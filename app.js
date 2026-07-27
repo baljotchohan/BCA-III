@@ -611,7 +611,7 @@ function selectCalendarDate(dateKey) {
   }
 }
 
-// Render Working Notion To-Do List with Delete Button
+// Render the To-Do List (with delete buttons)
 function renderTodoList() {
   const container = document.getElementById('todo-list-container');
   if (!container) return;

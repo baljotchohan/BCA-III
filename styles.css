@@ -1,4 +1,4 @@
-/* Notion-Inspired Aesthetic CSS for BCA 3rd Sem Hub — Lexend Font & Clean UI */
+/* BCA 3 Hub — clean, minimal dashboard styling with Lexend font, light & dark themes */
 @import url('https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
 :root {
@@ -14,17 +14,17 @@
   --text-muted: #666666;
   --text-light: #949494;
   
-  --notion-gray-bg: #f1f1ef;
-  --notion-blue: #0b6e99;
-  --notion-blue-bg: #e8f3f7;
-  --notion-green: #2e7b4f;
-  --notion-green-bg: #edf3ec;
-  --notion-orange: #d9730d;
-  --notion-orange-bg: #fbecdd;
-  --notion-purple: #6940a5;
-  --notion-purple-bg: #f3edd6;
-  --notion-red: #e03e3e;
-  --notion-red-bg: #fbe4e4;
+  --gray-soft-bg: #f1f1ef;
+  --blue-accent: #0b6e99;
+  --blue-soft-bg: #e8f3f7;
+  --green-accent: #2e7b4f;
+  --green-soft-bg: #edf3ec;
+  --orange-accent: #d9730d;
+  --orange-soft-bg: #fbecdd;
+  --purple-accent: #6940a5;
+  --purple-soft-bg: #f3edd6;
+  --red-accent: #e03e3e;
+  --red-soft-bg: #fbe4e4;
 
   --accent-color: #2563eb;
   --accent-hover: #1d4ed8;
@@ -59,11 +59,11 @@
   --text-muted: #9e9e9e;
   --text-light: #6e6e6e;
   
-  --notion-blue-bg: #193242;
-  --notion-green-bg: #193627;
-  --notion-orange-bg: #3b2818;
-  --notion-purple-bg: #302342;
-  --notion-red-bg: #3f1919;
+  --blue-soft-bg: #193242;
+  --green-soft-bg: #193627;
+  --orange-soft-bg: #3b2818;
+  --purple-soft-bg: #302342;
+  --red-soft-bg: #3f1919;
 
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
   --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.4);
@@ -793,7 +793,7 @@ body {
 }
 
 .cal-week-cell.today {
-  background-color: var(--notion-gray-bg);
+  background-color: var(--gray-soft-bg);
   border: 1px solid var(--border-hover);
 }
 
@@ -834,7 +834,7 @@ body {
 }
 
 .cal-date-num.today {
-  background-color: var(--notion-gray-bg);
+  background-color: var(--gray-soft-bg);
   border: 1px solid var(--border-hover);
   font-weight: 700;
 }
@@ -983,8 +983,8 @@ body {
 }
 
 .todo-delete-btn:hover {
-  color: var(--notion-red);
-  background-color: var(--notion-red-bg);
+  color: var(--red-accent);
+  background-color: var(--red-soft-bg);
 }
 
 .todo-empty {
@@ -1191,7 +1191,7 @@ body {
   font-size: 11.5px;
   white-space: pre;
   overflow-x: auto;
-  color: var(--notion-blue);
+  color: var(--blue-accent);
   margin: 10px 0;
   line-height: 1.3;
 }

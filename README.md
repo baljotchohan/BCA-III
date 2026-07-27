@@ -1,6 +1,6 @@
 # BCA 3 Hub
 
-A Notion-style study dashboard for **BCA 3rd Semester** students (Panjab University, 2026-27 batch). Built so nobody has to dig through WhatsApp for "what did we do in class today" — one place for the syllabus, a day-by-day lecture log, and basic study tools.
+A clean, minimal study dashboard for **BCA 3rd Semester** students (Panjab University, 2026-27 batch). Built so nobody has to dig through WhatsApp for "what did we do in class today" — one place for the syllabus, a day-by-day lecture log, and basic study tools.
 
 Static site, no backend — plain HTML/CSS/JS, so it runs anywhere and costs nothing to host.
 
@@ -19,7 +19,7 @@ Static site, no backend — plain HTML/CSS/JS, so it runs anywhere and costs not
 | File | Purpose |
 |---|---|
 | `index.html` | Page structure/layout |
-| `styles.css` | All styling (Notion-inspired, light + dark themes, responsive breakpoints) |
+| `styles.css` | All styling (clean, minimal design, light + dark themes, responsive breakpoints) |
 | `app.js` | All behavior — rendering, search, calendar, to-do list, theming |
 | `syllabus-data.js` | The actual data: subjects, syllabus units, lectures, to-dos. This is what gets edited to add new content. |
 | `Syllabus.pdf` | Official Panjab University syllabus document (source of truth for units/credits) |
