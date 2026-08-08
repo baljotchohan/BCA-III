@@ -208,7 +208,7 @@ function createMcpServer() {
 }
 
 // Determine Execution Mode: Stdio vs HTTP Server
-const isHttpMode = process.argv.includes("--sse") || process.argv.includes("--http") || process.env.HTTP_MODE === "true";
+const isHttpMode = process.argv.includes("--sse") || process.argv.includes("--http") || process.env.HTTP_MODE === "true" || Boolean(process.env.VERCEL) || Boolean(process.env.PORT);
 
 if (isHttpMode) {
   // --- Professional Express HTTP / SSE Server Mode ---
