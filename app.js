@@ -229,13 +229,29 @@ function toggleTopicCheck(topicKey, checkbox) {
    4. NOTION-STYLE DIGITAL NOTES REPOSITORY
    ========================================================================== */
 
-function renderSubjectNotes(subject) {
+async function renderSubjectNotes(subject) {
   const container = document.getElementById('ws-notes-stream');
   if (!container) return;
 
-  // Fetch both built-in notes and admin-published notes
+  // Fetch both built-in notes, local custom notes, and live Firebase AI notes
+  let fbLectures = await _fbFetch('lectures');
+  fbLectures = fbLectures.filter(l => l.subject === subject.id);
+  
   const localNotes = getCustomNotesForSubject(subject.id);
-  const allNotes = [...(subject.digitalNotes || []), ...localNotes];
+  // Map Firebase lectures to note format so they render properly
+  const fbNotes = fbLectures.map(l => ({
+    id: l.fbKey,
+    fbKey: l.fbKey,
+    unit: l.unit || 'General',
+    title: l.topic || l.title,
+    content: l.notes || l.description || '',
+    date: l.date,
+    readTime: 'AI Generated',
+    tags: ['AI', 'Cloud'],
+    imageUrl: l.imageUrl
+  }));
+
+  const allNotes = [...(subject.digitalNotes || []), ...localNotes, ...fbNotes];
 
   if (!allNotes.length) {
     container.innerHTML = `
@@ -263,6 +279,11 @@ function renderSubjectNotes(subject) {
           ${note.isAdminPublished ? '<span class="note-unit-badge" style="background-color: var(--color-coral); color: #fff;">Verified Course Note</span>' : ''}
         </div>
         <div class="note-actions-bar">
+          ${note.fbKey ? `
+            <button class="note-tool-btn" onclick="deleteNoteLive('${note.fbKey}', event)" title="Delete AI Note Live" style="color: #d44f4f;">
+              <span>🗑️ Delete</span>
+            </button>
+          ` : ''}
           <button class="note-tool-btn" onclick="copyNoteContent('${note.id}')" title="Copy note text">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
             <span>Copy</span>
@@ -595,6 +616,13 @@ function renderSubjectLecturesList(subject, allLectures) {
           </div>
         ` : ''}
         ${l.fileUrl || l.link ? `<a href="${l.fileUrl || l.link}" target="_blank" rel="noopener" class="lecture-link-btn">↗ View Attached Resource</a>` : ''}
+        ${l.fbKey ? `
+          <div style="margin-top: 1rem;">
+            <button onclick="deleteNoteLive('${l.fbKey}', event)" title="Delete AI Note Live" style="background: rgba(212, 79, 79, 0.15); color: #d44f4f; border: 1px solid rgba(212, 79, 79, 0.35); border-radius: 6px; padding: 0.35rem 0.65rem; font-size: 0.75rem; font-weight: 600; cursor: pointer;">
+              🗑️ Delete this Note
+            </button>
+          </div>
+        ` : ''}
       </div>
     </div>
   `).join('');

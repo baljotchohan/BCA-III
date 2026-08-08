@@ -99,97 +99,8 @@ const BCA_3RD_SEM_DATA = {
           ]
         }
       ],
-      digitalNotes: [
-        {
-          id: "note-ca-1",
-          unit: "Unit I",
-          title: "Arithmetic Logic Shift Unit (ALSU) Design",
-          date: "2026-08-01",
-          readTime: "6 min read",
-          tags: ["ALSU", "RTL", "Microoperations"],
-          content: `### 1. What is an ALSU?
-An **Arithmetic Logic Shift Unit (ALSU)** is a multi-purpose combinational circuit that performs:
-1. **Arithmetic Microoperations**: Addition, Subtraction, Increment, Decrement, Transfer.
-2. **Logic Microoperations**: 16 Boolean functions (AND, OR, XOR, NOT, NAND, NOR, etc.).
-3. **Shift Microoperations**: Logical shift left/right, Arithmetic shift left/right, Circular rotate.
-
----
-
-### 2. Selection Variables & Function Table
-| Select Lines (S3 S2 S1 S0) | Cin | Operation | Function Description |
-|---|---|---|---|
-| 0 0 0 0 | 0 | F = A | Transfer A |
-| 0 0 0 0 | 1 | F = A + 1 | Increment A |
-| 0 0 0 1 | 0 | F = A + B | Arithmetic Addition |
-| 0 0 0 1 | 1 | F = A + B + 1 | Addition with Carry |
-| 0 0 1 0 | 0 | F = A + B' | 1's Complement Subtraction |
-| 0 0 1 0 | 1 | F = A + B' + 1 | 2's Complement Subtraction (A - B) |
-| 0 0 1 1 | 0 | F = A - 1 | Decrement A |
-| 0 1 0 0 | X | F = A ∧ B | Bitwise AND |
-| 0 1 0 1 | X | F = A ∨ B | Bitwise OR |
-| 0 1 1 0 | X | F = A ⊕ B | Bitwise XOR |
-| 0 1 1 1 | X | F = A' | Bitwise NOT (Invert A) |
-| 1 0 0 0 | X | F = shr A | Shift Right A |
-| 1 0 0 1 | X | F = shl A | Shift Left A |
-
-> 💡 **Exam Tip**: In university exams, always draw the single-stage ALSU diagram showing the 4x1 Multiplexer receiving arithmetic, logic, and shift inputs.`
-        },
-        {
-          id: "note-ca-2",
-          unit: "Unit III",
-          title: "8086 Microprocessor Architecture & BIU vs EU",
-          date: "2026-08-04",
-          readTime: "8 min read",
-          tags: ["8086", "BIU", "EU", "Assembly"],
-          content: `### 1. Dual Processing Concept in 8086
-The Intel 8086 is a **16-bit microprocessor** with a 20-bit address bus (can address up to **1 MB of RAM**). It is partitioned into two independent functional units operating in parallel (pipelining):
-1. **Bus Interface Unit (BIU)**
-2. **Execution Unit (EU)**
-
----
-
-### 2. Bus Interface Unit (BIU)
-The BIU handles all data and address transfers on the external buses for the EU:
-- **6-Byte Instruction Stream Queue (FIFO)**: Pre-fetches instructions while the EU is decoding/executing previous instructions.
-- **Segment Registers (16-bit)**:
-  - \`CS\` (Code Segment)
-  - \`DS\` (Data Segment)
-  - \`SS\` (Stack Segment)
-  - \`ES\` (Extra Segment)
-- **Instruction Pointer (\`IP\`)**: Holds the 16-bit offset of the next instruction to fetch.
-- **Address Generation Circuit**: Computes the 20-bit physical address:
-$$\\text{Physical Address} = (\\text{Segment Register} \\times 16) + \\text{Offset}$$
-
----
-
-### 3. Execution Unit (EU)
-The EU decodes and executes instructions received from the 6-byte queue:
-- **General Purpose Registers**: \`AX\` (Accumulator), \`BX\` (Base), \`CX\` (Count), \`DX\` (Data).
-- **Pointers & Indices**: \`SP\` (Stack Pointer), \`BP\` (Base Pointer), \`SI\` (Source Index), \`DI\` (Destination Index).
-- **16-bit ALU & Flag Register (9 active flags)**:
-  - 6 Status Flags: \`CF\` (Carry), \`PF\` (Parity), \`AF\` (Auxiliary), \`ZF\` (Zero), \`SF\` (Sign), \`OF\` (Overflow).
-  - 3 Control Flags: \`TF\` (Trap/Single-step), \`IF\` (Interrupt Enable), \`DF\` (Direction).
-
-\`\`\`assembly
-; 8086 Physical Address Calculation Example:
-; CS = 2000H, IP = 0150H
-; Physical Address = 20000H + 0150H = 20150H
-
-MOV AX, 2000H
-MOV DS, AX          ; Load Data Segment base address
-MOV SI, 0200H       ; Offset into Data Segment
-MOV AL, [SI]        ; Read byte at physical address 20200H
-\`\`\``
-        }
-      ],
-      lectures: [
-        { date: "2026-08-01", time: "10:00 AM", topic: "Von Neumann vs Harvard Architecture & RTL", unit: "Unit I", description: "Stored program concept, bus organization with multiplexers, and register transfer notation.", fileUrl: "Syllabus.pdf" },
-        { date: "2026-08-03", time: "10:00 AM", topic: "Arithmetic & Logic Microoperations Implementation", unit: "Unit I", description: "Binary adder-subtractor, composite arithmetic circuit, and 4-bit ALSU selection table.", fileUrl: "Syllabus.pdf" },
-        { date: "2026-08-05", time: "11:30 AM", topic: "Instruction Cycle: Fetch, Decode & Execute", unit: "Unit II", description: "Step-by-step timing signals (T0–T6), Program Counter, Instruction Register, and addressing modes.", fileUrl: "Syllabus.pdf" },
-        { date: "2026-08-08", time: "10:00 AM", topic: "8086 Internal Architecture: BIU & EU Breakdown", unit: "Unit III", description: "6-byte instruction queue, 20-bit physical address formula, and segment register organization.", fileUrl: "Syllabus.pdf" },
-        { date: "2026-08-10", time: "10:00 AM", topic: "Memory Hierarchy, Cache Mapping & Associative Memory", unit: "Unit III", description: "Direct, Associative, and Set-Associative Cache mapping procedures.", fileUrl: "Syllabus.pdf" },
-        { date: "2026-08-12", time: "11:30 AM", topic: "Direct Memory Access (DMA) & I/O Handshaking", unit: "Unit IV", description: "DMA Controller, bus request/grant cycles, and source vs destination strobe control.", fileUrl: "Syllabus.pdf" }
-      ]
+      digitalNotes: [],
+      lectures: []
     },
     {
       id: "data-structures",
@@ -276,129 +187,8 @@ MOV AL, [SI]        ; Read byte at physical address 20200H
           ]
         }
       ],
-      digitalNotes: [
-        {
-          id: "note-ds-1",
-          unit: "Unit I",
-          title: "Infix to Postfix Conversion using Stacks",
-          date: "2026-08-02",
-          readTime: "7 min read",
-          tags: ["Stacks", "Postfix", "Algorithms"],
-          content: `### 1. Why Postfix Notation?
-Postfix notation (Reverse Polish Notation) eliminates the need for parentheses and operator precedence rules during computer expression evaluation.
-
----
-
-### 2. Operator Precedence Hierarchy
-1. \`^\` (Exponentiation) → Highest, Right-to-Left associative.
-2. \`*\`, \`/\`, \`%\` → High, Left-to-Right associative.
-3. \`+\`, \`-\` → Low, Left-to-Right associative.
-
----
-
-### 3. Step-by-Step Algorithm
-1. Scan the Infix expression character by character from left to right.
-2. If the scanned character is an **operand**, append it directly to the Postfix output string.
-3. If the scanned character is a \`'('\`, push it onto the Stack.
-4. If the scanned character is a \`')'\`, pop from the Stack and append to output until a \`'('\` is encountered. Discard both parentheses.
-5. If an **operator** is encountered:
-   - While the Stack is not empty and precedence of the operator on top of Stack $\\ge$ precedence of scanned operator, pop it to output.
-   - Push the scanned operator onto the Stack.
-6. When the expression ends, pop all remaining operators from the Stack to the output.
-
-\`\`\`cpp
-// C++ Infix to Postfix Converter
-#include <iostream>
-#include <stack>
-#include <string>
-
-int precedence(char op) {
-    if (op == '^') return 3;
-    if (op == '*' || op == '/') return 2;
-    if (op == '+' || op == '-') return 1;
-    return -1;
-}
-
-std::string infixToPostfix(std::string s) {
-    std::stack<char> st;
-    std::string result = "";
-    for (char c : s) {
-        if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9'))
-            result += c;
-        else if (c == '(')
-            st.push('(');
-        else if (c == ')') {
-            while (!st.empty() && st.top() != '(') {
-                result += st.top(); st.pop();
-            }
-            if (!st.empty()) st.pop(); // Pop '('
-        } else {
-            while (!st.empty() && precedence(st.top()) >= precedence(c)) {
-                result += st.top(); st.pop();
-            }
-            st.push(c);
-        }
-    }
-    while (!st.empty()) { result += st.top(); st.pop(); }
-    return result;
-}
-\`\`\``
-        },
-        {
-          id: "note-ds-2",
-          unit: "Unit III",
-          title: "Binary Search Tree (BST) Operations & Traversals",
-          date: "2026-08-06",
-          readTime: "9 min read",
-          tags: ["BST", "Trees", "Recursion"],
-          content: `### 1. BST Property
-For every node $X$ in a Binary Search Tree:
-- All values in the **left subtree** are strictly less than $X.data$.
-- All values in the **right subtree** are strictly greater than $X.data$.
-
----
-
-### 2. Three Traversal Orders
-- **Inorder (Left, Root, Right)**: Produces ascending sorted output!
-- **Preorder (Root, Left, Right)**: Useful for creating a copy of the tree or prefix expressions.
-- **Postorder (Left, Right, Root)**: Useful for deleting trees or postfix expressions.
-
-\`\`\`cpp
-struct Node {
-    int data;
-    Node* left;
-    Node* right;
-    Node(int val) : data(val), left(nullptr), right(nullptr) {}
-};
-
-// Recursive Inorder Traversal
-void inorder(Node* root) {
-    if (!root) return;
-    inorder(root->left);
-    std::cout << root->data << " ";
-    inorder(root->right);
-}
-
-// BST Insertion
-Node* insert(Node* root, int key) {
-    if (!root) return new Node(key);
-    if (key < root->data)
-        root->left = insert(root->left, key);
-    else if (key > root->data)
-        root->right = insert(root->right, key);
-    return root;
-}
-\`\`\``
-        }
-      ],
-      lectures: [
-        { date: "2026-08-02", time: "09:30 AM", topic: "Asymptotic Notation (Big-O, Omega, Theta) & 2D Arrays", unit: "Unit I", description: "Time-space trade-offs, row-major vs column-major addressing derivations.", fileUrl: "Syllabus.pdf" },
-        { date: "2026-08-04", time: "09:30 AM", topic: "Stack ADT & Infix to Postfix Conversion", unit: "Unit I", description: "Array implementation, overflow conditions, and operator precedence stacks.", fileUrl: "Syllabus.pdf" },
-        { date: "2026-08-06", time: "10:30 AM", topic: "Singly & Doubly Linked List Operations", unit: "Unit II", description: "Node insertion at head, tail, and arbitrary position with pointer manipulation.", fileUrl: "Syllabus.pdf" },
-        { date: "2026-08-08", time: "09:30 AM", topic: "Binary Search Tree Construction & Traversals", unit: "Unit III", description: "Recursive insertion, deletion with 3 cases (0, 1, 2 children), and inorder sorting.", fileUrl: "Syllabus.pdf" },
-        { date: "2026-08-11", time: "09:30 AM", topic: "Graph Representations & BFS / DFS Algorithms", unit: "Unit III", description: "Adjacency Matrix vs Adjacency List, queue-based BFS and stack-based DFS traversal.", fileUrl: "Syllabus.pdf" },
-        { date: "2026-08-13", time: "10:30 AM", topic: "Divide & Conquer: Merge Sort vs Quick Sort Analysis", unit: "Unit IV", description: "Partitioning mechanics, recurrence relations, and best/worst case space complexities.", fileUrl: "Syllabus.pdf" }
-      ]
+      digitalNotes: [],
+      lectures: []
     },
     {
       id: "numerical-methods",
@@ -489,62 +279,8 @@ Node* insert(Node* root, int key) {
           ]
         }
       ],
-      digitalNotes: [
-        {
-          id: "note-nm-1",
-          unit: "Unit II",
-          title: "Newton-Raphson Method Formula & Derivation",
-          date: "2026-08-03",
-          readTime: "6 min read",
-          tags: ["Newton-Raphson", "Root Finding", "Calculus"],
-          content: `### 1. Geometric Interpretation
-The Newton-Raphson method approximates the root of $f(x) = 0$ by drawing a tangent line to the curve at $(x_n, f(x_n))$ and finding where this tangent intersects the x-axis.
-
-$$\\text{Slope of Tangent } f'(x_n) = \\frac{f(x_n) - 0}{x_n - x_{n+1}}$$
-
-Rearranging gives the celebrated **Newton-Raphson Iteration Formula**:
-$$x_{n+1} = x_n - \\frac{f(x_n)}{f'(x_n)}$$
-
----
-
-### 2. Quadratic Convergence
-Newton-Raphson possesses **order of convergence $p = 2$**. This means the number of correct decimal digits roughly doubles with every single iteration!
-
-\`\`\`cpp
-// C++ Newton-Raphson Implementation
-#include <iostream>
-#include <cmath>
-
-// Example: f(x) = x^3 - x - 2 = 0
-double f(double x) { return x*x*x - x - 2; }
-double fPrime(double x) { return 3*x*x - 1; }
-
-double newtonRaphson(double x0, double tolerance = 1e-6, int maxIter = 100) {
-    double x = x0;
-    for (int i = 0; i < maxIter; ++i) {
-        double fx = f(x);
-        double fpx = fPrime(x);
-        if (std::abs(fpx) < 1e-12) {
-            std::cerr << "Derivative near zero! Method fails." << std::endl;
-            return x;
-        }
-        double h = fx / fpx;
-        x = x - h;
-        if (std::abs(h) < tolerance) {
-            std::cout << "Converged in " << i + 1 << " iterations! Root = " << x << std::endl;
-            return x;
-        }
-    }
-    return x;
-}
-\`\`\``
-        }
-      ],
-      lectures: [
-        { date: "2026-08-03", time: "11:00 AM", topic: "Absolute vs Relative Errors & Chopping vs Rounding", unit: "Unit I", description: "Floating point arithmetic, error propagation in multiplication and division.", fileUrl: "Syllabus.pdf" },
-        { date: "2026-08-07", time: "11:00 AM", topic: "Newton-Raphson vs Regula-Falsi Rate of Convergence", unit: "Unit II", description: "Geometric derivation of tangent formula, failure conditions when f'(x)=0.", fileUrl: "Syllabus.pdf" },
-        { date: "2026-08-09", time: "11:00 AM", topic: "Gauss Elimination & Partial Pivoting for Linear Systems", unit: "Unit III", description: "Forward elimination, back-substitution, and avoiding division by near-zero pivots.", fileUrl: "Syllabus.pdf" }
-      ]
+      digitalNotes: [],
+      lectures: []
     },
     {
       id: "machine-learning",
@@ -635,55 +371,8 @@ double newtonRaphson(double x0, double tolerance = 1e-6, int maxIter = 100) {
           ]
         }
       ],
-      digitalNotes: [
-        {
-          id: "note-ml-1",
-          unit: "Unit III",
-          title: "Decision Tree Entropy & Information Gain (ID3)",
-          date: "2026-08-04",
-          readTime: "8 min read",
-          tags: ["Decision Trees", "Entropy", "ID3 Algorithm"],
-          content: `### 1. What is Entropy?
-In Information Theory, **Entropy $H(S)$** measures the impurity or disorder in a dataset $S$:
-
-$$H(S) = - \\sum_{i=1}^{c} p_i \\log_2(p_i)$$
-
-- If all instances belong to the same class: $H(S) = 0$ (Pure set).
-- If classes are split equally 50/50: $H(S) = 1.0$ (Maximum impurity).
-
----
-
-### 2. Information Gain Formula
-Information Gain $Gain(S, A)$ measures the expected reduction in entropy achieved by partitioning on attribute $A$:
-
-$$Gain(S, A) = H(S) - \\sum_{v \\in Values(A)} \\frac{|S_v|}{|S|} H(S_v)$$
-
-The ID3 algorithm selects the attribute with the **highest Information Gain** as the decision node!
-
-\`\`\`python
-# Python Entropy & Information Gain
-import numpy as np
-
-def entropy(y):
-    _, counts = np.unique(y, return_counts=True)
-    probs = counts / len(y)
-    return -np.sum([p * np.log2(p) for p in probs if p > 0])
-
-def information_gain(y_parent, y_left, y_right):
-    n = len(y_parent)
-    h_parent = entropy(y_parent)
-    h_left = entropy(y_left)
-    h_right = entropy(y_right)
-    weighted_h = (len(y_left) / n) * h_left + (len(y_right) / n) * h_right
-    return h_parent - weighted_h
-\`\`\``
-        }
-      ],
-      lectures: [
-        { date: "2026-08-04", time: "12:00 PM", topic: "Supervised vs Unsupervised Paradigms & Bias-Variance", unit: "Unit I", description: "Overfitting prevention, cross-validation splits, and mathematical formulation of bias-variance.", fileUrl: "Syllabus.pdf" },
-        { date: "2026-08-07", time: "12:00 PM", topic: "Decision Tree Classifier: Entropy & ID3 Math", unit: "Unit III", description: "Calculating entropy, information gain on PlayTennis dataset, and tree pruning.", fileUrl: "Syllabus.pdf" },
-        { date: "2026-08-10", time: "12:00 PM", topic: "Support Vector Machines (SVM) & Kernel Hyperplanes", unit: "Unit III", description: "Margin maximization, support vectors, and soft-margin slack variables.", fileUrl: "Syllabus.pdf" }
-      ]
+      digitalNotes: [],
+      lectures: []
     },
     {
       id: "english-3",
@@ -729,28 +418,8 @@ def information_gain(y_parent, y_left, y_right):
           ]
         }
       ],
-      digitalNotes: [
-        {
-          id: "note-eng-1",
-          unit: "Unit I",
-          title: "Structure of Formal Technical Project Reports",
-          date: "2026-08-05",
-          readTime: "5 min read",
-          tags: ["Reports", "Technical Writing", "Documentation"],
-          content: `### 1. Standard Technical Report Structure
-1. **Title Page**: Project title, student name, roll number, department, university, date.
-2. **Executive Summary / Abstract**: 150–250 words summarizing the problem, approach, and key findings.
-3. **Table of Contents**: List of sections and sub-sections with accurate page numbers.
-4. **Introduction**: Problem background, objectives, scope, and technical constraints.
-5. **Technical Methodology**: System architecture, algorithms used, and tools employed.
-6. **Results & Evaluation**: Data analysis, benchmarks, and discussion of performance.
-7. **Conclusion & Recommendations**: Key takeaways and future enhancement paths.
-8. **References / Bibliography**: Standard IEEE / APA citation format.`
-        }
-      ],
-      lectures: [
-        { date: "2026-08-05", time: "02:00 PM", topic: "Technical Report Writing: Abstract & Executive Memos", unit: "Unit I", description: "Writing structured technical summaries and formal engineering project documentation.", fileUrl: "Syllabus.pdf" }
-      ]
+      digitalNotes: [],
+      lectures: []
     },
     {
       id: "web-dev",
@@ -799,38 +468,8 @@ def information_gain(y_parent, y_left, y_right):
           ]
         }
       ],
-      digitalNotes: [
-        {
-          id: "note-web-1",
-          unit: "Unit I",
-          title: "CSS Grid vs Flexbox Layout Mastery",
-          date: "2026-08-02",
-          readTime: "6 min read",
-          tags: ["CSS Grid", "Flexbox", "Responsive"],
-          content: `### 1. When to Use CSS Grid vs Flexbox?
-- **CSS Grid (2-Dimensional)**: Use when you need to align elements in **both rows and columns simultaneously** (e.g. dashboards, card grids, whole-page holy grail layouts).
-- **Flexbox (1-Dimensional)**: Use when you need to align items along **a single axis** (e.g. navigation bars, button rows, centering an element).
-
-\`\`\`css
-/* Responsive Card Grid with Zero Media Queries */
-.card-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 1.5rem;
-}
-
-/* Flexbox Centering */
-.flex-center {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-\`\`\``
-        }
-      ],
-      lectures: [
-        { date: "2026-08-02", time: "01:00 PM", topic: "HTML5 Semantic Structure & CSS Grid Architecture", unit: "Unit I", description: "Building responsive multi-column layouts with CSS Grid repeat(auto-fit, minmax()).", fileUrl: "Syllabus.pdf" }
-      ]
+      digitalNotes: [],
+      lectures: []
     },
     {
       id: "backend-dev",
@@ -877,42 +516,8 @@ def information_gain(y_parent, y_left, y_right):
           ]
         }
       ],
-      digitalNotes: [
-        {
-          id: "note-be-1",
-          unit: "Unit I",
-          title: "RESTful API Design & HTTP Status Codes",
-          date: "2026-08-04",
-          readTime: "7 min read",
-          tags: ["REST", "Express", "Node.js"],
-          content: `### 1. REST API URL Conventions
-- \`GET /api/notes\` — Fetch all notes
-- \`GET /api/notes/:id\` — Fetch specific note by ID
-- \`POST /api/notes\` — Create a new note (JSON payload in request body)
-- \`PUT /api/notes/:id\` — Update existing note
-- \`DELETE /api/notes/:id\` — Delete note
-
-\`\`\`javascript
-// Express.js REST API Endpoint
-const express = require('express');
-const app = express();
-app.use(express.json());
-
-app.get('/api/lectures', async (req, res) => {
-  try {
-    const { subject } = req.query;
-    const lectures = await db.getLecturesBySubject(subject);
-    res.status(200).json({ success: true, count: lectures.length, data: lectures });
-  } catch (err) {
-    res.status(500).json({ success: false, error: 'Internal Server Error' });
-  }
-});
-\`\`\``
-        }
-      ],
-      lectures: [
-        { date: "2026-08-04", time: "03:00 PM", topic: "RESTful API Endpoints & Request/Response Lifecycle", unit: "Unit I", description: "Setting up Node.js Express server, handling JSON payloads and HTTP status codes.", fileUrl: "Syllabus.pdf" }
-      ]
+      digitalNotes: [],
+      lectures: []
     }
   ],
   todos: [

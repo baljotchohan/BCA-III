@@ -3099,3 +3099,20 @@ html, body {
 }
 
 
+
+/* Universal Text Overflow & Word Break Fixes */
+.digital-note-card,
+.lecture-item,
+.note-content-body,
+.lecture-desc,
+.announcement-card,
+.unit-card-block {
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+.notion-code-block,
+pre {
+  overflow-x: auto;
+  max-width: 100%;
+}
