@@ -221,17 +221,19 @@ if (isHttpMode) {
 
   // Root Status Dashboard
   app.get("/", (req, res) => {
+    const proto = req.headers['x-forwarded-proto'] || (req.secure ? 'https' : 'http');
+    const host = req.headers.host;
     res.json({
       status: "online",
       server: "BCA III Hub Professional MCP & REST API Server",
       protocolVersion: "2024-11-05",
       endpoints: {
-        mcpSseUrl: `http://${req.headers.host}/sse`,
-        mcpMessagesUrl: `http://${req.headers.host}/messages`,
-        openApiSchemaUrl: `http://${req.headers.host}/openapi.json`,
-        healthCheck: `http://${req.headers.host}/health`,
-        restNotes: `http://${req.headers.host}/api/notes`,
-        restTodos: `http://${req.headers.host}/api/todos`,
+        mcpSseUrl: `${proto}://${host}/sse`,
+        mcpMessagesUrl: `${proto}://${host}/messages`,
+        openApiSchemaUrl: `${proto}://${host}/openapi.json`,
+        healthCheck: `${proto}://${host}/health`,
+        restNotes: `${proto}://${host}/api/notes`,
+        restTodos: `${proto}://${host}/api/todos`,
       },
       availableSubjects: SUBJECTS,
     });
@@ -328,6 +330,7 @@ if (isHttpMode) {
 
   // ChatGPT Custom GPT OpenAPI 3.0 Schema
   app.get("/openapi.json", (req, res) => {
+    const proto = req.headers['x-forwarded-proto'] || (req.secure ? 'https' : 'http');
     const host = req.headers.host;
     res.json({
       openapi: "3.0.0",
@@ -336,7 +339,7 @@ if (isHttpMode) {
         description: "Official API allowing ChatGPT and Claude to manage BCA 3rd Year notes, visuals, and study tasks.",
         version: "1.0.0"
       },
-      servers: [{ url: `http://${host}` }],
+      servers: [{ url: `${proto}://${host}` }],
       paths: {
         "/api/notes": {
           get: {

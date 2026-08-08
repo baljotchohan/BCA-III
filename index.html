@@ -1144,23 +1144,25 @@
       <!-- Tab Content: SSE -->
       <div class="mcp-tab-content" id="mcp-content-sse" style="display: none;">
         <p style="font-size: 0.875rem; color: var(--text-subtle); margin-bottom: 0.75rem;">
-          Use this <strong>Server-Sent Events (SSE)</strong> URL in Claude Web Connectors or Remote MCP tools:
+          Use this official <strong>Cloud SSE URL</strong> in Claude Web Connectors or Remote MCP tools:
         </p>
-        <div style="display: flex; gap: 0.5rem;">
-          <input type="text" readonly value="http://localhost:3000/sse" id="mcp-sse-url" class="admin-input-field" style="flex: 1; font-family: var(--font-mono); font-size: 0.85rem; background: var(--bg-page);" />
-          <button onclick="copyMcpText('http://localhost:3000/sse')" class="admin-action-btn primary" style="cursor: pointer;">📋 Copy SSE Link</button>
+        <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
+          <input type="text" readonly value="https://bca-iii.vercel.app/sse" id="mcp-sse-url" class="admin-input-field" style="flex: 1; font-family: var(--font-mono); font-size: 0.85rem; background: var(--bg-page);" />
+          <button onclick="copyMcpText('https://bca-iii.vercel.app/sse')" class="admin-action-btn primary" style="cursor: pointer;">📋 Copy Cloud SSE Link</button>
         </div>
+        <span style="font-size: 0.75rem; color: var(--text-subtle);">Local fallback: <code>http://localhost:3000/sse</code></span>
       </div>
 
       <!-- Tab Content: ChatGPT -->
       <div class="mcp-tab-content" id="mcp-content-gpt" style="display: none;">
         <p style="font-size: 0.875rem; color: var(--text-subtle); margin-bottom: 0.75rem;">
-          In <strong>ChatGPT Custom GPT -> Actions -> Import from URL</strong>, paste this OpenAPI 3.0 specification URL:
+          In <strong>ChatGPT Custom GPT -> Actions -> Import from URL</strong>, paste this official Cloud OpenAPI URL:
         </p>
-        <div style="display: flex; gap: 0.5rem;">
-          <input type="text" readonly value="http://localhost:3000/openapi.json" id="mcp-gpt-url" class="admin-input-field" style="flex: 1; font-family: var(--font-mono); font-size: 0.85rem; background: var(--bg-page);" />
-          <button onclick="copyMcpText('http://localhost:3000/openapi.json')" class="admin-action-btn primary" style="cursor: pointer;">📋 Copy OpenAPI Spec URL</button>
+        <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
+          <input type="text" readonly value="https://bca-iii.vercel.app/openapi.json" id="mcp-gpt-url" class="admin-input-field" style="flex: 1; font-family: var(--font-mono); font-size: 0.85rem; background: var(--bg-page);" />
+          <button onclick="copyMcpText('https://bca-iii.vercel.app/openapi.json')" class="admin-action-btn primary" style="cursor: pointer;">📋 Copy Cloud Spec URL</button>
         </div>
+        <span style="font-size: 0.75rem; color: var(--text-subtle);">Local fallback: <code>http://localhost:3000/openapi.json</code></span>
       </div>
 
       <!-- Tab Content: Cursor / Antigravity -->
