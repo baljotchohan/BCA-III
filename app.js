@@ -1326,13 +1326,21 @@ function formatDateLong(dateStr) {
 
 function openMcpModal() {
   const modal = document.getElementById('mcp-modal');
-  if (modal) modal.style.display = 'flex';
+  if (modal) {
+    modal.style.display = 'flex';
+    requestAnimationFrame(() => {
+      modal.classList.add('active');
+    });
+  }
 }
 
 function closeMcpModal(e) {
   if (e && e.target && e.target.id !== 'mcp-modal' && e.type === 'click') return;
   const modal = document.getElementById('mcp-modal');
-  if (modal) modal.style.display = 'none';
+  if (modal) {
+    modal.classList.remove('active');
+    setTimeout(() => { modal.style.display = 'none'; }, 200);
+  }
 }
 
 function switchMcpTab(tabName) {
