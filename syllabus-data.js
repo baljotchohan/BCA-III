@@ -520,12 +520,7 @@ const BCA_3RD_SEM_DATA = {
       lectures: []
     }
   ],
-  todos: [
-    { id: 1, text: "Revise Von Neumann & 8086 block diagrams for Computer Architecture", subject: "Computer Architecture", done: false, date: "2026-08-10" },
-    { id: 2, text: "Implement Infix to Postfix Stack algorithm in C++", subject: "Data Structures", done: false, date: "2026-08-11" },
-    { id: 3, text: "Practice Newton-Raphson & Gauss Elimination numerical problems", subject: "Computer Oriented Numerical Methods", done: true, date: "2026-08-08" },
-    { id: 4, text: "Write Python script for Decision Tree & Confusion Matrix evaluation", subject: "Introduction to Machine Learning", done: false, date: "2026-08-12" }
-  ]
+  todos: []
 };
 
 if (typeof module !== 'undefined' && module.exports) {

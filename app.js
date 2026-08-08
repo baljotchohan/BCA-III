@@ -481,12 +481,31 @@ async function deleteFirebaseItem(collection, fbKey, e) {
 
   showToast('⏳ Removing item from cloud...');
   try {
-    const res = await fetch(`${FIREBASE_DB}/${collection}/${fbKey}.json`, { method: 'DELETE' });
-    if (!res.ok) throw new Error('Delete failed');
+    // Delete from primary collection
+    await fetch(`${FIREBASE_DB}/${collection}/${fbKey}.json`, { method: 'DELETE' });
+    // Also cleanup from secondary collection in case of legacy mapping
+    if (collection === 'notes') {
+      await fetch(`${FIREBASE_DB}/lectures/${fbKey}.json`, { method: 'DELETE' });
+    } else if (collection === 'lectures') {
+      await fetch(`${FIREBASE_DB}/notes/${fbKey}.json`, { method: 'DELETE' });
+    }
+
+    // Clean local cache
+    let locNotes = getCustomNotes().filter(n => (n.fbKey !== fbKey && n.id !== fbKey));
+    localStorage.setItem('bca3_custom_notes', JSON.stringify(locNotes));
+
+    let locLecs = getCustomLectures().filter(l => (l.fbKey !== fbKey && l.id !== fbKey));
+    localStorage.setItem('bca3_custom_lectures', JSON.stringify(locLecs));
+
+    let locAnns = getStoredAnnouncements().filter(a => (a.fbKey !== fbKey && a.id !== fbKey));
+    localStorage.setItem('bca3_announcements_cache', JSON.stringify(locAnns));
+
     showToast('🗑️ Item deleted successfully from cloud!');
-    // Refresh all views
+    
+    // Refresh all live views
     renderDashboardLectures();
     renderDashboardAnnouncements();
+    renderDashboardTodos();
     renderAdminManageData();
     const subject = BCA_3RD_SEM_DATA.subjects.find(s => s.id === activeSubjectId) || BCA_3RD_SEM_DATA.subjects[0];
     if (subject) {
@@ -718,19 +737,23 @@ async function renderDashboardLectures() {
 
 function renderDashboardTodos() {
   const container = document.getElementById('dashboard-todos-list');
+  const badge = document.getElementById('todo-progress-badge');
   if (!container) return;
 
   const todos = getStoredTodos();
-  const badge = document.getElementById('todo-progress-badge');
   const doneCount = todos.filter(t => t.done).length;
   if (badge) badge.innerText = `${doneCount}/${todos.length} Done`;
 
-  container.innerHTML = todos.map(todo => `
-    <div class="todo-item-row">
-      <input type="checkbox" class="todo-checkbox" ${todo.done ? 'checked' : ''} onchange="toggleTodo(${todo.id})"/>
-      <span class="todo-text ${todo.done ? 'done' : ''}">${escapeHtml(todo.text)}</span>
-      <span class="todo-subject-tag">${escapeHtml(todo.subject)}</span>
-      <button class="todo-del-btn" onclick="deleteTodo(${todo.id})" title="Delete task">✕</button>
+  if (!todos.length) {
+    container.innerHTML = `<p style="font-size: 0.85rem; color: var(--text-subtle); padding: 0.75rem 0;">No active study tasks. Add a study target above.</p>`;
+    return;
+  }
+
+  container.innerHTML = todos.map(t => `
+    <div class="todo-item-row ${t.done ? 'done' : ''}">
+      <input type="checkbox" class="todo-checkbox" ${t.done ? 'checked' : ''} onchange="toggleTodo(${t.id})" id="todo-cb-${t.id}">
+      <label for="todo-cb-${t.id}" class="todo-label-text">${escapeHtml(t.text)}</label>
+      <button class="todo-del-btn" onclick="deleteTodo(${t.id})" title="Delete Task">✕</button>
     </div>
   `).join('');
 }
@@ -777,7 +800,7 @@ function getStoredTodos() {
   if (stored) {
     try { return JSON.parse(stored); } catch (e) {}
   }
-  return BCA_3RD_SEM_DATA.todos || [];
+  return (BCA_3RD_SEM_DATA.todos && BCA_3RD_SEM_DATA.todos.length) ? BCA_3RD_SEM_DATA.todos : [];
 }
 
 function renderDashboardAnnouncements() {
@@ -787,11 +810,16 @@ function renderDashboardAnnouncements() {
   const announcements = getStoredAnnouncements();
   const catIcons = { notice: '📌', exam: '📅', assignment: '📝', urgent: '🚨' };
 
-  container.innerHTML = announcements.slice(0, 3).map(a => `
+  if (!announcements.length) {
+    container.innerHTML = `<p style="font-size: 0.85rem; color: var(--text-subtle); padding: 0.75rem 0;">No announcements posted yet. Use Admin Portal to broadcast notices.</p>`;
+    return;
+  }
+
+  container.innerHTML = announcements.slice(0, 5).map(a => `
     <div class="announcement-card" style="margin-bottom: 0.75rem;">
       <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.35rem;">
-        <span class="admin-item-badge ${a.category === 'urgent' ? 'urgent' : 'coral'}">${catIcons[a.category] || '📌'} ${a.category || 'Notice'}</span>
-        <span style="font-size: 0.75rem; color: var(--text-subtle);">${a.date || 'Aug 2026'}</span>
+        <span class="admin-item-badge ${a.category === 'urgent' ? 'urgent' : 'coral'}">${catIcons[a.category] || '📌'} ${escapeHtml(a.category || 'Notice')}</span>
+        <span style="font-size: 0.75rem; color: var(--text-subtle);">${escapeHtml(a.date || 'Aug 2026')}</span>
       </div>
       <div style="font-weight: 600; font-size: 0.95rem; margin-bottom: 0.25rem;">${escapeHtml(a.title)}</div>
       <p style="font-size: 0.85rem; line-height: 1.5; color: var(--text-muted);">${escapeHtml(a.message)}</p>
@@ -805,10 +833,7 @@ function getStoredAnnouncements() {
   if (stored) {
     try { return JSON.parse(stored); } catch (e) {}
   }
-  return [
-    { title: "PU BCA 3rd Semester 2026-27 Session Started", category: "notice", date: "01 Aug 2026", message: "Official classes initiated. Access your dedicated subject workspaces and download the syllabus PDF." },
-    { title: "Mid-Semester Internal Examination Schedule", category: "exam", date: "08 Aug 2026", message: "Internal assessment for Comp Arch and Data Structures commences late September. Prepare Unit I & II." }
-  ];
+  return [];
 }
 
 /* ==========================================================================
@@ -1096,21 +1121,22 @@ async function renderAdminManageData() {
   let html = '';
 
   // --- NOTES SECTION ---
-  const allNotes = [...fbNotes, ...localNotes.filter(n => !fbNotes.some(fb => fb.id === n.id))];
+  const allNotes = [
+    ...fbNotes.map(n => ({ ...n, _sourceCol: 'notes' })),
+    ...fbLectures.filter(l => l.notes || l.content || l.isAdminPublished).map(n => ({ ...n, _sourceCol: 'lectures' })),
+    ...localNotes.filter(n => !fbNotes.some(fb => fb.id === n.id) && !fbLectures.some(fb => fb.id === n.id))
+  ];
   html += `<h4 style="font-size: 0.95rem; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.4rem;">📝 Notes & Study Material <span style="font-size: 0.75rem; background: var(--bg-surface-subtle); padding: 0.15rem 0.5rem; border-radius: var(--radius-full); color: var(--text-subtle);">${allNotes.length}</span></h4>`;
 
   if (!allNotes.length) {
     html += `<p style="font-size: 0.8125rem; color: var(--text-subtle); margin-bottom: 1rem;">No published notes yet.</p>`;
   } else {
     html += allNotes.map(n => {
-      const collection = n.isAdminPublished ? 'lectures' : 'notes';
+      const col = n._sourceCol || (n.isAdminPublished ? 'lectures' : 'notes');
       const deleteAction = n.fbKey
-        ? `deleteFirebaseItem('${collection}', '${n.fbKey}', event)`
+        ? `deleteFirebaseItem('${col}', '${n.fbKey}', event)`
         : `deleteCustomNote('${n.id}')`;
-      const editAction = n.fbKey
-        ? `editNoteItem(${JSON.stringify({fbKey: n.fbKey, collection, id: n.id, subjectId: n.subjectId || '', unit: n.unit || 'Unit I', title: n.title || n.topic || '', tags: (n.tags || []).join(', '), readTime: n.readTime || '', content: n.content || n.notes || '', date: n.date, timestamp: n.timestamp}).replace(/'/g, "\\'").replace(/"/g, '&quot;')})`
-        : '';
-      const subjectLabel = n.subjectId ? getSubjectName(n.subjectId) || n.subjectId : (n.subject || 'General');
+      const subjectLabel = n.subjectId ? getSubjectName(n.subjectId) || n.subjectId : (n.subject ? getSubjectName(n.subject) || n.subject : 'General');
       return `
         <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.55rem 0.75rem; background: var(--bg-surface-subtle); border-radius: var(--radius-sm); margin-bottom: 0.35rem; font-size: 0.85rem;">
           <div style="min-width: 0; flex: 1; overflow: hidden;">
@@ -1118,7 +1144,7 @@ async function renderAdminManageData() {
             <div style="font-size: 0.75rem; color: var(--text-subtle); margin-top: 0.15rem;">${escapeHtml(subjectLabel)} · ${n.date || '—'}${n.fbKey ? ' · <span style="color: #2ecc71;">☁️ Firebase</span>' : ' · 💾 Local'}</div>
           </div>
           <div style="display: flex; gap: 0.35rem; flex-shrink: 0; margin-left: 0.5rem;">
-            ${n.fbKey ? `<button class="todo-del-btn" onclick="editNoteFromManage('${n.fbKey}', '${collection}')" title="Edit" style="color: var(--color-coral);">✏️</button>` : ''}
+            ${n.fbKey ? `<button class="todo-del-btn" onclick="editNoteFromManage('${n.fbKey}', '${col}')" title="Edit" style="color: var(--color-coral);">✏️</button>` : ''}
             <button class="todo-del-btn" onclick="${deleteAction}" title="Delete">🗑️</button>
           </div>
         </div>`;
