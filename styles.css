@@ -1609,40 +1609,46 @@ html, body {
     padding-right: 1rem;
   }
 
-  /* Header compact sizing */
-  .SiteHeader-module-scss-module__zKj4Ca__contentWrapper {
-    gap: 0.4rem;
+  /* Mobile header clean single-row */
+  .SiteHeader-module-scss-module__zKj4Ca__claudeCtaWrapper {
+    display: none !important;
+  }
+
+  .brand-pu-tag,
+  .brand-hub-badge {
+    display: none !important;
+  }
+
+  .brand-header-link {
+    gap: 0;
+    flex-shrink: 1;
+    overflow: hidden;
+  }
+
+  .brand-name-wrap {
+    gap: 0;
   }
 
   .brand-main-title {
-    font-size: 1.15rem;
+    font-size: 1.1875rem;
+    white-space: nowrap;
   }
 
-  .brand-pu-tag {
-    display: none; /* Hide on small screens to save header space */
-  }
-
-  .SiteHeader-module-scss-module__zKj4Ca__claudeCtaButton {
-    padding: 0.4rem 0.75rem;
-    font-size: 0.75rem;
-  }
-
-  .SiteHeader-module-scss-module__zKj4Ca__claudeCtaButton span {
-    display: none; /* Show icon only or compact text */
-  }
-
-  .SiteHeader-module-scss-module__zKj4Ca__claudeCtaButton::after {
-    content: 'PDF';
-    font-weight: 600;
-  }
-
-  .SiteHeader-module-scss-module__zKj4Ca__claudeCtaDropdownTrigger {
-    display: none;
+  .SiteHeader-module-scss-module__zKj4Ca__contentWrapper {
+    gap: 0.35rem;
+    flex-shrink: 0;
   }
 
   .header-icon-btn {
-    width: 32px;
-    height: 32px;
+    width: 34px;
+    height: 34px;
+    flex-shrink: 0;
+  }
+
+  .SiteHeader-module-scss-module__zKj4Ca__mobileIcon {
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
   }
 
   /* Hero Section */
