@@ -328,14 +328,17 @@ function renderMarkdownBlocks(content) {
 
   let html = content;
 
-  // Code blocks with syntax highlighting container & copy button
-  html = html.replace(/```([a-zA-Z0-9_\-]+)?\n([\s\S]*?)```/g, (match, lang, code) => {
+  // 1. Normalize line endings
+  html = html.replace(/\r\n/g, '\n');
+
+  // 2. Code blocks (support ```lang or '''lang or ``` with trailing spaces)
+  html = html.replace(/(?:```|''')([a-zA-Z0-9_\-\+]+)?[ \t]*\n([\s\S]*?)(?:```|''')/g, (match, lang, code) => {
     const cleanCode = escapeHtml(code.trim());
-    const language = lang || 'code';
+    const language = lang ? lang.trim() : 'DIAGRAM / CODE';
     return `
       <div class="notion-code-container">
         <div class="notion-code-header">
-          <span>${language.toUpperCase()}</span>
+          <span>${escapeHtml(language.toUpperCase())}</span>
           <button class="copy-code-btn" onclick="copySnippet(this)">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
             <span>Copy Code</span>
@@ -346,48 +349,62 @@ function renderMarkdownBlocks(content) {
     `;
   });
 
-  // Tables
-  html = html.replace(/\|(.+)\|\n\|[-|\s]+\|\n((?:\|.+\|\n?)+)/g, (match, header, rows) => {
-    const headers = header.split('|').filter(h => h.trim().length > 0);
-    const ths = headers.map(h => `<th>${h.trim()}</th>`).join('');
+  // 3. LaTeX / Math formulas
+  html = html.replace(/\$\$([\s\S]*?)\$\$/g, (m, math) => `<div class="math-display-block" style="background: var(--bg-surface-subtle); padding: 0.85rem 1.25rem; border-radius: 8px; font-family: var(--font-serif); font-size: 1.15rem; text-align: center; margin: 1.25rem 0; border: 1px solid var(--border-color); color: var(--text-main); font-style: italic;">${escapeHtml(math.trim())}</div>`);
+  html = html.replace(/\\\[([\s\S]*?)\\\]/g, (m, math) => `<div class="math-display-block" style="background: var(--bg-surface-subtle); padding: 0.85rem 1.25rem; border-radius: 8px; font-family: var(--font-serif); font-size: 1.15rem; text-align: center; margin: 1.25rem 0; border: 1px solid var(--border-color); color: var(--text-main); font-style: italic;">${escapeHtml(math.trim())}</div>`);
+  html = html.replace(/\$([^\$\n]+)\$/g, (m, math) => `<span class="math-inline" style="font-family: var(--font-serif); font-style: italic; background: var(--color-oat); padding: 0.1rem 0.35rem; border-radius: 4px; color: var(--color-coral); font-size: 1.02em;">${escapeHtml(math)}</span>`);
+  html = html.replace(/\\\(([^\)\n]+)\\\)/g, (m, math) => `<span class="math-inline" style="font-family: var(--font-serif); font-style: italic; background: var(--color-oat); padding: 0.1rem 0.35rem; border-radius: 4px; color: var(--color-coral); font-size: 1.02em;">${escapeHtml(math)}</span>`);
+
+  // 4. Markdown Tables
+  html = html.replace(/\|(.+)\|\n\|[-|\s:]+\|\n((?:\|.+\|\n?)+)/g, (match, header, rows) => {
+    const headers = header.split('|').map(h => h.trim()).filter(h => h.length > 0);
+    const ths = headers.map(h => `<th>${h}</th>`).join('');
     const rowLines = rows.trim().split('\n');
     const trs = rowLines.map(r => {
-      const cols = r.split('|').filter(c => c.trim().length > 0);
-      return `<tr>${cols.map(c => `<td>${c.trim()}</td>`).join('')}</tr>`;
+      const cols = r.split('|').map(c => c.trim()).filter(c => c.length > 0);
+      return `<tr>${cols.map(c => `<td>${c}</td>`).join('')}</tr>`;
     }).join('');
     return `<div class="notion-table-wrapper"><table class="notion-table"><thead><tr>${ths}</tr></thead><tbody>${trs}</tbody></table></div>`;
   });
 
-  // Callouts (> 💡 etc.)
+  // 5. Callouts (> 💡 etc.)
   html = html.replace(/^>\s*(💡|📌|⚡|🚨|📝)?\s*(.*?)$/gm, (match, icon, text) => {
     return `<div class="notion-callout"><span class="notion-callout-icon">${icon || '💡'}</span><div>${text}</div></div>`;
   });
 
-  // Headings
-  html = html.replace(/^### (.*$)/gim, '<h3>$1</h3>');
-  html = html.replace(/^## (.*$)/gim, '<h2 style="font-family: var(--font-serif); font-size: 1.4rem; margin: 1.25rem 0 0.5rem 0;">$1</h2>');
+  // 6. Headings
+  html = html.replace(/^### (.*$)/gim, '<h3 style="font-size: 1.15rem; font-weight: 600; margin: 1.25rem 0 0.4rem 0;">$1</h3>');
+  html = html.replace(/^## (.*$)/gim, '<h2 style="font-family: var(--font-serif); font-size: 1.45rem; font-weight: 600; margin: 1.5rem 0 0.5rem 0; color: var(--text-main);">$1</h2>');
+  html = html.replace(/^# (.*$)/gim, '<h1 style="font-family: var(--font-serif); font-size: 1.85rem; font-weight: 600; margin: 1.5rem 0 0.75rem 0; color: var(--text-main);">$1</h1>');
 
-  // Images: ![alt](url)
+  // 7. Horizontal Rules
+  html = html.replace(/^---$/gm, '<hr style="border: none; border-top: 1px solid var(--border-color); margin: 1.5rem 0;"/>');
+
+  // 8. Lists
+  html = html.replace(/^\*\s+(.*$)/gim, '<li style="margin-left: 1.25rem; margin-bottom: 0.35rem; color: var(--text-muted);">$1</li>');
+  html = html.replace(/^-\s+(.*$)/gim, '<li style="margin-left: 1.25rem; margin-bottom: 0.35rem; color: var(--text-muted);">$1</li>');
+
+  // 9. Images: ![alt](url)
   html = html.replace(/!\[(.*?)\]\((.*?)\)/g, (match, alt, url) => {
     return `
       <div style="margin: 1.25rem 0; border-radius: 8px; overflow: hidden; border: 1px solid var(--border-color); background: #000;">
         <div style="padding: 0.45rem 0.85rem; background: rgba(0,0,0,0.7); color: #fff; font-size: 0.75rem; font-weight: 600; display: flex; align-items: center; gap: 0.4rem;">
-          🎨 Visual Study Diagram — ${escapeHtml(alt || 'Infographic')}
+          🎨 Visual Diagram — ${escapeHtml(alt || 'Infographic')}
         </div>
         <img src="${url}" alt="${escapeHtml(alt)}" style="width: 100%; max-height: 480px; object-fit: contain; display: block;" onerror="this.parentElement.style.display='none';" />
       </div>
     `;
   });
 
-  // Links: [text](url)
+  // 10. Links: [text](url)
   html = html.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" rel="noopener" style="color: var(--color-coral); text-decoration: underline;">$1 ↗</a>');
 
-  // Bold & Italic
+  // 11. Bold & Italic & Inline Code
   html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
   html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
   html = html.replace(/`([^`]+)`/g, '<code style="font-family: var(--font-mono); background-color: var(--color-oat); padding: 0.15rem 0.35rem; border-radius: 4px; font-size: 0.85em;">$1</code>');
 
-  // Newlines to breaks for regular paragraphs
+  // 12. Paragraph breaks
   html = html.replace(/\n\n/g, '</p><p>');
 
   return `<p>${html}</p>`;
