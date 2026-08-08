@@ -1,816 +1,539 @@
-// BCA 3rd Sem Dashboard Logic — PU 2026-27
+/**
+ * BCA 3 Hub — Panjab University 2026-27 Study Dashboard Controller
+ * Incorporates Anthropic's Warm Editorial Aesthetic, Multi-Level Navigation Dropdowns,
+ * Unit-by-Unit Syllabus Viewers, Interactive Lecture Logging, To-Do Tracker, and ⌘K Search.
+ */
 
-// State management (with localStorage fallback)
-let subjectsData = BCA_3RD_SEM_DATA.subjects;
-let todoList = JSON.parse(localStorage.getItem('bca3_todos')) || INITIAL_TODOS;
+let activeSubjectId = 'comp-arch';
 
-let activeView = 'dashboard'; // 'dashboard' or 'subject'
-let currentSubjectId = null;
-let currentTab = 'lectures'; // 'lectures' or 'notes'
-let selectedCalendarDate = new Date().toISOString().split('T')[0]; // Default to today 'YYYY-MM-DD'
-
-const _today = new Date();
-let calendarViewYear = _today.getFullYear();
-let calendarViewMonth = _today.getMonth();
-let calendarViewMode = 'month'; // 'month' or 'week'
-let weekAnchor = new Date(); // any date within the week currently shown
-
-// DOM Initialization
+// Initialize on DOM Loaded
 document.addEventListener('DOMContentLoaded', () => {
-  initLucideIcons();
-  setupEventListeners();
-  updateCleanGreetingAndDate();
-  renderSidebar();
-  renderView();
-  renderTodaysAgenda();
-  renderMiniCalendar();
-  renderTodoList();
-  setupSearch();
-  setupKeyboardShortcuts();
-  initSidebarState();
-  updateThemeIcon(savedTheme);
+  initTheme();
+  initGreeting();
+  initDropdowns();
+  initMobileDrawer();
+  initSubjectModals();
+  initDashboardWidgets();
+  initCommandPalette();
+  initNewsletter();
+  initFilterPills();
+  initKeyboardShortcuts();
 });
 
-// Initialize Lucide Icons
-function initLucideIcons() {
-  if (window.lucide) {
-    lucide.createIcons();
+/* --- 1. Theme Management (Ivory Light vs Midnight Slate Dark) --- */
+function initTheme() {
+  const savedTheme = localStorage.getItem('bca_hub_theme') || 'light';
+  document.documentElement.setAttribute('data-theme', savedTheme);
+  updateThemeButton(savedTheme);
+}
+
+function toggleTheme() {
+  const current = document.documentElement.getAttribute('data-theme') || 'light';
+  const next = current === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('bca_hub_theme', next);
+  updateThemeButton(next);
+  showToast(`Switched to ${next === 'dark' ? 'Midnight Slate Dark' : 'Warm Ivory Light'} theme`);
+}
+
+function updateThemeButton(theme) {
+  const btn = document.getElementById('theme-toggle-btn');
+  if (btn) {
+    btn.innerHTML = theme === 'dark'
+      ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>'
+      : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>';
   }
 }
 
-// Sidebar Toggle (Adjustable & Closable — doubles as the mobile drawer)
-const MOBILE_BREAKPOINT = '(max-width: 860px)';
-function isMobileViewport() {
-  return window.matchMedia(MOBILE_BREAKPOINT).matches;
+/* --- 2. Dynamic Time-Aware Greeting --- */
+function initGreeting() {
+  const greetingEl = document.getElementById('live-greeting');
+  if (!greetingEl) return;
+
+  const hour = new Date().getHours();
+  let timeStr = 'Good Evening';
+  if (hour < 12) timeStr = 'Good Morning';
+  else if (hour < 17) timeStr = 'Good Afternoon';
+
+  greetingEl.innerText = `${timeStr}, BCA III Scholar 👋`;
 }
 
-function toggleSidebar() {
-  const sidebar = document.getElementById('app-sidebar');
-  if (!sidebar) return;
+/* --- 3. Interactive Header Dropdown Menus --- */
+function initDropdowns() {
+  const navItems = document.querySelectorAll('[data-category]');
 
-  sidebar.classList.toggle('collapsed');
-  const isCollapsed = sidebar.classList.contains('collapsed');
-  syncSidebarBackdrop(isCollapsed);
+  navItems.forEach(item => {
+    const button = item.querySelector('button');
+    const category = item.getAttribute('data-category');
+    const dropdown = document.getElementById(`nav-dropdown-${category}`);
 
-  // Only persist the preference on desktop — mobile always starts closed
-  if (!isMobileViewport()) {
-    localStorage.setItem('bca3_sidebar_collapsed', isCollapsed ? 'true' : 'false');
+    if (button && dropdown) {
+      button.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isOpen = button.getAttribute('aria-expanded') === 'true';
+        closeAllDropdowns();
+        if (!isOpen) {
+          button.setAttribute('aria-expanded', 'true');
+          dropdown.classList.add('active');
+        }
+      });
+    }
+  });
+
+  document.addEventListener('click', () => {
+    closeAllDropdowns();
+  });
+}
+
+function closeAllDropdowns() {
+  document.querySelectorAll('.SiteHeader-module-scss-module__zKj4Ca__navText').forEach(el => {
+    el.setAttribute('aria-expanded', 'false');
+  });
+  document.querySelectorAll('.anthropic-dropdown-menu').forEach(menu => {
+    menu.classList.remove('active');
+  });
+}
+
+/* --- 4. Mobile Off-Canvas Drawer --- */
+function initMobileDrawer() {
+  const mobileToggle = document.querySelector('.SiteHeader-module-scss-module__zKj4Ca__mobileIcon');
+  const drawer = document.getElementById('mobile-nav-drawer');
+  const closeBtn = document.getElementById('close-mobile-drawer');
+
+  if (mobileToggle && drawer) {
+    mobileToggle.addEventListener('click', () => {
+      drawer.classList.add('active');
+      document.body.style.overflow = 'hidden';
+    });
+  }
+
+  if (closeBtn && drawer) {
+    closeBtn.addEventListener('click', () => {
+      drawer.classList.remove('active');
+      document.body.style.overflow = '';
+    });
   }
 }
 
-function closeMobileSidebar() {
-  const sidebar = document.getElementById('app-sidebar');
-  if (!sidebar || sidebar.classList.contains('collapsed')) return;
-  sidebar.classList.add('collapsed');
-  syncSidebarBackdrop(true);
+/* --- 5. Interactive Subject Syllabus Modal --- */
+function initSubjectModals() {
+  const backdrop = document.getElementById('subject-modal-backdrop');
+  const closeBtn = document.getElementById('close-subject-modal');
+
+  if (backdrop && closeBtn) {
+    closeBtn.addEventListener('click', closeSubjectModal);
+    backdrop.addEventListener('click', (e) => {
+      if (e.target === backdrop) closeSubjectModal();
+    });
+  }
 }
 
-function syncSidebarBackdrop(isCollapsed) {
-  const backdrop = document.getElementById('sidebar-backdrop');
+function openSubjectModal(subjectId) {
+  const subject = BCA_3RD_SEM_DATA.subjects.find(s => s.id === subjectId) || BCA_3RD_SEM_DATA.subjects[0];
+  activeSubjectId = subject.id;
+
+  const backdrop = document.getElementById('subject-modal-backdrop');
   if (!backdrop) return;
-  backdrop.classList.toggle('visible', isMobileViewport() && !isCollapsed);
-}
 
-function initSidebarState() {
-  const sidebar = document.getElementById('app-sidebar');
-  if (!sidebar) return;
+  document.getElementById('modal-subject-code').innerText = `${subject.code} • ${subject.type} • ${subject.credits} Credits`;
+  document.getElementById('modal-subject-title').innerText = subject.title;
+  document.getElementById('modal-subject-desc').innerText = subject.description;
 
-  if (isMobileViewport()) {
-    sidebar.classList.add('collapsed'); // drawer always starts closed on mobile
-  } else {
-    const savedState = localStorage.getItem('bca3_sidebar_collapsed');
-    if (savedState === 'true') sidebar.classList.add('collapsed');
-  }
-  syncSidebarBackdrop(sidebar.classList.contains('collapsed'));
-
-  window.addEventListener('resize', () => {
-    syncSidebarBackdrop(sidebar.classList.contains('collapsed'));
-  });
-}
-
-// Clean Greeting (No progress bar box, no personal name, just clean text on screen)
-function updateCleanGreetingAndDate() {
-  const now = new Date();
-  const hours = now.getHours();
-  let greetingText = 'Good Morning';
-  let greetingIcon = '☀️';
-
-  if (hours >= 12 && hours < 17) {
-    greetingText = 'Good Afternoon';
-    greetingIcon = '🌤️';
-  } else if (hours >= 17) {
-    greetingText = 'Good Evening';
-    greetingIcon = '🌙';
-  }
-
-  const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-  const formattedDate = now.toLocaleDateString('en-US', options);
-
-  const bannerGreeting = document.getElementById('banner-greeting');
-  if (bannerGreeting) {
-    bannerGreeting.innerHTML = `${greetingText} ${greetingIcon}`;
-  }
-
-  const dateWidget = document.getElementById('current-date-widget');
-  if (dateWidget) {
-    dateWidget.innerHTML = `<i data-lucide="calendar" style="width:13px; height:13px; color:var(--accent-color);"></i> <span>${formattedDate}</span>`;
-  }
-}
-
-// Render Sidebar Navigation
-function renderSidebar() {
-  const subjectNavList = document.getElementById('sidebar-subjects-list');
-  if (!subjectNavList) return;
-
-  subjectNavList.innerHTML = subjectsData.map(subject => `
-    <div class="nav-item ${currentSubjectId === subject.id && activeView === 'subject' ? 'active' : ''}" onclick="openSubjectFolder('${subject.id}')" title="${subject.title}">
-      <i data-lucide="${subject.icon}"></i>
-      <span class="nav-text">${subject.title}</span>
-    </div>
-  `).join('');
-
-  initLucideIcons();
-}
-
-// Render Main Active View
-function renderView() {
-  const dashboardView = document.getElementById('dashboard-view');
-  const subjectView = document.getElementById('subject-view');
-
-  if (activeView === 'dashboard') {
-    dashboardView.style.display = 'block';
-    subjectView.style.display = 'none';
-    renderSubjectCards();
-    triggerFadeIn(dashboardView);
-  } else {
-    dashboardView.style.display = 'none';
-    subjectView.style.display = 'block';
-    renderSubjectFolderDetail();
-    triggerFadeIn(subjectView);
-  }
-
-  renderSidebar();
-}
-
-// Small fade + slide-up on view switch — restarts the CSS animation each time
-function triggerFadeIn(el) {
-  if (!el) return;
-  el.classList.remove('view-enter');
-  void el.offsetWidth; // force reflow so the animation replays
-  el.classList.add('view-enter');
-}
-
-// Render Subject Cards on Dashboard
-function renderSubjectCards() {
-  const grid = document.getElementById('subjects-grid');
-  if (!grid) return;
-
-  grid.innerHTML = subjectsData.map(sub => {
-    const lectureCount = sub.lectures.length;
-    const totalHours = sub.theoryHours || sub.practicalHours || 1;
-    const progressPct = Math.min(100, Math.round((lectureCount / totalHours) * 100));
-
-    return `
-      <div class="subject-card" onclick="openSubjectFolder('${sub.id}')">
-        <div class="subject-top">
-          <div class="subject-icon-box" style="background-color: ${sub.accentBg}; color: ${sub.color};">
-            <i data-lucide="${sub.icon}"></i>
-          </div>
-          <span class="subject-badge" style="background-color: ${sub.accentBg}; color: ${sub.color};">${sub.type}</span>
+  // Render Units (I–IV)
+  const unitsContainer = document.getElementById('modal-units-container');
+  if (subject.units && subject.units.length > 0) {
+    unitsContainer.innerHTML = subject.units.map(u => `
+      <div class="unit-section-block">
+        <div class="unit-header-title">
+          <span class="unit-tag">${u.unitNumber}</span>
+          <span>${u.title || 'Syllabus Breakdown'}</span>
         </div>
+        <div class="unit-topics-list">
+          ${u.topics.map(t => `<div class="unit-topic-bullet">${t}</div>`).join('')}
+        </div>
+      </div>
+    `).join('');
+  } else {
+    unitsContainer.innerHTML = `
+      <div style="padding:1.5rem; text-align:center; color:var(--text-muted); background:var(--bg-page); border-radius:var(--radius-md);">
+        <p class="body-1 serif" style="margin-bottom:0.5rem;">Unit details for this elective/AEC paper are in the official curriculum credit structure.</p>
+        <a href="./Syllabus.pdf" target="_blank" class="Button-module-scss-module__f9ZZrG__button Button-module-scss-module__f9ZZrG__secondary" style="margin-top:0.5rem;">
+          <span>Open Official PU Syllabus PDF ↗</span>
+        </a>
+      </div>
+    `;
+  }
+
+  // Render Practicals
+  const practicalsContainer = document.getElementById('modal-practicals-container');
+  if (subject.practicals && subject.practicals.length > 0) {
+    practicalsContainer.innerHTML = subject.practicals.map((p, i) => `
+      <div class="curriculum-item">
+        <div class="curriculum-item-left">
+          <span class="module-num">${String(i + 1).padStart(2, '0')}</span>
+          <span class="module-title">${p}</span>
+        </div>
+        <span class="module-duration">Lab Experiment</span>
+      </div>
+    `).join('');
+  } else {
+    practicalsContainer.innerHTML = `
+      <div style="padding:1.5rem; text-align:center; color:var(--text-muted); background:var(--bg-page); border-radius:var(--radius-md);">
+        This subject is evaluated primarily via Theory Examination (60 Hours).
+      </div>
+    `;
+  }
+
+  // Render Lectures
+  renderSubjectLectures();
+
+  // Render Revision Notes
+  document.getElementById('modal-revision-box').innerText = subject.revisionNotes || `// ${subject.title}\n// Refer to PU prescribed textbooks and class notes.`;
+
+  // Default to units tab
+  switchSubjectTab('units');
+
+  backdrop.classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeSubjectModal() {
+  const backdrop = document.getElementById('subject-modal-backdrop');
+  if (backdrop) {
+    backdrop.classList.remove('active');
+    document.body.style.overflow = '';
+  }
+}
+
+function switchSubjectTab(tabName) {
+  document.querySelectorAll('.modal-tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.modal-tab-content').forEach(c => c.style.display = 'none');
+
+  const btn = document.getElementById(`tab-btn-${tabName}`);
+  const content = document.getElementById(`tab-content-${tabName}`);
+
+  if (btn) btn.classList.add('active');
+  if (content) content.style.display = 'block';
+}
+
+function renderSubjectLectures() {
+  const subject = BCA_3RD_SEM_DATA.subjects.find(s => s.id === activeSubjectId);
+  const container = document.getElementById('modal-lectures-container');
+  if (!container || !subject) return;
+
+  const storedLecturesKey = `bca_lectures_${subject.id}`;
+  const localLecs = JSON.parse(localStorage.getItem(storedLecturesKey) || 'null') || subject.lectures || [];
+
+  if (localLecs.length === 0) {
+    container.innerHTML = `
+      <div style="padding:1.5rem; text-align:center; color:var(--text-muted); background:var(--bg-page); border-radius:var(--radius-md);">
+        No lectures recorded yet. Log your first class below!
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = localLecs.map((lec, idx) => `
+    <div class="curriculum-item">
+      <div class="curriculum-item-left">
+        <span class="module-num">${String(idx + 1).padStart(2, '0')}</span>
         <div>
-          <div class="subject-code">${sub.code}</div>
-          <h3 class="subject-title">${sub.title}</h3>
-          <div class="subject-meta">
-            <span><i data-lucide="calendar-days" style="width:12px; height:12px"></i> ${lectureCount} Lecture${lectureCount === 1 ? '' : 's'}</span>
-            <span><i data-lucide="award" style="width:12px; height:12px"></i> ${sub.credits} Credits</span>
-          </div>
-          <div class="subject-progress-track" title="${lectureCount} of ~${totalHours} lectures logged">
-            <div class="subject-progress-fill" style="width:${progressPct}%; background-color:${sub.color};"></div>
-          </div>
-        </div>
-        <div class="subject-footer">
-          <span class="open-folder-btn">Open Folder <i data-lucide="arrow-right" style="width:13px; height:13px"></i></span>
-          <span class="subject-progress-label">${progressPct}%</span>
+          <div class="module-title">${lec.topic}</div>
+          <div style="font-size:0.8125rem; color:var(--text-subtle);">${lec.description || 'Class notes recorded'}</div>
         </div>
       </div>
-    `;
-  }).join('');
-
-  initLucideIcons();
+      <div style="text-align:right;">
+        <div style="font-size:0.8125rem; font-weight:600; color:var(--color-coral);">${lec.date}</div>
+        <div style="font-size:0.75rem; color:var(--text-subtle);">${lec.time || ''}</div>
+      </div>
+    </div>
+  `).join('');
 }
 
-// Render Today's Agenda Widget (pulls today's lectures across every subject)
-function renderTodaysAgenda() {
-  const container = document.getElementById('agenda-list');
+function saveNewLecture() {
+  const dateInput = document.getElementById('new-lec-date');
+  const timeInput = document.getElementById('new-lec-time');
+  const topicInput = document.getElementById('new-lec-topic');
+  const descInput = document.getElementById('new-lec-desc');
+
+  const date = dateInput.value || new Date().toISOString().split('T')[0];
+  const time = timeInput.value.trim() || '10:00 AM';
+  const topic = topicInput.value.trim();
+  const description = descInput.value.trim();
+
+  if (!topic) {
+    showToast('Please specify the topic covered in class.');
+    return;
+  }
+
+  const subject = BCA_3RD_SEM_DATA.subjects.find(s => s.id === activeSubjectId);
+  const storedLecturesKey = `bca_lectures_${subject.id}`;
+  const existing = JSON.parse(localStorage.getItem(storedLecturesKey) || 'null') || subject.lectures || [];
+
+  existing.unshift({ date, time, topic, description, fileUrl: 'Syllabus.pdf' });
+  localStorage.setItem(storedLecturesKey, JSON.stringify(existing));
+
+  topicInput.value = '';
+  descInput.value = '';
+  renderSubjectLectures();
+  renderAgendaWidget();
+  showToast(`✓ Class record logged for ${subject.title}!`);
+}
+
+/* --- 6. Dashboard Widgets: Today's Agenda & Study To-Dos --- */
+function initDashboardWidgets() {
+  renderAgendaWidget();
+  renderTodoWidget();
+}
+
+function renderAgendaWidget() {
+  const container = document.getElementById('agenda-items-container');
   if (!container) return;
 
-  const todayKey = new Date().toISOString().split('T')[0];
-  const todaysLectures = [];
-
-  subjectsData.forEach(sub => {
-    (sub.lectures || []).forEach(lec => {
-      if (lec.date === todayKey) {
-        todaysLectures.push({
-          ...lec,
-          subjectId: sub.id,
-          subjectTitle: sub.title,
-          color: sub.color,
-          accentBg: sub.accentBg,
-          icon: sub.icon
-        });
-      }
-    });
+  let allLecs = [];
+  BCA_3RD_SEM_DATA.subjects.forEach(sub => {
+    const stored = JSON.parse(localStorage.getItem(`bca_lectures_${sub.id}`) || 'null') || sub.lectures || [];
+    stored.forEach(l => allLecs.push({ ...l, subjectTitle: sub.title, subjectId: sub.id }));
   });
 
-  todaysLectures.sort((a, b) => (a.time || '').localeCompare(b.time || ''));
-
-  if (todaysLectures.length === 0) {
+  if (allLecs.length === 0) {
     container.innerHTML = `
-      <div class="todo-empty">
-        <i data-lucide="coffee" style="width:16px; height:16px;"></i>
-        <span>No lectures logged for today yet.</span>
+      <div style="padding:1.25rem; text-align:center; color:var(--text-muted); font-size:0.875rem;">
+        No lectures scheduled yet. Click "+ Log Class" to add one!
       </div>
     `;
-    initLucideIcons();
     return;
   }
 
-  container.innerHTML = todaysLectures.map(lec => `
-    <div class="agenda-item" onclick="openSubjectFolder('${lec.subjectId}')">
-      <div class="agenda-icon" style="background-color:${lec.accentBg}; color:${lec.color};">
-        <i data-lucide="${lec.icon}"></i>
+  container.innerHTML = allLecs.slice(0, 4).map(l => `
+    <div class="agenda-item" onclick="openSubjectModal('${l.subjectId}')" style="cursor:pointer;">
+      <div>
+        <div class="agenda-time">${l.date} • ${l.time || '10:00 AM'}</div>
+        <div class="agenda-topic">${l.topic}</div>
+        <div style="font-size:0.75rem; color:var(--text-subtle);">${l.subjectTitle}</div>
       </div>
-      <div class="agenda-info">
-        <span class="agenda-topic">${lec.topic}</span>
-        <span class="agenda-subject">${lec.subjectTitle}</span>
-      </div>
-      ${lec.time ? `<span class="agenda-time">${lec.time}</span>` : ''}
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--text-subtle);">
+        <polyline points="9 18 15 12 9 6"></polyline>
+      </svg>
     </div>
   `).join('');
-  initLucideIcons();
 }
 
-// Open Subject Folder View
-function openSubjectFolder(subjectId) {
-  currentSubjectId = subjectId;
-  activeView = 'subject';
-  currentTab = 'lectures';
-  renderView();
-  if (isMobileViewport()) closeMobileSidebar();
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
-// Format a 'YYYY-MM-DD' string as a readable date for lecture log headers
-function formatLectureDate(dateStr) {
-  const d = new Date(dateStr + 'T00:00:00');
-  return d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
-}
-
-// Back to Dashboard
-function openDashboard() {
-  activeView = 'dashboard';
-  currentSubjectId = null;
-  renderView();
-  if (isMobileViewport()) closeMobileSidebar();
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
-// Render Detailed Subject View
-function renderSubjectFolderDetail() {
-  const subject = subjectsData.find(s => s.id === currentSubjectId);
-  if (!subject) return;
-
-  const folderContainer = document.getElementById('subject-view');
-
-  folderContainer.innerHTML = `
-    <div class="folder-header">
-      <div class="folder-cover" style="background: linear-gradient(90deg, ${subject.color}, #3b82f6);"></div>
-      <div class="breadcrumb">
-        <span class="breadcrumb-link" onclick="openDashboard()"><i data-lucide="home" style="width:12px; height:12px"></i> Dashboard</span>
-        <span>/</span>
-        <span style="font-weight:600; color:var(--text-main);">${subject.code}</span>
-      </div>
-      <div class="folder-title-row">
-        <h2>
-          <i data-lucide="${subject.icon}" style="color: ${subject.color}"></i>
-          ${subject.title}
-        </h2>
-        <button class="print-btn" onclick="window.print()" title="Print this subject or save it as a PDF">
-          <i data-lucide="printer" style="width:14px; height:14px;"></i> Print / Export
-        </button>
-      </div>
-      <p style="color: var(--text-muted); font-size: 13.5px; margin-bottom: 14px; max-width: 820px; line-height: 1.5;">${subject.description}</p>
-      
-      <div style="display: flex; flex-wrap: wrap; gap: 14px; font-size: 12.5px; font-weight: 500; color: var(--text-muted); padding-top: 10px; border-top: 1px solid var(--border-color);">
-        <span style="display:flex; align-items:center; gap:5px;"><i data-lucide="file-code" style="width:13px; height:13px; color:var(--accent-color)"></i> Code: ${subject.code}</span>
-        <span style="display:flex; align-items:center; gap:5px;"><i data-lucide="tag" style="width:13px; height:13px; color:var(--accent-color)"></i> Type: ${subject.type}</span>
-        <span style="display:flex; align-items:center; gap:5px;"><i data-lucide="star" style="width:13px; height:13px; color:var(--accent-color)"></i> Credits: ${subject.credits}</span>
-        ${subject.theoryHours ? `<span style="display:flex; align-items:center; gap:5px;"><i data-lucide="book" style="width:13px; height:13px; color:var(--accent-color)"></i> Theory: ${subject.theoryHours} Hrs</span>` : ''}
-        ${subject.practicalHours ? `<span style="display:flex; align-items:center; gap:5px;"><i data-lucide="flask-conical" style="width:13px; height:13px; color:var(--accent-color)"></i> Practical: ${subject.practicalHours} Hrs</span>` : ''}
-      </div>
-    </div>
-
-    <!-- TABS BAR -->
-    <div class="folder-tabs">
-      <button class="tab-btn ${currentTab === 'lectures' ? 'active' : ''}" onclick="switchTab('lectures')">
-        <i data-lucide="calendar-days" style="width:14px; height:14px"></i> Lecture Log${subject.lectures.length > 0 ? ` (${subject.lectures.length})` : ''}
-      </button>
-      <button class="tab-btn ${currentTab === 'units' ? 'active' : ''}" onclick="switchTab('units')">
-        <i data-lucide="list-checks" style="width:14px; height:14px"></i> Syllabus Units${subject.units.length > 0 ? ` (${subject.units.length})` : ''}
-      </button>
-      <button class="tab-btn ${currentTab === 'notes' ? 'active' : ''}" onclick="switchTab('notes')">
-        <i data-lucide="file-text" style="width:14px; height:14px"></i> Official PU Syllabus PDF
-      </button>
-    </div>
-
-    <!-- TAB CONTENTS -->
-    <div id="tab-content">
-      ${renderTabContent(subject)}
-    </div>
-  `;
-
-  initLucideIcons();
-}
-
-// Switch Active Folder Tab
-function switchTab(tabName) {
-  currentTab = tabName;
-  renderSubjectFolderDetail();
-}
-
-// Render Folder Tab Contents
-function renderTabContent(subject) {
-  if (currentTab === 'lectures') {
-    if (!subject.lectures || subject.lectures.length === 0) {
-      return `
-        <div class="empty-state">
-          <i data-lucide="calendar-clock" style="width:32px; height:32px;"></i>
-          <h4>No lectures added yet</h4>
-          <p>Once classes start, each lecture's date, time and topic will show up here, grouped by day — click an entry to open its notes or PDF.</p>
-        </div>
-      `;
-    }
-
-    // Group lectures by date
-    const grouped = {};
-    subject.lectures.forEach(lec => {
-      if (!grouped[lec.date]) grouped[lec.date] = [];
-      grouped[lec.date].push(lec);
-    });
-    const sortedDates = Object.keys(grouped).sort();
-
-    return `
-      <div class="units-accordion">
-        ${sortedDates.map(date => `
-          <div class="unit-box">
-            <div class="unit-header">
-              <span>${formatLectureDate(date)}</span>
-              <span style="font-size:11.5px; color:var(--text-muted); font-weight:500;">${grouped[date].length} Lecture${grouped[date].length > 1 ? 's' : ''}</span>
-            </div>
-            <div>
-              ${grouped[date].map(lec => `
-                <div class="topic-card" ${lec.fileUrl ? `onclick="window.open('${lec.fileUrl}', '_blank')" style="cursor:pointer;"` : ''}>
-                  <div class="topic-card-title">
-                    <i data-lucide="book-marked" style="width:15px; height:15px; color:var(--accent-color);"></i>
-                    <span>${lec.topic}</span>
-                    ${lec.time ? `<span style="margin-left:auto; font-size:11px; font-weight:500; color:var(--text-muted); white-space:nowrap;">${lec.time}</span>` : ''}
-                  </div>
-                  ${lec.description ? `<div class="topic-body"><p>${lec.description}</p></div>` : ''}
-                  ${lec.fileUrl ? `<div class="topic-body" style="color:var(--accent-color); font-weight:600; font-size:12px; display:flex; align-items:center; gap:5px;"><i data-lucide="file-text" style="width:12px; height:12px;"></i> Open PDF / Notes</div>` : ''}
-                </div>
-              `).join('')}
-            </div>
-          </div>
-        `).join('')}
-      </div>
-    `;
-  }
-
-  if (currentTab === 'units') {
-    if (!subject.units || subject.units.length === 0) {
-      return `
-        <div class="empty-state">
-          <i data-lucide="file-question" style="width:32px; height:32px;"></i>
-          <h4>Not published in the official PU document</h4>
-          <p>The syllabus PDF only lists this paper's code and credit split — it doesn't include a unit-wise breakdown. Check the "Official PU Syllabus PDF" tab, or your college notice board, for what's actually covered.</p>
-        </div>
-      `;
-    }
-
-    return `
-      <div class="units-accordion">
-        ${subject.units.map(unit => `
-          <div class="unit-box">
-            <div class="unit-header">
-              <span>${unit.unitNumber}</span>
-              <span style="font-size:11.5px; color:var(--text-muted); font-weight:500;">${unit.topics.length} Topics</span>
-            </div>
-            <ul class="unit-topic-list">
-              ${unit.topics.map(t => `<li>${t}</li>`).join('')}
-            </ul>
-          </div>
-        `).join('')}
-        ${subject.practicals && subject.practicals.length > 0 ? `
-          <div class="unit-box">
-            <div class="unit-header">
-              <span>Practical List</span>
-              <span style="font-size:11.5px; color:var(--text-muted); font-weight:500;">${subject.practicals.length} Programs</span>
-            </div>
-            <ol class="practical-list">
-              ${subject.practicals.map(prac => `<li>${prac}</li>`).join('')}
-            </ol>
-          </div>
-        ` : ''}
-      </div>
-    `;
-  }
-
-  if (currentTab === 'notes') {
-    return `
-      <div class="unit-box" style="padding: 24px;">
-        <h4 style="font-size: 16px; font-weight: 700; margin-bottom: 8px;">Official Panjab University Syllabus Reference</h4>
-        <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 16px; line-height: 1.5;">
-          The exact syllabus for <strong>${subject.title} (${subject.code})</strong> extracted directly from the Panjab University BCA III 2026-27 Syllabi document.
-        </p>
-        <div style="display: flex; gap: 12px;">
-          <a href="./Syllabus.pdf" target="_blank" class="btn-primary" style="text-decoration:none;">
-            <i data-lucide="file-text" style="width:14px; height:14px"></i> Open Syllabus.pdf
-          </a>
-        </div>
-      </div>
-    `;
-  }
-}
-
-// Format a Date as a 'YYYY-MM-DD' key
-function toDateKey(d) {
-  const y = d.getFullYear();
-  const m = (d.getMonth() + 1).toString().padStart(2, '0');
-  const day = d.getDate().toString().padStart(2, '0');
-  return `${y}-${m}-${day}`;
-}
-
-// Switch between the Month grid and the Week strip
-function setCalendarMode(mode) {
-  calendarViewMode = mode;
-  document.getElementById('cal-mode-month-btn')?.classList.toggle('active', mode === 'month');
-  document.getElementById('cal-mode-week-btn')?.classList.toggle('active', mode === 'week');
-  document.getElementById('cal-dates-grid').style.display = mode === 'month' ? 'grid' : 'none';
-  document.getElementById('cal-week-strip').style.display = mode === 'week' ? 'grid' : 'none';
-  renderMiniCalendar();
-}
-
-// Step the calendar forward/back — a month at a time in Month mode, a week at a time in Week mode
-function stepCalendar(delta) {
-  if (calendarViewMode === 'week') {
-    weekAnchor = new Date(weekAnchor);
-    weekAnchor.setDate(weekAnchor.getDate() + delta * 7);
-    renderMiniCalendar();
-  } else {
-    changeCalendarMonth(delta);
-  }
-}
-
-// Mini Calendar Widget — dispatches to the active view mode
-function renderMiniCalendar() {
-  if (calendarViewMode === 'week') {
-    renderWeekStrip();
-  } else {
-    renderMonthGrid();
-  }
-}
-
-// Month Grid View (Fully Interactive Date Selection + Month Navigation)
-function renderMonthGrid() {
-  const calHeader = document.getElementById('cal-month-year');
-  const calDatesGrid = document.getElementById('cal-dates-grid');
-  const calSubhead = document.getElementById('cal-subhead');
-  if (!calHeader || !calDatesGrid) return;
-
-  const now = new Date();
-  const year = calendarViewYear;
-  const month = calendarViewMonth;
-
-  const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-  calHeader.innerText = `${monthNames[month]} ${year}`;
-
-  const isCurrentMonth = year === now.getFullYear() && month === now.getMonth();
-  if (calSubhead) {
-    calSubhead.innerHTML = isCurrentMonth
-      ? `Click any date`
-      : `<span class="cal-today-link" onclick="jumpToToday()">Jump to Today</span>`;
-  }
-
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const firstDayIndex = new Date(year, month, 1).getDay();
-
-  let html = `
-    <div class="cal-day-label">Su</div>
-    <div class="cal-day-label">Mo</div>
-    <div class="cal-day-label">Tu</div>
-    <div class="cal-day-label">We</div>
-    <div class="cal-day-label">Th</div>
-    <div class="cal-day-label">Fr</div>
-    <div class="cal-day-label">Sa</div>
-  `;
-
-  for (let i = 0; i < firstDayIndex; i++) {
-    html += `<div></div>`;
-  }
-
-  for (let d = 1; d <= daysInMonth; d++) {
-    const monthStr = (month + 1).toString().padStart(2, '0');
-    const dayStr = d.toString().padStart(2, '0');
-    const dateKey = `${year}-${monthStr}-${dayStr}`;
-    const dayOfWeek = (firstDayIndex + d - 1) % 7;
-
-    const isToday = isCurrentMonth && d === now.getDate();
-    const isSelected = dateKey === selectedCalendarDate;
-    const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
-
-    html += `<div class="cal-date-num ${isToday ? 'today' : ''} ${isSelected ? 'selected' : ''} ${isWeekend ? 'weekend' : ''}" onclick="selectCalendarDate('${dateKey}')">${d}</div>`;
-  }
-
-  calDatesGrid.innerHTML = html;
-}
-
-// Week Strip View — 7 days centered on weekAnchor's week
-function renderWeekStrip() {
-  const calHeader = document.getElementById('cal-month-year');
-  const calSubhead = document.getElementById('cal-subhead');
-  const weekStrip = document.getElementById('cal-week-strip');
-  if (!calHeader || !weekStrip) return;
-
-  const now = new Date();
-  const sunday = new Date(weekAnchor);
-  sunday.setDate(weekAnchor.getDate() - weekAnchor.getDay());
-
-  const days = [];
-  for (let i = 0; i < 7; i++) {
-    const d = new Date(sunday);
-    d.setDate(sunday.getDate() + i);
-    days.push(d);
-  }
-
-  const monthNamesShort = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-  const start = days[0];
-  const end = days[6];
-  calHeader.innerText = start.getMonth() === end.getMonth()
-    ? `${monthNamesShort[start.getMonth()]} ${start.getDate()} – ${end.getDate()}, ${end.getFullYear()}`
-    : `${monthNamesShort[start.getMonth()]} ${start.getDate()} – ${monthNamesShort[end.getMonth()]} ${end.getDate()}, ${end.getFullYear()}`;
-
-  const isCurrentWeek = days.some(d => d.toDateString() === now.toDateString());
-  if (calSubhead) {
-    calSubhead.innerHTML = isCurrentWeek
-      ? `Click any date`
-      : `<span class="cal-today-link" onclick="jumpToToday()">Jump to Today</span>`;
-  }
-
-  const dayLabels = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
-  weekStrip.innerHTML = days.map((d, i) => {
-    const dateKey = toDateKey(d);
-    const isToday = d.toDateString() === now.toDateString();
-    const isSelected = dateKey === selectedCalendarDate;
-    const isWeekend = i === 0 || i === 6;
-
-    return `<div class="cal-week-cell ${isToday ? 'today' : ''} ${isSelected ? 'selected' : ''} ${isWeekend ? 'weekend' : ''}" onclick="selectCalendarDate('${dateKey}')">
-      <span class="cal-week-dow">${dayLabels[i]}</span>
-      <span class="cal-week-num">${d.getDate()}</span>
-    </div>`;
-  }).join('');
-}
-
-// Step the calendar view forward/back a month without touching the selected date
-function changeCalendarMonth(delta) {
-  calendarViewMonth += delta;
-  if (calendarViewMonth < 0) { calendarViewMonth = 11; calendarViewYear--; }
-  if (calendarViewMonth > 11) { calendarViewMonth = 0; calendarViewYear++; }
-  renderMiniCalendar();
-}
-
-// Snap the calendar view back to the current month/week
-function jumpToToday() {
-  const now = new Date();
-  calendarViewYear = now.getFullYear();
-  calendarViewMonth = now.getMonth();
-  weekAnchor = new Date();
-  renderMiniCalendar();
-}
-
-// Select Date on Calendar
-function selectCalendarDate(dateKey) {
-  selectedCalendarDate = dateKey;
-  renderMiniCalendar();
-  renderTodoList();
-
-  const dateLabel = document.getElementById('selected-date-label');
-  if (dateLabel) {
-    const d = new Date(dateKey + 'T00:00:00');
-    dateLabel.innerText = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-  }
-}
-
-// Render the To-Do List (with delete buttons)
-function renderTodoList() {
-  const container = document.getElementById('todo-list-container');
+function renderTodoWidget() {
+  const container = document.getElementById('todo-items-container');
   if (!container) return;
 
-  // Filter tasks for selected date (or show all if no tasks for selected date)
-  const filteredTodos = todoList.filter(t => t.date === selectedCalendarDate || !t.date);
+  const todos = JSON.parse(localStorage.getItem('bca_study_todos') || 'null') || BCA_3RD_SEM_DATA.todos;
 
-  if (filteredTodos.length === 0) {
-    container.innerHTML = `
-      <div class="todo-empty">
-        <i data-lucide="check-circle-2" style="width:16px; height:16px;"></i>
-        <span>No tasks for this date. Add one above.</span>
-      </div>
-    `;
-    initLucideIcons();
-    return;
-  }
-
-  container.innerHTML = filteredTodos.map(todo => `
-    <div class="todo-item ${todo.completed ? 'completed' : ''}">
-      <button class="todo-check-btn" onclick="toggleTodo('${todo.id}')" title="${todo.completed ? 'Mark incomplete' : 'Mark complete'}">
-        <i data-lucide="${todo.completed ? 'check-circle-2' : 'circle'}"></i>
-      </button>
-      <span class="todo-text">${todo.text}</span>
-      <button class="todo-delete-btn" onclick="deleteTodo('${todo.id}')" title="Delete Task">
-        <i data-lucide="x" style="width:12px; height:12px;"></i>
-      </button>
+  container.innerHTML = todos.map(t => `
+    <div class="todo-item-row ${t.done ? 'completed' : ''}" id="todo-row-${t.id}">
+      <input type="checkbox" class="todo-checkbox" ${t.done ? 'checked' : ''} onchange="toggleTodoItem(${t.id})"/>
+      <span class="todo-text">${t.text}</span>
+      <span class="todo-subject-badge">${t.subject}</span>
     </div>
   `).join('');
-  initLucideIcons();
 }
 
-// Toggle Todo Item
-function toggleTodo(todoId) {
-  todoList = todoList.map(t => t.id === todoId ? { ...t, completed: !t.completed } : t);
-  localStorage.setItem('bca3_todos', JSON.stringify(todoList));
-  renderTodoList();
-}
+window.toggleTodoItem = function(todoId) {
+  const todos = JSON.parse(localStorage.getItem('bca_study_todos') || 'null') || BCA_3RD_SEM_DATA.todos;
+  const item = todos.find(t => t.id === todoId);
+  if (item) {
+    item.done = !item.done;
+    localStorage.setItem('bca_study_todos', JSON.stringify(todos));
+    renderTodoWidget();
+    showToast(item.done ? '✓ Task marked completed!' : 'Task active');
+  }
+};
 
-// Delete Todo Item (Remove Functionality)
-function deleteTodo(todoId) {
-  todoList = todoList.filter(t => t.id !== todoId);
-  localStorage.setItem('bca3_todos', JSON.stringify(todoList));
-  renderTodoList();
-}
+window.openAddTodoPrompt = function() {
+  const task = prompt('Enter new study task / revision goal:');
+  if (!task || !task.trim()) return;
 
-// Add New Todo Item for Selected Date
-function addNewTodo() {
-  const input = document.getElementById('new-todo-input');
-  if (!input || !input.value.trim()) return;
-
+  const todos = JSON.parse(localStorage.getItem('bca_study_todos') || 'null') || BCA_3RD_SEM_DATA.todos;
   const newTodo = {
-    id: 'todo-' + Date.now(),
-    text: input.value.trim(),
-    completed: false,
-    date: selectedCalendarDate
+    id: Date.now(),
+    text: task.trim(),
+    subject: 'Core BCA III',
+    done: false,
+    date: new Date().toISOString().split('T')[0]
   };
 
-  todoList.unshift(newTodo);
-  localStorage.setItem('bca3_todos', JSON.stringify(todoList));
-  input.value = '';
-  renderTodoList();
-}
+  todos.unshift(newTodo);
+  localStorage.setItem('bca_study_todos', JSON.stringify(todos));
+  renderTodoWidget();
+  showToast('✓ New study goal added to your tracker!');
+};
 
-// Setup Global Search
-function setupSearch() {
-  const searchInput = document.getElementById('global-search-input');
-  const dropdown = document.getElementById('search-results-dropdown');
-  if (!searchInput || !dropdown) return;
+window.openAddLectureModal = function() {
+  openSubjectModal('comp-arch');
+  switchSubjectTab('lectures');
+};
 
-  searchInput.addEventListener('input', (e) => {
-    const query = e.target.value.toLowerCase().trim();
-    if (!query) {
-      dropdown.classList.remove('active');
+/* --- 7. Global Command Palette (⌘K) --- */
+function initCommandPalette() {
+  const palette = document.getElementById('command-palette-backdrop');
+  const input = document.getElementById('command-search-input');
+  const resultsContainer = document.getElementById('command-results');
+
+  if (!palette || !input || !resultsContainer) return;
+
+  const SEARCH_ITEMS = [];
+  BCA_3RD_SEM_DATA.subjects.forEach(sub => {
+    SEARCH_ITEMS.push({ title: sub.title, category: 'Subject', id: sub.id });
+    if (sub.units) {
+      sub.units.forEach(u => {
+        SEARCH_ITEMS.push({ title: `${sub.title}: ${u.title || u.unitNumber}`, category: 'Unit', id: sub.id });
+        u.topics.forEach(top => {
+          SEARCH_ITEMS.push({ title: top, category: `${sub.title} Topic`, id: sub.id });
+        });
+      });
+    }
+    if (sub.practicals) {
+      sub.practicals.forEach(p => {
+        SEARCH_ITEMS.push({ title: `${sub.title} Lab: ${p}`, category: 'Practical', id: sub.id });
+      });
+    }
+  });
+
+  function renderResults(query = '') {
+    const q = query.toLowerCase().trim();
+    const filtered = SEARCH_ITEMS.filter(item =>
+      item.title.toLowerCase().includes(q) || item.category.toLowerCase().includes(q)
+    ).slice(0, 10);
+
+    if (filtered.length === 0) {
+      resultsContainer.innerHTML = '<div style="padding:1.5rem; text-align:center; color:var(--text-subtle);">No matching syllabus topics found.</div>';
       return;
     }
 
-    const results = [];
+    resultsContainer.innerHTML = filtered.map((item, i) => `
+      <div class="command-item ${i === 0 ? 'selected' : ''}" onclick="selectSearchSubject('${item.id}')">
+        <div class="command-item-left">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--text-muted);">
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+          </svg>
+          <span style="font-weight:500; font-size:0.9rem;">${item.title}</span>
+        </div>
+        <span class="command-tag">${item.category}</span>
+      </div>
+    `).join('');
+  }
 
-    // Search Subjects
-    subjectsData.forEach(sub => {
-      if (sub.title.toLowerCase().includes(query) || sub.code.toLowerCase().includes(query)) {
-        results.push({
-          type: 'Subject Folder',
-          title: sub.title,
-          sub: sub.code,
-          action: () => openSubjectFolder(sub.id)
+  input.addEventListener('input', (e) => {
+    renderResults(e.target.value);
+  });
+
+  window.openCommandPalette = function() {
+    palette.classList.add('active');
+    input.value = '';
+    renderResults();
+    setTimeout(() => input.focus(), 50);
+    document.body.style.overflow = 'hidden';
+  };
+
+  window.closeCommandPalette = function() {
+    palette.classList.remove('active');
+    document.body.style.overflow = '';
+  };
+
+  palette.addEventListener('click', (e) => {
+    if (e.target === palette) closeCommandPalette();
+  });
+
+  window.selectSearchSubject = function(id) {
+    closeCommandPalette();
+    if (id) openSubjectModal(id);
+  };
+}
+
+/* --- 8. Category Filter Pills --- */
+function initFilterPills() {
+  const pills = document.querySelectorAll('.filter-pill');
+  const cards = document.querySelectorAll('.subject-card-item');
+
+  pills.forEach(pill => {
+    pill.addEventListener('click', () => {
+      pills.forEach(p => p.classList.remove('active'));
+      pill.classList.add('active');
+      const filter = pill.getAttribute('data-filter');
+
+      if (filter === 'all') {
+        cards.forEach(c => c.style.display = 'block');
+      } else if (filter === 'agenda' || filter === 'todos') {
+        document.getElementById('study-widgets')?.scrollIntoView({ behavior: 'smooth' });
+      } else {
+        cards.forEach(c => {
+          const type = c.getAttribute('data-type') || '';
+          if (type.includes(filter)) {
+            c.style.display = 'block';
+          } else {
+            c.style.display = 'none';
+          }
         });
       }
-
-      // Search Lecture Topics
-      (sub.lectures || []).forEach(lec => {
-        if (lec.topic.toLowerCase().includes(query)) {
-          results.push({
-            type: `Lecture (${sub.code})`,
-            title: lec.topic,
-            sub: formatLectureDate(lec.date),
-            action: () => openSubjectFolder(sub.id)
-          });
-        }
-      });
-
-      // Search Official Syllabus Units
-      (sub.units || []).forEach(unit => {
-        const matchedTopic = unit.topics.find(t => t.toLowerCase().includes(query));
-        if (matchedTopic) {
-          results.push({
-            type: `Syllabus (${sub.code}) — ${unit.unitNumber}`,
-            title: matchedTopic,
-            sub: sub.title,
-            action: () => { openSubjectFolder(sub.id); switchTab('units'); }
-          });
-        }
-      });
+      showToast(`Filter applied: ${pill.innerText}`);
     });
-
-    if (results.length > 0) {
-      dropdown.innerHTML = results.slice(0, 6).map((res, i) => `
-        <div class="search-result-item" onclick="triggerSearchResult(${i})">
-          <h4>${res.title}</h4>
-          <p>${res.type} &bull; ${res.sub}</p>
-        </div>
-      `).join('');
-      dropdown.classList.add('active');
-      window._currentSearchResults = results;
-    } else {
-      dropdown.innerHTML = `<div class="search-result-item"><p>No results found for "${query}"</p></div>`;
-      dropdown.classList.add('active');
-    }
-  });
-
-  document.addEventListener('click', (e) => {
-    if (!searchInput.contains(e.target) && !dropdown.contains(e.target)) {
-      dropdown.classList.remove('active');
-    }
   });
 }
 
-function triggerSearchResult(index) {
-  if (window._currentSearchResults && window._currentSearchResults[index]) {
-    window._currentSearchResults[index].action();
-    document.getElementById('search-results-dropdown').classList.remove('active');
-    document.getElementById('global-search-input').value = '';
-  }
+/* --- 9. Newsletter Form Feedback --- */
+function initNewsletter() {
+  const form = document.querySelector('.NewsletterSubscribe-module-scss-module__MOPAja__email-form');
+  if (!form) return;
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const input = form.querySelector('input[type="email"]');
+    const email = input.value.trim();
+
+    if (!email || !email.includes('@')) {
+      showToast('Please enter a valid email address.');
+      return;
+    }
+
+    input.value = '';
+    showToast('✓ Subscribed! You will receive BCA 3rd Sem exam & syllabus alerts.');
+  });
 }
 
-// Toggle Theme (Dark / Light)
-function toggleTheme() {
-  const currentTheme = document.body.getAttribute('data-theme');
-  const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-  document.body.setAttribute('data-theme', newTheme);
-  localStorage.setItem('bca3_theme', newTheme);
-  updateThemeIcon(newTheme);
-}
-
-// Keep the sidebar toggle icon (moon/sun) in sync with the active theme.
-// Lucide replaces the <i data-lucide> tag with an <svg> on render, so the
-// icon markup is rebuilt fresh each time rather than mutated in place.
-function updateThemeIcon(theme) {
-  const btn = document.getElementById('theme-toggle-btn');
-  if (!btn) return;
-  btn.innerHTML = `<i data-lucide="${theme === 'dark' ? 'sun' : 'moon'}" style="width:14px; height:14px;"></i>`;
-  initLucideIcons();
-}
-
-// Apply Saved Theme (falls back to the OS/browser's light-dark preference on first visit)
-const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-const savedTheme = localStorage.getItem('bca3_theme') || (prefersDark ? 'dark' : 'light');
-document.body.setAttribute('data-theme', savedTheme);
-
-// Event Listeners
-function setupEventListeners() {
-  const newTodoInput = document.getElementById('new-todo-input');
-  if (newTodoInput) {
-    newTodoInput.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') addNewTodo();
-    });
-  }
-}
-
-// Global Keyboard Shortcuts: Cmd/Ctrl+K to search, Esc to close it
-function setupKeyboardShortcuts() {
-  const isMac = navigator.platform.toUpperCase().includes('MAC');
-  const badge = document.querySelector('.shortcut-badge');
-  if (badge) badge.textContent = isMac ? '⌘K' : 'Ctrl K';
-
+/* --- 10. Global Keyboard Shortcuts --- */
+function initKeyboardShortcuts() {
   document.addEventListener('keydown', (e) => {
-    const searchInput = document.getElementById('global-search-input');
-    const dropdown = document.getElementById('search-results-dropdown');
-
-    if ((isMac && e.metaKey && e.key.toLowerCase() === 'k') || (!isMac && e.ctrlKey && e.key.toLowerCase() === 'k')) {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
       e.preventDefault();
-      searchInput?.focus();
-      searchInput?.select();
+      window.openCommandPalette();
     }
-
-    if (e.key === 'Escape' && document.activeElement === searchInput) {
-      searchInput.blur();
-      dropdown?.classList.remove('active');
+    if (e.key === 'Escape') {
+      closeSubjectModal();
+      window.closeCommandPalette();
+      closeAllDropdowns();
     }
   });
+}
+
+/* --- 11. Toast Feedback Component --- */
+function showToast(message) {
+  let toast = document.getElementById('anthropic-toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'anthropic-toast';
+    toast.className = 'anthropic-toast';
+    document.body.appendChild(toast);
+  }
+
+  toast.innerHTML = `
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--color-coral);">
+      <circle cx="12" cy="12" r="10"></circle>
+      <line x1="12" y1="16" x2="12" y2="12"></line>
+      <line x1="12" y1="8" x2="12.01" y2="8"></line>
+    </svg>
+    <span>${message}</span>
+  `;
+
+  toast.classList.add('visible');
+  clearTimeout(window._toastTimeout);
+  window._toastTimeout = setTimeout(() => {
+    toast.classList.remove('visible');
+  }, 3200);
 }
