@@ -331,10 +331,11 @@ function renderMarkdownBlocks(content) {
   // 1. Normalize line endings
   html = html.replace(/\r\n/g, '\n');
 
-  // 2. Code blocks (support ```lang or '''lang or ``` with trailing spaces)
-  html = html.replace(/(?:```|''')([a-zA-Z0-9_\-\+]+)?[ \t]*\n([\s\S]*?)(?:```|''')/g, (match, lang, code) => {
+  // 2. Code blocks & ASCII diagrams (matches closed or unclosed ``` or ''')
+  html = html.replace(/(?:```|''')([a-zA-Z0-9_\-\+]+)?[ \t]*\n?([\s\S]*?)(?:```|'''|$)/g, (match, lang, code) => {
+    if (!code || !code.trim()) return '';
     const cleanCode = escapeHtml(code.trim());
-    const language = lang ? lang.trim() : 'DIAGRAM / CODE';
+    const language = lang ? lang.trim() : 'DIAGRAM / ARCHITECTURE';
     return `
       <div class="notion-code-container">
         <div class="notion-code-header">
