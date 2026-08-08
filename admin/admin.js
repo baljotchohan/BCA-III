@@ -228,18 +228,19 @@ function closeLectureForm() {
 }
 
 async function saveLecture() {
-  const subject = document.getElementById('lec-subject').value;
-  const date    = document.getElementById('lec-date').value;
-  const time    = document.getElementById('lec-time').value;
-  const unit    = document.getElementById('lec-unit').value;
-  const topic   = document.getElementById('lec-topic').value.trim();
-  const notes   = document.getElementById('lec-notes').value.trim();
-  const link    = document.getElementById('lec-link').value.trim();
+  const subject  = document.getElementById('lec-subject').value;
+  const date     = document.getElementById('lec-date').value;
+  const time     = document.getElementById('lec-time').value;
+  const unit     = document.getElementById('lec-unit').value;
+  const topic    = document.getElementById('lec-topic').value.trim();
+  const notes    = document.getElementById('lec-notes').value.trim();
+  const link     = document.getElementById('lec-link').value.trim();
+  const imageUrl = document.getElementById('lec-image-url').value.trim();
   if (!topic || !date) { showAdminToast('❌ Date and topic are required.'); return; }
 
   showAdminToast('⏳ Saving...');
   try {
-    await fbPush('lectures', { subject, date, time, unit, topic, notes, link, timestamp: Date.now() });
+    await fbPush('lectures', { subject, date, time, unit, topic, notes, link, imageUrl, timestamp: Date.now() });
     closeLectureForm();
     await renderLectures(_lectureFilter || 'all');
     showAdminToast(`✅ Lecture saved — visible to all students!`);
