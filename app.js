@@ -422,10 +422,9 @@ function renderSubjectCalendar(subject) {
   const lecturesList = document.getElementById('ws-subject-lectures-list');
   if (!calGrid || !lecturesList) return;
 
-  // Combine live Firebase lectures with local lectures
-  const allLecs = fbLecs.length > 0 ? fbLecs : subject.lectures || [];
+  // Combine static lectures and admin-published lectures
   const localLectures = getCustomLecturesForSubject(subject.id);
-  const allLectures = [...allLecs, ...localLectures];
+  const allLectures = [...(subject.lectures || []), ...localLectures];
 
   // Map of active dates
   const lectureDateMap = {};
@@ -1327,13 +1326,13 @@ function formatDateLong(dateStr) {
 
 function openMcpModal() {
   const modal = document.getElementById('mcp-modal');
-  if (modal) modal.classList.add('active');
+  if (modal) modal.style.display = 'flex';
 }
 
 function closeMcpModal(e) {
   if (e && e.target && e.target.id !== 'mcp-modal' && e.type === 'click') return;
   const modal = document.getElementById('mcp-modal');
-  if (modal) modal.classList.remove('active');
+  if (modal) modal.style.display = 'none';
 }
 
 function switchMcpTab(tabName) {

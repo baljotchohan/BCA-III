@@ -145,18 +145,16 @@
             </svg>
             <span>Admin</span>
           </button>
+        </div>
 
-          <!-- CONNECT AI BUTTON -->
-          <button class="header-admin-btn" onclick="openMcpModal()" title="Connect Claude &amp; ChatGPT AI (MCP Server)" style="background: rgba(224, 122, 95, 0.12); color: var(--color-coral); border-color: rgba(224, 122, 95, 0.25);">
+        <!-- DOWNLOAD SYLLABUS PDF CTA & CONNECT AI CTA -->
+        <div class="SiteHeader-module-scss-module__zKj4Ca__claudeCtaWrapper" style="display: flex; gap: 0.5rem; align-items: center;">
+          <button onclick="openMcpModal()" class="SiteHeader-module-scss-module__zKj4Ca__claudeCtaButton body-3" style="background: linear-gradient(135deg, #e07a5f, #d44f4f); color: white; border: none; cursor: pointer;" title="Connect Claude & ChatGPT AI (MCP Server)">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
             </svg>
             <span>Connect AI</span>
           </button>
-        </div>
-
-        <!-- DOWNLOAD SYLLABUS PDF CTA -->
-        <div class="SiteHeader-module-scss-module__zKj4Ca__claudeCtaWrapper">
           <a href="./Syllabus.pdf" target="_blank" class="SiteHeader-module-scss-module__zKj4Ca__claudeCtaButton body-3" title="Download Official PU Syllabus PDF">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
@@ -1104,8 +1102,8 @@
   <!-- ========================================================================
        CONNECT AI (MCP & REST SERVER) MODAL
        ======================================================================== -->
-  <div id="mcp-modal" class="anthropic-modal-backdrop" onclick="closeMcpModal(event)">
-    <div class="anthropic-modal-card" style="max-width: 680px; width: 100%; padding: 1.75rem; background: var(--bg-surface); border-radius: var(--radius-lg); border: 1px solid var(--border-color); box-shadow: var(--shadow-lg);" onclick="event.stopPropagation()">
+  <div id="mcp-modal" class="palette-backdrop" style="display: none;" onclick="closeMcpModal(event)">
+    <div class="palette-card" style="max-width: 680px; padding: 1.75rem;" onclick="event.stopPropagation()">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.85rem;">
         <div style="display: flex; align-items: center; gap: 0.6rem;">
           <div style="width: 34px; height: 34px; border-radius: 8px; background: rgba(224, 122, 95, 0.15); color: var(--color-coral); display: flex; align-items: center; justify-content: center; font-size: 1.15rem;">⚡</div>
@@ -1149,8 +1147,8 @@
           Use this <strong>Server-Sent Events (SSE)</strong> URL in Claude Web Connectors or Remote MCP tools:
         </p>
         <div style="display: flex; gap: 0.5rem;">
-          <input type="text" readonly value="https://fancy-mice-tan.loca.lt/sse" id="mcp-sse-url" class="admin-input-field" style="flex: 1; font-family: var(--font-mono); font-size: 0.85rem; background: var(--bg-page);" />
-          <button onclick="copyMcpText('https://fancy-mice-tan.loca.lt/sse')" class="admin-action-btn primary" style="cursor: pointer;">📋 Copy Live SSE Link</button>
+          <input type="text" readonly value="http://localhost:3000/sse" id="mcp-sse-url" class="admin-input-field" style="flex: 1; font-family: var(--font-mono); font-size: 0.85rem; background: var(--bg-page);" />
+          <button onclick="copyMcpText('http://localhost:3000/sse')" class="admin-action-btn primary" style="cursor: pointer;">📋 Copy SSE Link</button>
         </div>
       </div>
 
@@ -1160,8 +1158,8 @@
           In <strong>ChatGPT Custom GPT -> Actions -> Import from URL</strong>, paste this OpenAPI 3.0 specification URL:
         </p>
         <div style="display: flex; gap: 0.5rem;">
-          <input type="text" readonly value="https://fancy-mice-tan.loca.lt/openapi.json" id="mcp-gpt-url" class="admin-input-field" style="flex: 1; font-family: var(--font-mono); font-size: 0.85rem; background: var(--bg-page);" />
-          <button onclick="copyMcpText('https://fancy-mice-tan.loca.lt/openapi.json')" class="admin-action-btn primary" style="cursor: pointer;">📋 Copy OpenAPI Spec URL</button>
+          <input type="text" readonly value="http://localhost:3000/openapi.json" id="mcp-gpt-url" class="admin-input-field" style="flex: 1; font-family: var(--font-mono); font-size: 0.85rem; background: var(--bg-page);" />
+          <button onclick="copyMcpText('http://localhost:3000/openapi.json')" class="admin-action-btn primary" style="cursor: pointer;">📋 Copy OpenAPI Spec URL</button>
         </div>
       </div>
 
