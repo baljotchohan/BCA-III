@@ -236,29 +236,30 @@ async function renderSubjectNotes(subject) {
 
   // Fetch both built-in notes, local custom notes, and live Firebase AI notes
   let fbLectures = await _fbFetch('lectures');
-  fbLectures = fbLectures.filter(l => l.subject === subject.id);
+  fbLectures = fbLectures.filter(l => (l.subject === subject.id || l.subjectId === subject.id));
   
   const localNotes = getCustomNotesForSubject(subject.id);
   // Map Firebase lectures to note format so they render properly
   const fbNotes = fbLectures.map(l => ({
-    id: l.fbKey,
+    id: l.id || l.fbKey,
     fbKey: l.fbKey,
     unit: l.unit || 'General',
-    title: l.topic || l.title,
-    content: l.notes || l.description || '',
+    title: l.title || l.topic || 'Untitled Note',
+    content: l.content || l.notes || l.description || '',
     date: l.date,
-    readTime: 'AI Generated',
-    tags: ['AI', 'Cloud'],
-    imageUrl: l.imageUrl
+    readTime: l.readTime || '6 min read',
+    tags: l.tags || ['Study Guide'],
+    imageUrl: l.imageUrl || '',
+    isAdminPublished: true
   }));
 
   const allNotes = [...(subject.digitalNotes || []), ...localNotes, ...fbNotes];
 
   if (!allNotes.length) {
     container.innerHTML = `
-      <div class="empty-state">
-        <p>No digital notes published yet for ${subject.title}.</p>
-        <button class="Button-module-scss-module__f9ZZrG__button Button-module-scss-module__f9ZZrG__secondary" style="margin-top: 1rem;" onclick="openAdminModal()">
+      <div class="empty-state" style="text-align: center; padding: 3rem 1rem; color: var(--text-subtle);">
+        <p style="font-size: 1rem; margin-bottom: 1rem;">No digital notes published yet for ${escapeHtml(subject.title)}.</p>
+        <button class="admin-submit-btn" style="display: inline-flex; width: auto; padding: 0.6rem 1.25rem;" onclick="openAdminModal()">
           <span>+ Create Note as Admin</span>
         </button>
       </div>
@@ -271,43 +272,47 @@ async function renderSubjectNotes(subject) {
     filtered = allNotes.filter(n => n.unit === currentNoteFilter);
   }
 
-  container.innerHTML = filtered.map(note => `
-    <div class="digital-note-card">
-      <div class="note-card-meta">
-        <div class="note-meta-left">
-          <span class="note-unit-badge">${note.unit || 'General'}</span>
-          <span class="note-read-time">⏱️ ${note.readTime || '6 min read'}</span>
-          ${note.isAdminPublished ? '<span class="note-unit-badge" style="background-color: var(--color-coral); color: #fff;">Verified Course Note</span>' : ''}
-        </div>
-        <div class="note-actions-bar">
-          ${note.fbKey ? `
-            <button class="note-tool-btn" onclick="deleteNoteLive('${note.fbKey}', event)" title="Delete AI Note Live" style="color: #d44f4f;">
+  container.innerHTML = filtered.map(note => {
+    const deleteAction = note.fbKey
+      ? `deleteNoteLive('${note.fbKey}', event)`
+      : `deleteCustomNote('${note.id}')`;
+
+    return `
+      <div class="digital-note-card">
+        <div class="note-card-meta">
+          <div class="note-meta-left">
+            <span class="note-unit-badge">${escapeHtml(note.unit || 'General')}</span>
+            <span class="note-read-time">⏱️ ${escapeHtml(note.readTime || '6 min read')}</span>
+            ${note.isAdminPublished ? '<span class="note-unit-badge" style="background-color: var(--color-cactus); color: var(--text-main);">Verified Note</span>' : ''}
+          </div>
+          <div class="note-actions-bar">
+            <button class="note-tool-btn" onclick="${deleteAction}" title="Delete Note" style="color: #d44f4f;">
               <span>🗑️ Delete</span>
             </button>
-          ` : ''}
-          <button class="note-tool-btn" onclick="copyNoteContent('${note.id}')" title="Copy note text">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-            <span>Copy</span>
-          </button>
-          <button class="note-tool-btn" onclick="openZenReaderWithNote('${note.id}')" title="Focus view">
-            <span>Focus ↗</span>
-          </button>
+            <button class="note-tool-btn" onclick="copyNoteContent('${note.id}')" title="Copy note text">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+              <span>Copy</span>
+            </button>
+            <button class="note-tool-btn" onclick="openZenReaderWithNote('${note.id}')" title="Focus view">
+              <span>Focus ↗</span>
+            </button>
+          </div>
         </div>
-      </div>
 
-      <h2 class="note-card-title">${note.title}</h2>
+        <h2 class="note-card-title">${escapeHtml(note.title)}</h2>
 
-      <div class="note-content-body" id="note-body-${note.id}">
-        ${renderMarkdownBlocks(note.content)}
-      </div>
-
-      ${note.tags ? `
-        <div class="topic-tags-row" style="margin-top: 1.25rem;">
-          ${note.tags.map(t => `<span class="topic-badge">#${t}</span>`).join('')}
+        <div class="note-content-body" id="note-body-${note.id}">
+          ${renderMarkdownBlocks(note.content)}
         </div>
-      ` : ''}
-    </div>
-  `).join('');
+
+        ${note.tags && note.tags.length ? `
+          <div class="topic-tags-row" style="margin-top: 1.25rem;">
+            ${note.tags.map(t => `<span class="topic-badge">#${escapeHtml(t)}</span>`).join('')}
+          </div>
+        ` : ''}
+      </div>
+    `;
+  }).join('');
 }
 
 function filterNotesByUnit(unit, btn) {
@@ -1384,7 +1389,8 @@ function openZenReaderWithNote(noteId) {
   if (modal) modal.style.display = 'flex';
 }
 
-function closeZenReader() {
+function closeZenReader(e) {
+  if (e && e.target && e.target.id !== 'zen-reader-modal' && e.type === 'click') return;
   const modal = document.getElementById('zen-reader-modal');
   if (modal) modal.style.display = 'none';
 }
