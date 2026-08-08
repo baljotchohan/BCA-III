@@ -412,19 +412,60 @@ function exportCurrentSubjectNotes() {
   showToast(`Exported ${subject.title} notes as Markdown! 📥`);
 }
 
+/* --- Live Firebase RTDB Helper Functions --- */
+const _RTDB = 'https://bca2nd-5c622-default-rtdb.firebaseio.com/bca3';
+
+async function _fbFetch(path) {
+  try {
+    const res = await fetch(`${_RTDB}/${path}.json`);
+    const data = await res.json();
+    if (!data || data.error) return [];
+    return Object.entries(data).map(([fbKey, val]) => ({ ...val, fbKey }))
+      .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+  } catch (err) {
+    return [];
+  }
+}
+
+async function deleteNoteLive(fbKey, e) {
+  if (e) e.stopPropagation();
+  if (!fbKey) return;
+  if (!confirm('Are you sure you want to delete this note live?')) return;
+
+  showToast('⏳ Deleting note...');
+  try {
+    const res = await fetch(`${_RTDB}/lectures/${fbKey}.json`, { method: 'DELETE' });
+    if (!res.ok) throw new Error('Delete failed');
+    showToast('🗑️ Note deleted live from website!');
+    renderDashboardLectures();
+    const subject = BCA_3RD_SEM_DATA.subjects.find(s => s.id === activeSubjectId) || BCA_3RD_SEM_DATA.subjects[0];
+    if (subject) renderSubjectCalendar(subject);
+  } catch (err) {
+    showToast('❌ Error deleting note: ' + err.message);
+  }
+}
+
+function getSubjectName(subjectId) {
+  const s = BCA_3RD_SEM_DATA.subjects.find(sub => sub.id === subjectId);
+  return s ? s.title : (subjectId || 'General');
+}
+
 /* ==========================================================================
    5. INTERACTIVE CALENDAR SWITCHER & DAILY LECTURE LOGS
    ========================================================================== */
 
-function renderSubjectCalendar(subject) {
+async function renderSubjectCalendar(subject) {
   const calGrid = document.getElementById('ws-calendar-grid');
   const quickDatesBar = document.getElementById('ws-quick-dates-bar');
   const lecturesList = document.getElementById('ws-subject-lectures-list');
   if (!calGrid || !lecturesList) return;
 
-  // Combine static lectures and admin-published lectures
+  // Fetch live lectures from Firebase
+  let fbLectures = await _fbFetch('lectures');
+  fbLectures = fbLectures.filter(l => l.subject === subject.id);
+
   const localLectures = getCustomLecturesForSubject(subject.id);
-  const allLectures = [...(subject.lectures || []), ...localLectures];
+  const allLectures = [...fbLectures, ...(subject.lectures || []), ...localLectures];
 
   // Map of active dates
   const lectureDateMap = {};
@@ -569,37 +610,48 @@ function initDashboardWidgets() {
   renderDashboardAnnouncements();
 }
 
-function renderDashboardLectures() {
+async function renderDashboardLectures() {
   const container = document.getElementById('dashboard-lectures-list');
   if (!container) return;
 
-  // Gather all lectures across all subjects + custom
-  let all = [];
+  // Fetch live lectures from Firebase
+  let fbLectures = await _fbFetch('lectures');
+
+  // Gather static lectures
+  let staticLectures = [];
   BCA_3RD_SEM_DATA.subjects.forEach(s => {
-    (s.lectures || []).forEach(l => all.push({ ...l, subjectName: s.title, subjectId: s.id }));
-    const customs = getCustomLecturesForSubject(s.id);
-    customs.forEach(l => all.push({ ...l, subjectName: s.title, subjectId: s.id }));
+    (s.lectures || []).forEach(l => staticLectures.push({ ...l, subjectName: s.title, subjectId: s.id }));
   });
 
-  all.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+  const all = [...fbLectures.map(l => ({ ...l, subjectName: getSubjectName(l.subject), subjectId: l.subject })), ...staticLectures];
 
   const badge = document.getElementById('lecture-count-badge');
-  if (badge) badge.innerText = `${all.length} Lectures`;
+  if (badge) badge.innerText = `${all.length} Notes/Lectures`;
 
-  container.innerHTML = all.slice(0, 5).map(l => `
-    <div class="lecture-item" onclick="navigateToSubject('${l.subjectId}')" style="cursor: pointer;">
+  if (!all.length) {
+    container.innerHTML = `<div class="empty-state">No lectures or notes recorded yet.</div>`;
+    return;
+  }
+
+  container.innerHTML = all.slice(0, 8).map(l => `
+    <div class="lecture-item" onclick="navigateToSubject('${l.subjectId}')" style="cursor: pointer; position: relative;">
       <div class="lecture-date-box">
         <span class="lecture-month">AUG</span>
-        <span class="lecture-day">${l.date.split('-')[2] || '01'}</span>
+        <span class="lecture-day">${l.date ? l.date.split('-')[2] || '01' : '01'}</span>
       </div>
-      <div class="lecture-info">
+      <div class="lecture-info" style="flex: 1; min-width: 0;">
         <div class="lecture-topic-title">${escapeHtml(l.topic)}</div>
         <div class="lecture-meta-row">
-          <span class="lecture-subject-badge">${escapeHtml(l.subjectName)}</span>
+          <span class="lecture-subject-badge">${escapeHtml(l.subjectName || l.subject)}</span>
           <span>⏱️ ${l.time || '10:00 AM'}</span>
           <span>${l.unit || ''}</span>
         </div>
       </div>
+      ${l.fbKey ? `
+        <button onclick="deleteNoteLive('${l.fbKey}', event)" title="Delete Note Live" style="background: rgba(212, 79, 79, 0.15); color: #d44f4f; border: 1px solid rgba(212, 79, 79, 0.35); border-radius: 6px; padding: 0.35rem 0.65rem; font-size: 0.75rem; font-weight: 600; cursor: pointer; flex-shrink: 0; align-self: center;">
+          🗑️ Delete
+        </button>
+      ` : ''}
     </div>
   `).join('');
 }
