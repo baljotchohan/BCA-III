@@ -422,9 +422,10 @@ function renderSubjectCalendar(subject) {
   const lecturesList = document.getElementById('ws-subject-lectures-list');
   if (!calGrid || !lecturesList) return;
 
-  // Combine static lectures and admin-published lectures
+  // Combine live Firebase lectures with local lectures
+  const allLecs = fbLecs.length > 0 ? fbLecs : subject.lectures || [];
   const localLectures = getCustomLecturesForSubject(subject.id);
-  const allLectures = [...(subject.lectures || []), ...localLectures];
+  const allLectures = [...allLecs, ...localLectures];
 
   // Map of active dates
   const lectureDateMap = {};

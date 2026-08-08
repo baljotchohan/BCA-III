@@ -81,6 +81,13 @@
               <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
             </svg>
           </button>
+          <button class="admin-logout-btn" onclick="masterResetDatabase()" style="background: rgba(212, 79, 79, 0.15); color: #d44f4f; border-color: rgba(212, 79, 79, 0.3);" title="Wipe all database entries and reset sample data">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="3 6 5 6 21 6"></polyline>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path>
+            </svg>
+            Reset DB
+          </button>
           <button class="admin-logout-btn" onclick="logout()">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
@@ -122,10 +129,13 @@
             <h2 class="admin-panel-title serif">Class Announcements</h2>
             <p class="admin-panel-desc">Post notices, exam alerts, assignment reminders & notes that appear on the main student hub.</p>
           </div>
-          <button class="admin-action-btn primary" onclick="openAnnouncementForm()">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-            New Announcement
-          </button>
+          <div style="display: flex; gap: 0.5rem;">
+            <button class="admin-action-btn" onclick="clearAllAnnouncements()" style="color:#d44f4f; border-color:rgba(212,79,79,0.3);">Clear All</button>
+            <button class="admin-action-btn primary" onclick="openAnnouncementForm()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+              New Announcement
+            </button>
+          </div>
         </div>
 
         <!-- Add Announcement Form -->
@@ -176,10 +186,13 @@
             <h2 class="admin-panel-title serif">Lecture Logs</h2>
             <p class="admin-panel-desc">Add and manage class lecture logs across all 7 subjects. All logs appear in student subject modals.</p>
           </div>
-          <button class="admin-action-btn primary" onclick="openLectureForm()">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-            Add Lecture
-          </button>
+          <div style="display: flex; gap: 0.5rem;">
+            <button class="admin-action-btn" onclick="clearAllLectures()" style="color:#d44f4f; border-color:rgba(212,79,79,0.3);">Clear All Notes</button>
+            <button class="admin-action-btn primary" onclick="openLectureForm()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+              Add Lecture
+            </button>
+          </div>
         </div>
 
         <!-- Add Lecture Form -->

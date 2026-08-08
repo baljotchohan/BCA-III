@@ -8,6 +8,11 @@ const ADMIN_KEY   = 'Defenderbhabhiontop';
 const SESSION_KEY = 'bca_admin_session';
 const DB          = 'https://bca2nd-5c622-default-rtdb.firebaseio.com/bca3';
 
+let _editingLectureKey = null;
+let _editingAnnKey     = null;
+let _editingAgendaKey  = null;
+let _editingTodoKey    = null;
+
 // ─── Firebase REST Helpers ────────────────────────────────────────────────────
 
 async function fbGet(path) {
@@ -15,7 +20,6 @@ async function fbGet(path) {
   if (!res.ok) throw new Error(`Firebase GET failed: ${res.status}`);
   const data = await res.json();
   if (!data) return [];
-  // Convert Firebase object {"-key": {...}} to array with .fbKey
   return Object.entries(data).map(([fbKey, val]) => ({ ...val, fbKey }))
     .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
 }
@@ -27,12 +31,26 @@ async function fbPush(path, data) {
     body:    JSON.stringify(data),
   });
   if (!res.ok) throw new Error(`Firebase POST failed: ${res.status}`);
-  return (await res.json()).name; // returns the generated key
+  return (await res.json()).name;
+}
+
+async function fbUpdate(path, fbKey, data) {
+  const res = await fetch(`${DB}/${path}/${fbKey}.json`, {
+    method:  'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error(`Firebase PATCH failed: ${res.status}`);
 }
 
 async function fbDelete(path, fbKey) {
   const res = await fetch(`${DB}/${path}/${fbKey}.json`, { method: 'DELETE' });
   if (!res.ok) throw new Error(`Firebase DELETE failed: ${res.status}`);
+}
+
+async function fbClearAll(path) {
+  const res = await fetch(`${DB}/${path}.json`, { method: 'DELETE' });
+  if (!res.ok) throw new Error(`Firebase CLEAR failed: ${res.status}`);
 }
 
 // ─── Boot ─────────────────────────────────────────────────────────────────────
@@ -79,27 +97,15 @@ function logout() {
   document.getElementById('passkey-input').value = '';
 }
 
-function showDashboard() {
-  document.getElementById('admin-lock-screen').style.display = 'none';
-  const dash = document.getElementById('admin-dashboard');
-  dash.style.display = 'flex';
-  dash.style.flexDirection = 'column';
-  renderAll();
-}
-
-function togglePasskeyVisibility() {
-  const input = document.getElementById('passkey-input');
-  const icon  = document.getElementById('eye-icon');
-  if (input.type === 'password') {
-    input.type = 'text';
-    icon.innerHTML = `<line x1="1" y1="1" x2="23" y2="23"></line><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>`;
-  } else {
-    input.type = 'password';
-    icon.innerHTML = `<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle>`;
+function updateAdminThemeBtn(theme) {
+  const btn = document.getElementById('admin-theme-btn');
+  if (btn) {
+    btn.innerHTML = theme === 'dark'
+      ? '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line></svg>'
+      : '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>';
   }
 }
 
-// ─── Theme ────────────────────────────────────────────────────────────────────
 function toggleAdminTheme() {
   const current = document.documentElement.getAttribute('data-theme') || 'light';
   const next = current === 'dark' ? 'light' : 'dark';
@@ -109,41 +115,52 @@ function toggleAdminTheme() {
   showAdminToast(`Switched to ${next === 'dark' ? 'Dark' : 'Light'} mode`);
 }
 
-function updateAdminThemeBtn(theme) {
-  const btn = document.getElementById('admin-theme-btn');
-  if (!btn) return;
-  btn.innerHTML = theme === 'dark'
-    ? `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>`
-    : `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>`;
-}
-
-// ─── Tabs ─────────────────────────────────────────────────────────────────────
-function switchTab(tabName) {
-  document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.admin-tab-panel').forEach(p => p.classList.remove('active'));
-  document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
-  document.getElementById(`tab-${tabName}`).classList.add('active');
-}
-
-function renderAll() {
+function showDashboard() {
+  document.getElementById('admin-lock-screen').style.display = 'none';
+  document.getElementById('admin-dashboard').style.display = 'block';
+  loadDashboardStats();
   renderAnnouncements();
   renderLectures('all');
   renderAgenda();
   renderTodos();
 }
 
+async function loadDashboardStats() {
+  try {
+    const [anns, lecs, agenda, todos] = await Promise.all([
+      fbGet('announcements'), fbGet('lectures'), fbGet('agenda'), fbGet('todos'),
+    ]);
+    document.getElementById('stat-anns').textContent   = anns.length;
+    document.getElementById('stat-lecs').textContent   = lecs.length;
+    document.getElementById('stat-agenda').textContent = agenda.length;
+    document.getElementById('stat-todos').textContent  = todos.length;
+  } catch(e) { console.error('Stats load error', e); }
+}
+
+function switchTab(tabName) {
+  document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.admin-tab-panel').forEach(p => p.classList.remove('active'));
+
+  const tab = document.querySelector(`.admin-tab[data-tab="${tabName}"]`);
+  const panel = document.getElementById(`tab-${tabName}`);
+  if (tab) tab.classList.add('active');
+  if (panel) panel.classList.add('active');
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 //  1. ANNOUNCEMENTS
 // ─────────────────────────────────────────────────────────────────────────────
 function openAnnouncementForm() {
+  _editingAnnKey = null;
   const f = document.getElementById('announcement-form');
-  f.style.display = f.style.display === 'none' ? 'flex' : 'none';
-  if (f.style.display === 'flex') document.getElementById('ann-title').focus();
+  f.style.display = f.style.display==='none' ? 'flex' : 'none';
+  if (f.style.display==='flex') document.getElementById('ann-title').focus();
 }
+
 function closeAnnouncementForm() {
+  _editingAnnKey = null;
   document.getElementById('announcement-form').style.display = 'none';
-  ['ann-title','ann-message','ann-link'].forEach(id => { const el = document.getElementById(id); if(el) el.value=''; });
-  document.getElementById('ann-category').value = 'notice';
+  ['ann-title','ann-message','ann-link'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
 }
 
 async function saveAnnouncement() {
@@ -153,19 +170,40 @@ async function saveAnnouncement() {
   const link     = document.getElementById('ann-link').value.trim();
   if (!title || !message) { showAdminToast('❌ Title and message are required.'); return; }
 
-  showAdminToast('⏳ Publishing...');
+  showAdminToast('⏳ Saving...');
   try {
-    await fbPush('announcements', {
+    const payload = {
       title, message, category, link,
       date: new Date().toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' }),
       timestamp: Date.now(),
-    });
+    };
+
+    if (_editingAnnKey) {
+      await fbUpdate('announcements', _editingAnnKey, payload);
+      showAdminToast('✅ Announcement updated successfully!');
+    } else {
+      await fbPush('announcements', payload);
+      showAdminToast('✅ Announcement live for all students!');
+    }
     closeAnnouncementForm();
     await renderAnnouncements();
-    showAdminToast('✅ Announcement live for all students!');
-  } catch(e) {
-    showAdminToast('❌ Failed: ' + e.message);
-  }
+    loadDashboardStats();
+  } catch(e) { showAdminToast('❌ Failed: ' + e.message); }
+}
+
+async function editAnnouncement(fbKey) {
+  try {
+    const list = await fbGet('announcements');
+    const item = list.find(a => a.fbKey === fbKey);
+    if (!item) return;
+    _editingAnnKey = fbKey;
+    document.getElementById('ann-title').value = item.title || '';
+    document.getElementById('ann-message').value = item.message || '';
+    document.getElementById('ann-category').value = item.category || 'notice';
+    document.getElementById('ann-link').value = item.link || '';
+    document.getElementById('announcement-form').style.display = 'flex';
+    document.getElementById('ann-title').focus();
+  } catch(e) { showAdminToast('❌ ' + e.message); }
 }
 
 async function deleteAnnouncement(fbKey) {
@@ -173,7 +211,18 @@ async function deleteAnnouncement(fbKey) {
   try {
     await fbDelete('announcements', fbKey);
     await renderAnnouncements();
+    loadDashboardStats();
     showAdminToast('Announcement removed.');
+  } catch(e) { showAdminToast('❌ ' + e.message); }
+}
+
+async function clearAllAnnouncements() {
+  if (!confirm('🚨 Delete ALL announcements from database?')) return;
+  try {
+    await fbClearAll('announcements');
+    await renderAnnouncements();
+    loadDashboardStats();
+    showAdminToast('All announcements cleared.');
   } catch(e) { showAdminToast('❌ ' + e.message); }
 }
 
@@ -196,9 +245,8 @@ async function renderAnnouncements() {
           ${a.link?`<a href="${escHtml(a.link)}" target="_blank" style="font-size:0.8125rem;color:var(--color-coral);text-decoration:none;display:inline-block;margin-top:0.35rem;">↗ View Resource</a>`:''}
         </div>
         <div class="admin-item-actions">
-          <button class="admin-item-btn delete" onclick="deleteAnnouncement('${a.fbKey}')" title="Delete">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path></svg>
-          </button>
+          <button class="admin-item-btn edit" onclick="editAnnouncement('${a.fbKey}')" title="Edit Announcement">✏️ Edit</button>
+          <button class="admin-item-btn delete" onclick="deleteAnnouncement('${a.fbKey}')" title="Delete">🗑️ Delete</button>
         </div>
       </div>
     `).join('');
@@ -206,7 +254,7 @@ async function renderAnnouncements() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  2. LECTURE LOGS
+//  2. LECTURE LOGS & NOTES
 // ─────────────────────────────────────────────────────────────────────────────
 const SUBJECT_NAMES = {
   'comp-arch':'Computer Architecture','data-structures':'Data Structures',
@@ -215,6 +263,7 @@ const SUBJECT_NAMES = {
 };
 
 function openLectureForm() {
+  _editingLectureKey = null;
   const f = document.getElementById('lecture-form');
   f.style.display = f.style.display==='none' ? 'flex' : 'none';
   if (f.style.display==='flex') {
@@ -222,9 +271,11 @@ function openLectureForm() {
     document.getElementById('lec-topic').focus();
   }
 }
+
 function closeLectureForm() {
+  _editingLectureKey = null;
   document.getElementById('lecture-form').style.display = 'none';
-  ['lec-topic','lec-notes','lec-link'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  ['lec-topic','lec-notes','lec-link','lec-image-url'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
 }
 
 async function saveLecture() {
@@ -240,19 +291,57 @@ async function saveLecture() {
 
   showAdminToast('⏳ Saving...');
   try {
-    await fbPush('lectures', { subject, date, time, unit, topic, notes, link, imageUrl, timestamp: Date.now() });
+    const payload = { subject, date, time, unit, topic, notes, link, imageUrl, timestamp: Date.now() };
+
+    if (_editingLectureKey) {
+      await fbUpdate('lectures', _editingLectureKey, payload);
+      showAdminToast(`✅ Lecture note updated successfully!`);
+    } else {
+      await fbPush('lectures', payload);
+      showAdminToast(`✅ Lecture saved — visible to all students!`);
+    }
     closeLectureForm();
     await renderLectures(_lectureFilter || 'all');
-    showAdminToast(`✅ Lecture saved — visible to all students!`);
+    loadDashboardStats();
+  } catch(e) { showAdminToast('❌ ' + e.message); }
+}
+
+async function editLecture(fbKey) {
+  try {
+    const list = await fbGet('lectures');
+    const item = list.find(l => l.fbKey === fbKey);
+    if (!item) return;
+    _editingLectureKey = fbKey;
+    document.getElementById('lec-subject').value = item.subject || 'comp-arch';
+    document.getElementById('lec-date').value = item.date || new Date().toISOString().split('T')[0];
+    document.getElementById('lec-time').value = item.time || '';
+    document.getElementById('lec-unit').value = item.unit || 'Unit I';
+    document.getElementById('lec-topic').value = item.topic || '';
+    document.getElementById('lec-notes').value = item.notes || '';
+    document.getElementById('lec-link').value = item.link || '';
+    document.getElementById('lec-image-url').value = item.imageUrl || '';
+    document.getElementById('lecture-form').style.display = 'flex';
+    document.getElementById('lec-topic').focus();
   } catch(e) { showAdminToast('❌ ' + e.message); }
 }
 
 async function deleteLecture(fbKey) {
-  if (!confirm('Delete this lecture log?')) return;
+  if (!confirm('Delete this lecture / note entry?')) return;
   try {
     await fbDelete('lectures', fbKey);
     await renderLectures(_lectureFilter || 'all');
-    showAdminToast('Lecture removed.');
+    loadDashboardStats();
+    showAdminToast('Lecture / note removed.');
+  } catch(e) { showAdminToast('❌ ' + e.message); }
+}
+
+async function clearAllLectures() {
+  if (!confirm('🚨 Delete ALL notes and lecture entries from database?')) return;
+  try {
+    await fbClearAll('lectures');
+    await renderLectures(_lectureFilter || 'all');
+    loadDashboardStats();
+    showAdminToast('All lectures & notes cleared.');
   } catch(e) { showAdminToast('❌ ' + e.message); }
 }
 
@@ -281,12 +370,12 @@ async function renderLectures(filter) {
             <span>${formatDate(l.date)}${l.time?' · '+formatTime(l.time):''}</span>
           </div>
           ${l.notes?`<div class="admin-item-desc">${escHtml(l.notes)}</div>`:''}
+          ${l.imageUrl?`<div style="font-size:0.75rem; color:var(--color-coral); margin-top:0.35rem;">🎨 Visual Image: ${escHtml(l.imageUrl)}</div>`:''}
           ${l.link?`<a href="${escHtml(l.link)}" target="_blank" style="font-size:0.8125rem;color:var(--color-coral);text-decoration:none;display:inline-block;margin-top:0.35rem;">↗ Resource</a>`:''}
         </div>
         <div class="admin-item-actions">
-          <button class="admin-item-btn delete" onclick="deleteLecture('${l.fbKey}')" title="Delete">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path></svg>
-          </button>
+          <button class="admin-item-btn edit" onclick="editLecture('${l.fbKey}')" title="Edit Lecture">✏️ Edit</button>
+          <button class="admin-item-btn delete" onclick="deleteLecture('${l.fbKey}')" title="Delete">🗑️ Delete</button>
         </div>
       </div>
     `).join('');
@@ -297,6 +386,7 @@ async function renderLectures(filter) {
 //  3. CLASS AGENDA
 // ─────────────────────────────────────────────────────────────────────────────
 function openAgendaForm() {
+  _editingAgendaKey = null;
   const f = document.getElementById('agenda-form');
   f.style.display = f.style.display==='none' ? 'flex' : 'none';
   if (f.style.display==='flex') {
@@ -304,7 +394,9 @@ function openAgendaForm() {
     document.getElementById('agenda-topic').focus();
   }
 }
+
 function closeAgendaForm() {
+  _editingAgendaKey = null;
   document.getElementById('agenda-form').style.display = 'none';
   ['agenda-topic','agenda-room'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
 }
@@ -319,10 +411,34 @@ async function saveAgendaItem() {
 
   showAdminToast('⏳ Saving...');
   try {
-    await fbPush('agenda', { subject, date, time, room, topic, timestamp: Date.now() });
+    const payload = { subject, date, time, room, topic, timestamp: Date.now() };
+
+    if (_editingAgendaKey) {
+      await fbUpdate('agenda', _editingAgendaKey, payload);
+      showAdminToast('✅ Agenda item updated!');
+    } else {
+      await fbPush('agenda', payload);
+      showAdminToast('✅ Agenda item live for all students!');
+    }
     closeAgendaForm();
     await renderAgenda();
-    showAdminToast('✅ Agenda item live for all students!');
+    loadDashboardStats();
+  } catch(e) { showAdminToast('❌ ' + e.message); }
+}
+
+async function editAgendaItem(fbKey) {
+  try {
+    const list = await fbGet('agenda');
+    const item = list.find(a => a.fbKey === fbKey);
+    if (!item) return;
+    _editingAgendaKey = fbKey;
+    document.getElementById('agenda-subject').value = item.subject || 'comp-arch';
+    document.getElementById('agenda-date').value = item.date || new Date().toISOString().split('T')[0];
+    document.getElementById('agenda-time').value = item.time || '';
+    document.getElementById('agenda-room').value = item.room || '';
+    document.getElementById('agenda-topic').value = item.topic || '';
+    document.getElementById('agenda-form').style.display = 'flex';
+    document.getElementById('agenda-topic').focus();
   } catch(e) { showAdminToast('❌ ' + e.message); }
 }
 
@@ -331,7 +447,18 @@ async function deleteAgendaItem(fbKey) {
   try {
     await fbDelete('agenda', fbKey);
     await renderAgenda();
+    loadDashboardStats();
     showAdminToast('Agenda item removed.');
+  } catch(e) { showAdminToast('❌ ' + e.message); }
+}
+
+async function clearAllAgenda() {
+  if (!confirm('🚨 Delete ALL agenda items from database?')) return;
+  try {
+    await fbClearAll('agenda');
+    await renderAgenda();
+    loadDashboardStats();
+    showAdminToast('All agenda items cleared.');
   } catch(e) { showAdminToast('❌ ' + e.message); }
 }
 
@@ -352,9 +479,8 @@ async function renderAgenda() {
           </div>
         </div>
         <div class="admin-item-actions">
-          <button class="admin-item-btn delete" onclick="deleteAgendaItem('${a.fbKey}')" title="Remove">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path></svg>
-          </button>
+          <button class="admin-item-btn edit" onclick="editAgendaItem('${a.fbKey}')" title="Edit Agenda">✏️ Edit</button>
+          <button class="admin-item-btn delete" onclick="deleteAgendaItem('${a.fbKey}')" title="Remove">🗑️ Delete</button>
         </div>
       </div>
     `).join('');
@@ -365,11 +491,14 @@ async function renderAgenda() {
 //  4. STUDY TASKS
 // ─────────────────────────────────────────────────────────────────────────────
 function openTodoForm() {
+  _editingTodoKey = null;
   const f = document.getElementById('todo-form');
   f.style.display = f.style.display==='none' ? 'flex' : 'none';
   if (f.style.display==='flex') document.getElementById('todo-text').focus();
 }
+
 function closeTodoForm() {
+  _editingTodoKey = null;
   document.getElementById('todo-form').style.display = 'none';
   document.getElementById('todo-text').value = '';
   document.getElementById('todo-priority').value = 'medium';
@@ -386,20 +515,39 @@ async function saveTodo() {
 
   showAdminToast('⏳ Saving...');
   try {
-    await fbPush('todos', { text, priority, due, subject, done: false, timestamp: Date.now() });
+    const payload = { text, priority, due, subject, done: false, timestamp: Date.now() };
+
+    if (_editingTodoKey) {
+      await fbUpdate('todos', _editingTodoKey, payload);
+      showAdminToast('✅ Study task updated!');
+    } else {
+      await fbPush('todos', payload);
+      showAdminToast('✅ Study task live for all students!');
+    }
     closeTodoForm();
     await renderTodos();
-    showAdminToast('✅ Study task live for all students!');
+    loadDashboardStats();
+  } catch(e) { showAdminToast('❌ ' + e.message); }
+}
+
+async function editTodo(fbKey) {
+  try {
+    const list = await fbGet('todos');
+    const item = list.find(t => t.fbKey === fbKey);
+    if (!item) return;
+    _editingTodoKey = fbKey;
+    document.getElementById('todo-text').value = item.text || '';
+    document.getElementById('todo-priority').value = item.priority || 'medium';
+    document.getElementById('todo-due').value = item.due || '';
+    document.getElementById('todo-subject').value = item.subject || '';
+    document.getElementById('todo-form').style.display = 'flex';
+    document.getElementById('todo-text').focus();
   } catch(e) { showAdminToast('❌ ' + e.message); }
 }
 
 async function toggleTodoDone(fbKey, current) {
   try {
-    await fetch(`${DB}/todos/${fbKey}.json`, {
-      method:  'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ done: !current }),
-    });
+    await fbUpdate('todos', fbKey, { done: !current });
     await renderTodos();
   } catch(e) { showAdminToast('❌ ' + e.message); }
 }
@@ -409,7 +557,18 @@ async function deleteTodo(fbKey) {
   try {
     await fbDelete('todos', fbKey);
     await renderTodos();
+    loadDashboardStats();
     showAdminToast('Task removed.');
+  } catch(e) { showAdminToast('❌ ' + e.message); }
+}
+
+async function clearAllTodos() {
+  if (!confirm('🚨 Delete ALL study tasks from database?')) return;
+  try {
+    await fbClearAll('todos');
+    await renderTodos();
+    loadDashboardStats();
+    showAdminToast('All study tasks cleared.');
   } catch(e) { showAdminToast('❌ ' + e.message); }
 }
 
@@ -432,16 +591,41 @@ async function renderTodos() {
           </div>
         </div>
         <div class="admin-item-actions">
-          <button class="admin-item-btn" onclick="toggleTodoDone('${t.fbKey}', ${t.done})" title="${t.done?'Mark incomplete':'Mark done'}">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
-          </button>
-          <button class="admin-item-btn delete" onclick="deleteTodo('${t.fbKey}')" title="Delete">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path></svg>
-          </button>
+          <button class="admin-item-btn edit" onclick="editTodo('${t.fbKey}')" title="Edit Task">✏️ Edit</button>
+          <button class="admin-item-btn" onclick="toggleTodoDone('${t.fbKey}', ${t.done})" title="${t.done?'Mark incomplete':'Mark done'}">✓</button>
+          <button class="admin-item-btn delete" onclick="deleteTodo('${t.fbKey}')" title="Delete">🗑️ Delete</button>
         </div>
       </div>
     `).join('');
   } catch(e) { container.innerHTML = errorState(e.message); }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 5. MASTER PURGE / RESET EVERYTHING
+// ─────────────────────────────────────────────────────────────────────────────
+
+async function masterResetDatabase() {
+  if (!confirm('⚠️ Are you sure you want to WIPE all database items (Lectures, Notes, Announcements, Tasks, Agenda) and clear local cache?')) return;
+  showAdminToast('⏳ Purging database...');
+  try {
+    await Promise.all([
+      fbClearAll('announcements'),
+      fbClearAll('lectures'),
+      fbClearAll('agenda'),
+      fbClearAll('todos'),
+    ]);
+    localStorage.clear();
+    await Promise.all([
+      renderAnnouncements(),
+      renderLectures('all'),
+      renderAgenda(),
+      renderTodos(),
+      loadDashboardStats(),
+    ]);
+    showAdminToast('✅ Database completely reset! All fake/sample records removed.');
+  } catch(e) {
+    showAdminToast('❌ Purge failed: ' + e.message);
+  }
 }
 
 // ─── Utilities ────────────────────────────────────────────────────────────────
@@ -471,14 +655,21 @@ function escHtml(str) {
 }
 
 function formatDate(dateStr) {
-  if (!dateStr) return '';
-  try { return new Date(dateStr+'T00:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}); }
-  catch { return dateStr; }
+  if (!dateStr || dateStr === 'undefined' || dateStr === 'NaN-NaN-NaN') return '';
+  try {
+    const d = new Date(dateStr + (dateStr.includes('T') ? '' : 'T00:00:00'));
+    if (isNaN(d.getTime())) return dateStr;
+    return d.toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' });
+  } catch { return dateStr; }
 }
 
 function formatTime(timeStr) {
   if (!timeStr) return '';
-  const [h,m] = timeStr.split(':').map(Number);
+  const parts = timeStr.split(':');
+  if (parts.length < 2) return timeStr;
+  const h = Number(parts[0]);
+  const m = Number(parts[1]);
+  if (isNaN(h) || isNaN(m)) return timeStr;
   return `${h%12||12}:${String(m).padStart(2,'0')} ${h>=12?'PM':'AM'}`;
 }
 
