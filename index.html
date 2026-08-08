@@ -851,21 +851,26 @@
       <div class="admin-modal-body">
         
         <!-- 1. LOGIN SCREEN (If not authenticated) -->
-        <div id="admin-auth-screen" style="display: block;">
-          <p class="body-2" style="color: var(--text-muted); margin-bottom: 1.25rem;">
-            Authenticate with your administrator passkey to publish digital notes, lecture logs, and announcements.
-          </p>
+        <div id="admin-auth-screen" style="display: block; padding: 0.25rem 0;">
+          <div style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.15rem 1.25rem; margin-bottom: 1.35rem;">
+            <div style="font-weight: 600; font-size: 0.95rem; margin-bottom: 0.35rem; color: var(--text-main); display: flex; align-items: center; gap: 0.45rem;">
+              <span>🛡️</span> <span>Administrator Verification</span>
+            </div>
+            <p class="body-3" style="color: var(--text-subtle); margin: 0; line-height: 1.5; font-size: 0.84rem;">
+              Authenticate to create, edit, or remove notes, lecture logs, and university announcements. All updates synchronize live to Firebase.
+            </p>
+          </div>
           
           <form onsubmit="handleInAppAdminLogin(event)">
             <div class="admin-form-group">
-              <label class="admin-form-label" for="inapp-passkey">Admin Passkey</label>
-              <input type="password" id="inapp-passkey" class="admin-form-input" placeholder="Enter admin passkey..." autocomplete="current-password"/>
-              <div id="inapp-login-error" style="color: #e53e3e; font-size: 0.8rem; display: none; margin-top: 0.35rem;">
-                ❌ Incorrect passkey. Access restricted.
+              <label class="admin-form-label" for="inapp-passkey">Administrator Passkey</label>
+              <input type="password" id="inapp-passkey" class="admin-form-input" placeholder="Enter passkey to unlock..." autocomplete="current-password"/>
+              <div id="inapp-login-error" style="background: rgba(229, 62, 62, 0.08); border: 1px solid rgba(229, 62, 62, 0.28); border-radius: var(--radius-sm); padding: 0.55rem 0.85rem; color: #d44f4f; font-size: 0.825rem; font-weight: 500; display: none; margin-top: 0.5rem;">
+                ❌ Incorrect passkey. Access restricted to authorized admins.
               </div>
             </div>
-            <button type="submit" class="admin-submit-btn" style="width: 100%;">
-              <span>Authenticate &amp; Unlock Controls</span>
+            <button type="submit" class="admin-submit-btn" style="width: 100%; margin-top: 0.5rem;">
+              <span>🔐 Verify &amp; Unlock Controls</span>
             </button>
           </form>
         </div>

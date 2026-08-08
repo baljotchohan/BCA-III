@@ -451,13 +451,13 @@ async function _fbFetch(path) {
 async function deleteNoteLive(fbKey, e) {
   if (e) e.stopPropagation();
   if (!fbKey) return;
-  if (!confirm('Are you sure you want to delete this item?')) return;
+  if (!confirm('Are you sure you want to permanently delete this item?')) return;
 
-  showToast('⏳ Deleting...');
+  showToast('⏳ Removing item from cloud...');
   try {
     const res = await fetch(`${FIREBASE_DB}/lectures/${fbKey}.json`, { method: 'DELETE' });
     if (!res.ok) throw new Error('Delete failed');
-    showToast('🗑️ Deleted successfully!');
+    showToast('🗑️ Item deleted successfully from cloud!');
     renderDashboardLectures();
     const subject = BCA_3RD_SEM_DATA.subjects.find(s => s.id === activeSubjectId) || BCA_3RD_SEM_DATA.subjects[0];
     if (subject) {
@@ -465,20 +465,20 @@ async function deleteNoteLive(fbKey, e) {
       renderSubjectNotes(subject);
     }
   } catch (err) {
-    showToast('❌ Error: ' + err.message);
+    showToast('❌ Deletion failed: ' + err.message);
   }
 }
 
 async function deleteFirebaseItem(collection, fbKey, e) {
   if (e) e.stopPropagation();
   if (!fbKey) return;
-  if (!confirm('Are you sure you want to delete this item?')) return;
+  if (!confirm('Are you sure you want to permanently delete this item?')) return;
 
-  showToast('⏳ Deleting...');
+  showToast('⏳ Removing item from cloud...');
   try {
     const res = await fetch(`${FIREBASE_DB}/${collection}/${fbKey}.json`, { method: 'DELETE' });
     if (!res.ok) throw new Error('Delete failed');
-    showToast('🗑️ Deleted successfully!');
+    showToast('🗑️ Item deleted successfully from cloud!');
     // Refresh all views
     renderDashboardLectures();
     renderDashboardAnnouncements();
@@ -489,7 +489,7 @@ async function deleteFirebaseItem(collection, fbKey, e) {
       renderSubjectNotes(subject);
     }
   } catch (err) {
-    showToast('❌ Error: ' + err.message);
+    showToast('❌ Deletion failed: ' + err.message);
   }
 }
 
@@ -823,14 +823,14 @@ function openAdminModal() {
   if (isAuth) {
     authScreen.style.display = 'none';
     controlsScreen.style.display = 'block';
-    badge.innerText = 'Admin Unlocked 🔓';
+    badge.innerText = '🛡️ Admin Verified';
     badge.style.backgroundColor = 'var(--color-cactus)';
     badge.style.color = 'var(--text-main)';
     switchAdminTab('note');
   } else {
     authScreen.style.display = 'block';
     controlsScreen.style.display = 'none';
-    badge.innerText = 'Admin Access 🔒';
+    badge.innerText = '🔒 Admin Restricted';
     badge.style.backgroundColor = 'var(--color-oat)';
     badge.style.color = 'var(--color-coral)';
     setTimeout(() => {
@@ -853,7 +853,7 @@ function handleInAppAdminLogin(e) {
   if (passkey === ADMIN_PASSKEY) {
     sessionStorage.setItem(ADMIN_SESSION_KEY, 'authenticated');
     errEl.style.display = 'none';
-    showToast('Admin access authenticated! 🛡️');
+    showToast('🛡️ Admin verification successful! Portal unlocked.');
     openAdminModal();
   } else {
     errEl.style.display = 'block';
@@ -864,7 +864,7 @@ function handleInAppAdminLogin(e) {
 
 function handleInAppAdminLogout() {
   sessionStorage.removeItem(ADMIN_SESSION_KEY);
-  showToast('Logged out of Admin mode.');
+  showToast('🔒 Admin signed out successfully.');
   openAdminModal();
 }
 
@@ -942,7 +942,7 @@ async function publishAdminNote() {
   document.getElementById('adm-note-content').value = '';
   resetEditState('note');
 
-  showToast(isEditing ? '✅ Note updated!' : '✅ Digital Note published live!');
+  showToast(isEditing ? '✅ Digital note updated in cloud!' : '✅ Digital note published live to workspace!');
   closeAdminModal();
 
   if (activeSubjectId === subjectId) {
@@ -1007,7 +1007,7 @@ async function publishAdminLecture() {
   document.getElementById('adm-lec-link').value = '';
   resetEditState('lecture');
 
-  showToast(isEditing ? '✅ Lecture updated!' : '✅ Lecture log recorded & calendar updated!');
+  showToast(isEditing ? '✅ Lecture log updated in cloud!' : '✅ Lecture log recorded & calendar updated!');
   closeAdminModal();
 
   renderDashboardLectures();
@@ -1068,7 +1068,7 @@ async function publishAdminAnnouncement() {
   document.getElementById('adm-ann-msg').value = '';
   resetEditState('announcement');
 
-  showToast(isEditing ? '✅ Announcement updated!' : '✅ Announcement published to all students!');
+  showToast(isEditing ? '✅ Announcement updated in cloud!' : '✅ Announcement published to all students!');
   closeAdminModal();
   renderDashboardAnnouncements();
 }
