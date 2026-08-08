@@ -1095,6 +1095,26 @@
   <div id="toast" class="toast-popup"></div>
 
 
+  <!-- MOBILE NAVIGATION DRAWER -->
+  <div id="mobile-drawer-backdrop" class="mobile-drawer-backdrop"></div>
+  <div id="mobile-nav-drawer" class="mobile-nav-drawer">
+    <button id="mobile-drawer-close" class="mobile-drawer-close">&times;</button>
+    <div style="margin-top: 2rem;">
+      <div style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-subtle); margin-bottom: 0.75rem; font-weight: 600;">Subjects</div>
+      <a class="mobile-drawer-link" href="#" onclick="navigateToSubject('comp-arch')">Computer Architecture</a>
+      <a class="mobile-drawer-link" href="#" onclick="navigateToSubject('data-structures')">Data Structures</a>
+      <a class="mobile-drawer-link" href="#" onclick="navigateToSubject('numerical-methods')">Numerical Methods</a>
+      <a class="mobile-drawer-link" href="#" onclick="navigateToSubject('machine-learning')">Machine Learning</a>
+      <a class="mobile-drawer-link" href="#" onclick="navigateToSubject('english-3')">English-3</a>
+      <a class="mobile-drawer-link" href="#" onclick="navigateToSubject('web-dev')">Web Development</a>
+      <a class="mobile-drawer-link" href="#" onclick="navigateToSubject('backend-dev')">Backend Development</a>
+      <div style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-subtle); margin: 1.25rem 0 0.75rem 0; font-weight: 600;">Quick Links</div>
+      <a class="mobile-drawer-link" href="#study-widgets">Lecture Log</a>
+      <a class="mobile-drawer-link" href="#study-widgets">To-Do Tracker</a>
+      <a class="mobile-drawer-link" href="./Syllabus.pdf" target="_blank">Download Syllabus PDF</a>
+      <a class="mobile-drawer-link" href="#" onclick="openAdminModal()">Admin Portal</a>
+    </div>
+  </div>
 
   <!-- SCRIPTS -->
   <script src="syllabus-data.js"></script>

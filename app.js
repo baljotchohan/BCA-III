@@ -1,7 +1,7 @@
 /**
  * BCA 3 Hub — Panjab University 2026-27 Study Dashboard Controller
  * Full SPA Routing (Dedicated Subject Workspaces), Notion-Style Digital Notes Repository,
- * Interactive Calendar Switcher, Lab Practical Elimination, and Integrated In-App Admin Portal.
+ * Interactive Calendar Switcher and Integrated In-App Admin Portal.
  */
 
 let activeSubjectId = 'comp-arch';
@@ -434,11 +434,10 @@ function exportCurrentSubjectNotes() {
 }
 
 /* --- Live Firebase RTDB Helper Functions --- */
-const _RTDB = 'https://bca2nd-5c622-default-rtdb.firebaseio.com/bca3';
 
 async function _fbFetch(path) {
   try {
-    const res = await fetch(`${_RTDB}/${path}.json`);
+    const res = await fetch(`${FIREBASE_DB}/${path}.json`);
     const data = await res.json();
     if (!data || data.error) return [];
     return Object.entries(data).map(([fbKey, val]) => ({ ...val, fbKey }))
@@ -451,18 +450,45 @@ async function _fbFetch(path) {
 async function deleteNoteLive(fbKey, e) {
   if (e) e.stopPropagation();
   if (!fbKey) return;
-  if (!confirm('Are you sure you want to delete this note live?')) return;
+  if (!confirm('Are you sure you want to delete this item?')) return;
 
-  showToast('⏳ Deleting note...');
+  showToast('⏳ Deleting...');
   try {
-    const res = await fetch(`${_RTDB}/lectures/${fbKey}.json`, { method: 'DELETE' });
+    const res = await fetch(`${FIREBASE_DB}/lectures/${fbKey}.json`, { method: 'DELETE' });
     if (!res.ok) throw new Error('Delete failed');
-    showToast('🗑️ Note deleted live from website!');
+    showToast('🗑️ Deleted successfully!');
     renderDashboardLectures();
     const subject = BCA_3RD_SEM_DATA.subjects.find(s => s.id === activeSubjectId) || BCA_3RD_SEM_DATA.subjects[0];
-    if (subject) renderSubjectCalendar(subject);
+    if (subject) {
+      renderSubjectCalendar(subject);
+      renderSubjectNotes(subject);
+    }
   } catch (err) {
-    showToast('❌ Error deleting note: ' + err.message);
+    showToast('❌ Error: ' + err.message);
+  }
+}
+
+async function deleteFirebaseItem(collection, fbKey, e) {
+  if (e) e.stopPropagation();
+  if (!fbKey) return;
+  if (!confirm('Are you sure you want to delete this item?')) return;
+
+  showToast('⏳ Deleting...');
+  try {
+    const res = await fetch(`${FIREBASE_DB}/${collection}/${fbKey}.json`, { method: 'DELETE' });
+    if (!res.ok) throw new Error('Delete failed');
+    showToast('🗑️ Deleted successfully!');
+    // Refresh all views
+    renderDashboardLectures();
+    renderDashboardAnnouncements();
+    renderAdminManageData();
+    const subject = BCA_3RD_SEM_DATA.subjects.find(s => s.id === activeSubjectId) || BCA_3RD_SEM_DATA.subjects[0];
+    if (subject) {
+      renderSubjectCalendar(subject);
+      renderSubjectNotes(subject);
+    }
+  } catch (err) {
+    showToast('❌ Error: ' + err.message);
   }
 }
 
@@ -890,9 +916,9 @@ async function publishAdminNote() {
   existing.push(newNote);
   localStorage.setItem('bca3_custom_notes', JSON.stringify(existing));
 
-  // 2. Sync to Firebase
+  // 2. Sync to Firebase (POST to lectures.json so notes stream can read them)
   try {
-    await fetch(`${FIREBASE_DB}/notes.json`, {
+    await fetch(`${FIREBASE_DB}/lectures.json`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(newNote)
@@ -1021,37 +1047,84 @@ async function publishAdminAnnouncement() {
   renderDashboardAnnouncements();
 }
 
-function renderAdminManageData() {
+async function renderAdminManageData() {
   const container = document.getElementById('admin-manage-items-list');
   if (!container) return;
 
-  const notes = getCustomNotes();
-  const lectures = getCustomLectures();
+  container.innerHTML = `<div style="text-align: center; padding: 2rem; color: var(--text-subtle);">⏳ Loading data from Firebase...</div>`;
 
-  let html = `
-    <h4 style="font-size: 0.95rem; margin-bottom: 0.5rem;">Custom Notes (${notes.length})</h4>
-  `;
+  // Fetch ALL data live from Firebase
+  const [fbNotes, fbLectures, fbAnnouncements] = await Promise.all([
+    _fbFetch('notes'),
+    _fbFetch('lectures'),
+    _fbFetch('announcements')
+  ]);
 
-  if (!notes.length) {
-    html += `<p style="font-size: 0.8125rem; color: var(--text-subtle); margin-bottom: 1rem;">No custom published notes.</p>`;
+  // Combine Firebase + local notes
+  const localNotes = getCustomNotes();
+  const localLectures = getCustomLectures();
+
+  let html = '';
+
+  // --- NOTES SECTION ---
+  const allNotes = [...fbNotes, ...localNotes.filter(n => !fbNotes.some(fb => fb.id === n.id))];
+  html += `<h4 style="font-size: 0.95rem; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.4rem;">📝 Notes & Study Material <span style="font-size: 0.75rem; background: var(--bg-surface-subtle); padding: 0.15rem 0.5rem; border-radius: var(--radius-full); color: var(--text-subtle);">${allNotes.length}</span></h4>`;
+
+  if (!allNotes.length) {
+    html += `<p style="font-size: 0.8125rem; color: var(--text-subtle); margin-bottom: 1rem;">No published notes yet.</p>`;
   } else {
-    html += notes.map(n => `
-      <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.5rem 0.75rem; background: var(--bg-surface-subtle); border-radius: var(--radius-sm); margin-bottom: 0.4rem; font-size: 0.85rem;">
-        <span>📝 <strong>${escapeHtml(n.title)}</strong> (${n.subjectId})</span>
-        <button class="todo-del-btn" onclick="deleteCustomNote('${n.id}')" title="Delete Note">✕</button>
-      </div>
-    `).join('');
+    html += allNotes.map(n => {
+      const deleteAction = n.fbKey
+        ? `deleteFirebaseItem('${n.isAdminPublished ? 'lectures' : 'notes'}', '${n.fbKey}', event)`
+        : `deleteCustomNote('${n.id}')`;
+      const subjectLabel = n.subjectId ? getSubjectName(n.subjectId) || n.subjectId : (n.subject || 'General');
+      return `
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.55rem 0.75rem; background: var(--bg-surface-subtle); border-radius: var(--radius-sm); margin-bottom: 0.35rem; font-size: 0.85rem;">
+          <div style="min-width: 0; flex: 1; overflow: hidden;">
+            <strong style="word-break: break-word;">${escapeHtml(n.title || n.topic || 'Untitled')}</strong>
+            <div style="font-size: 0.75rem; color: var(--text-subtle); margin-top: 0.15rem;">${escapeHtml(subjectLabel)} · ${n.date || '—'}${n.fbKey ? ' · <span style="color: #2ecc71;">☁️ Firebase</span>' : ' · 💾 Local'}</div>
+          </div>
+          <button class="todo-del-btn" onclick="${deleteAction}" title="Delete" style="flex-shrink: 0; margin-left: 0.5rem;">🗑️</button>
+        </div>`;
+    }).join('');
   }
 
-  html += `<h4 style="font-size: 0.95rem; margin: 1rem 0 0.5rem 0;">Custom Lectures (${lectures.length})</h4>`;
+  // --- LECTURES SECTION ---
+  const allLectures = [...fbLectures.filter(l => !l.isAdminPublished), ...localLectures.filter(l => !fbLectures.some(fb => fb.id === l.id))];
+  html += `<h4 style="font-size: 0.95rem; margin: 1.25rem 0 0.5rem 0; display: flex; align-items: center; gap: 0.4rem;">📅 Lecture Logs <span style="font-size: 0.75rem; background: var(--bg-surface-subtle); padding: 0.15rem 0.5rem; border-radius: var(--radius-full); color: var(--text-subtle);">${allLectures.length}</span></h4>`;
 
-  if (!lectures.length) {
-    html += `<p style="font-size: 0.8125rem; color: var(--text-subtle);">No custom published lectures.</p>`;
+  if (!allLectures.length) {
+    html += `<p style="font-size: 0.8125rem; color: var(--text-subtle); margin-bottom: 1rem;">No lecture logs recorded.</p>`;
   } else {
-    html += lectures.map(l => `
-      <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.5rem 0.75rem; background: var(--bg-surface-subtle); border-radius: var(--radius-sm); margin-bottom: 0.4rem; font-size: 0.85rem;">
-        <span>📅 <strong>${escapeHtml(l.topic)}</strong> (${l.subjectId} • ${l.date})</span>
-        <button class="todo-del-btn" onclick="deleteCustomLecture('${l.id}')" title="Delete Lecture">✕</button>
+    html += allLectures.map(l => {
+      const deleteAction = l.fbKey
+        ? `deleteFirebaseItem('lectures', '${l.fbKey}', event)`
+        : `deleteCustomLecture('${l.id}')`;
+      const subjectLabel = l.subjectId ? getSubjectName(l.subjectId) || l.subjectId : (l.subject ? getSubjectName(l.subject) || l.subject : 'General');
+      return `
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.55rem 0.75rem; background: var(--bg-surface-subtle); border-radius: var(--radius-sm); margin-bottom: 0.35rem; font-size: 0.85rem;">
+          <div style="min-width: 0; flex: 1; overflow: hidden;">
+            <strong style="word-break: break-word;">${escapeHtml(l.topic || 'Untitled')}</strong>
+            <div style="font-size: 0.75rem; color: var(--text-subtle); margin-top: 0.15rem;">${escapeHtml(subjectLabel)} · ${l.date || '—'}${l.fbKey ? ' · <span style="color: #2ecc71;">☁️ Firebase</span>' : ' · 💾 Local'}</div>
+          </div>
+          <button class="todo-del-btn" onclick="${deleteAction}" title="Delete" style="flex-shrink: 0; margin-left: 0.5rem;">🗑️</button>
+        </div>`;
+    }).join('');
+  }
+
+  // --- ANNOUNCEMENTS SECTION ---
+  html += `<h4 style="font-size: 0.95rem; margin: 1.25rem 0 0.5rem 0; display: flex; align-items: center; gap: 0.4rem;">📢 Announcements <span style="font-size: 0.75rem; background: var(--bg-surface-subtle); padding: 0.15rem 0.5rem; border-radius: var(--radius-full); color: var(--text-subtle);">${fbAnnouncements.length}</span></h4>`;
+
+  if (!fbAnnouncements.length) {
+    html += `<p style="font-size: 0.8125rem; color: var(--text-subtle);">No announcements posted.</p>`;
+  } else {
+    html += fbAnnouncements.map(a => `
+      <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.55rem 0.75rem; background: var(--bg-surface-subtle); border-radius: var(--radius-sm); margin-bottom: 0.35rem; font-size: 0.85rem;">
+        <div style="min-width: 0; flex: 1; overflow: hidden;">
+          <strong style="word-break: break-word;">${escapeHtml(a.title || 'Untitled')}</strong>
+          <div style="font-size: 0.75rem; color: var(--text-subtle); margin-top: 0.15rem;">${a.category || 'notice'} · ${a.date || '—'} · <span style="color: #2ecc71;">☁️ Firebase</span></div>
+        </div>
+        <button class="todo-del-btn" onclick="deleteFirebaseItem('announcements', '${a.fbKey}', event)" title="Delete" style="flex-shrink: 0; margin-left: 0.5rem;">🗑️</button>
       </div>
     `).join('');
   }
@@ -1062,7 +1135,7 @@ function renderAdminManageData() {
 function deleteCustomNote(noteId) {
   let notes = getCustomNotes().filter(n => n.id !== noteId);
   localStorage.setItem('bca3_custom_notes', JSON.stringify(notes));
-  showToast('Note deleted.');
+  showToast('🗑️ Note deleted.');
   renderAdminManageData();
   const subject = BCA_3RD_SEM_DATA.subjects.find(s => s.id === activeSubjectId);
   if (subject) renderSubjectNotes(subject);
@@ -1071,7 +1144,7 @@ function deleteCustomNote(noteId) {
 function deleteCustomLecture(lecId) {
   let lectures = getCustomLectures().filter(l => l.id !== lecId);
   localStorage.setItem('bca3_custom_lectures', JSON.stringify(lectures));
-  showToast('Lecture log deleted.');
+  showToast('🗑️ Lecture deleted.');
   renderAdminManageData();
   const subject = BCA_3RD_SEM_DATA.subjects.find(s => s.id === activeSubjectId);
   if (subject) renderSubjectCalendar(subject);
@@ -1105,32 +1178,22 @@ function getCustomLecturesForSubject(subjectId) {
 // Background sync from Firebase Realtime Database
 async function syncFirebaseData() {
   try {
-    // 1. Sync notes
-    const resNotes = await fetch(`${FIREBASE_DB}/notes.json`);
-    if (resNotes.ok) {
-      const data = await resNotes.json();
-      if (data) {
-        const cloudNotes = Object.values(data);
-        localStorage.setItem('bca3_custom_notes', JSON.stringify(cloudNotes));
-      }
-    }
-
-    // 2. Sync lectures
+    // 1. Sync lectures (notes are stored here too)
     const resLec = await fetch(`${FIREBASE_DB}/lectures.json`);
     if (resLec.ok) {
       const data = await resLec.json();
       if (data) {
-        const cloudLecs = Object.values(data);
+        const cloudLecs = Object.entries(data).map(([fbKey, val]) => ({ ...val, fbKey }));
         localStorage.setItem('bca3_custom_lectures', JSON.stringify(cloudLecs));
       }
     }
 
-    // 3. Sync announcements
+    // 2. Sync announcements
     const resAnn = await fetch(`${FIREBASE_DB}/announcements.json`);
     if (resAnn.ok) {
       const data = await resAnn.json();
       if (data) {
-        const cloudAnn = Object.values(data);
+        const cloudAnn = Object.entries(data).map(([fbKey, val]) => ({ ...val, fbKey }));
         localStorage.setItem('bca3_announcements_cache', JSON.stringify(cloudAnn));
         renderDashboardAnnouncements();
       }
@@ -1370,7 +1433,29 @@ function filterSubjects(filter) {
 }
 
 function initMobileDrawer() {
-  // Reserved for mobile drawer interactions
+  const hamburger = document.querySelector('.SiteHeader-module-scss-module__zKj4Ca__mobileIcon');
+  const backdrop = document.getElementById('mobile-drawer-backdrop');
+  const closeBtn = document.getElementById('mobile-drawer-close');
+
+  function openDrawer() {
+    const drawer = document.getElementById('mobile-nav-drawer');
+    if (drawer) drawer.classList.add('open');
+    if (backdrop) backdrop.classList.add('open');
+  }
+  function closeDrawer() {
+    const drawer = document.getElementById('mobile-nav-drawer');
+    if (drawer) drawer.classList.remove('open');
+    if (backdrop) backdrop.classList.remove('open');
+  }
+
+  if (hamburger) hamburger.addEventListener('click', openDrawer);
+  if (backdrop) backdrop.addEventListener('click', closeDrawer);
+  if (closeBtn) closeBtn.addEventListener('click', closeDrawer);
+
+  // Close drawer when a link is clicked
+  document.querySelectorAll('.mobile-drawer-link').forEach(link => {
+    link.addEventListener('click', closeDrawer);
+  });
 }
 
 function showToast(msg) {
