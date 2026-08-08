@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover"/>
+  <title>Admin — BCA III Hub</title>
+  <meta name="robots" content="noindex, nofollow"/>
+  <meta name="theme-color" content="#141413"/>
+
+  <link rel="icon" type="image/svg+xml" href="../favicon.svg"/>
+  <link rel="icon" type="image/png" sizes="64x64" href="../favicon.png"/>
+  <link rel="apple-touch-icon" sizes="180x180" href="../apple-touch-icon.png"/>
+  <link rel="stylesheet" href="../styles.css"/>
+  <link rel="stylesheet" href="admin.css"/>
+</head>
+<body>
+
+  <!-- ADMIN LOGIN SCREEN -->
+  <div id="admin-lock-screen" class="admin-lock-screen">
+    <div class="admin-lock-card">
+      <div class="admin-lock-logo">
+        <div class="brand-name-wrap">
+          <span class="brand-main-title">BCA<span class="brand-roman-accent">III</span></span>
+          <span class="brand-hub-badge">Admin</span>
+        </div>
+      </div>
+      <h1 class="admin-lock-title serif">Admin Access</h1>
+      <p class="admin-lock-subtitle">Restricted to course administrators only</p>
+      <form id="admin-login-form" class="admin-login-form" onsubmit="handleLogin(event)">
+        <div class="admin-input-group">
+          <label class="admin-input-label" for="passkey-input">Admin Passkey</label>
+          <div class="admin-input-wrapper">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="admin-input-icon">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+            </svg>
+            <input type="password" id="passkey-input" class="admin-input" placeholder="Enter admin passkey..." autocomplete="current-password" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+            <button type="button" class="admin-eye-btn" onclick="togglePasskeyVisibility()" title="Show/Hide passkey">
+              <svg id="eye-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+              </svg>
+            </button>
+          </div>
+          <div class="admin-input-error" id="login-error">Incorrect passkey. Access denied.</div>
+        </div>
+        <button type="submit" class="admin-login-btn">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
+            <polyline points="10 17 15 12 10 7"></polyline>
+            <line x1="15" y1="12" x2="3" y2="12"></line>
+          </svg>
+          Authenticate
+        </button>
+      </form>
+      <a href="../" class="admin-back-link">← Back to Student Hub</a>
+    </div>
+  </div>
+
+  <!-- ADMIN DASHBOARD (hidden until login) -->
+  <div id="admin-dashboard" class="admin-dashboard" style="display:none;">
+
+    <!-- ADMIN HEADER -->
+    <header class="admin-header">
+      <div class="admin-header-inner">
+        <a href="../" class="brand-header-link">
+          <div class="brand-name-wrap">
+            <span class="brand-main-title">BCA<span class="brand-roman-accent">III</span></span>
+            <span class="brand-hub-badge">Hub</span>
+          </div>
+        </a>
+        <div class="admin-header-right">
+          <span class="admin-badge">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+            </svg>
+            Admin Mode
+          </span>
+          <button class="admin-theme-btn" onclick="toggleAdminTheme()" title="Toggle theme" id="admin-theme-btn">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+            </svg>
+          </button>
+          <button class="admin-logout-btn" onclick="logout()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+              <polyline points="16 17 21 12 16 7"></polyline>
+              <line x1="21" y1="12" x2="9" y2="12"></line>
+            </svg>
+            Logout
+          </button>
+        </div>
+      </div>
+      <!-- ADMIN TABS -->
+      <div class="admin-tabs-bar">
+        <button class="admin-tab active" data-tab="announcements" onclick="switchTab('announcements')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8h1a4 4 0 0 1 0 8h-1"></path><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"></path><line x1="6" y1="1" x2="6" y2="4"></line><line x1="10" y1="1" x2="10" y2="4"></line><line x1="14" y1="1" x2="14" y2="4"></line></svg>
+          Announcements
+        </button>
+        <button class="admin-tab" data-tab="lectures" onclick="switchTab('lectures')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+          Lecture Logs
+        </button>
+        <button class="admin-tab" data-tab="agenda" onclick="switchTab('agenda')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+          Class Agenda
+        </button>
+        <button class="admin-tab" data-tab="todos" onclick="switchTab('todos')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+          Study Tasks
+        </button>
+      </div>
+    </header>
+
+    <!-- ADMIN CONTENT AREA -->
+    <main class="admin-main">
+
+      <!-- TAB 1: ANNOUNCEMENTS -->
+      <section id="tab-announcements" class="admin-tab-panel active">
+        <div class="admin-panel-header">
+          <div>
+            <h2 class="admin-panel-title serif">Class Announcements</h2>
+            <p class="admin-panel-desc">Post notices, exam alerts, assignment reminders & notes that appear on the main student hub.</p>
+          </div>
+          <button class="admin-action-btn primary" onclick="openAnnouncementForm()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            New Announcement
+          </button>
+        </div>
+
+        <!-- Add Announcement Form -->
+        <div id="announcement-form" class="admin-form-card" style="display:none;">
+          <h3 class="admin-form-title">New Announcement</h3>
+          <div class="admin-form-grid">
+            <div class="admin-field">
+              <label class="admin-label">Title *</label>
+              <input type="text" id="ann-title" class="admin-input-field" placeholder="e.g. Assignment 2 Deadline Extended"/>
+            </div>
+            <div class="admin-field">
+              <label class="admin-label">Category</label>
+              <select id="ann-category" class="admin-input-field">
+                <option value="notice">📌 General Notice</option>
+                <option value="exam">📅 Exam / Date Sheet</option>
+                <option value="assignment">📝 Assignment</option>
+                <option value="lab">🔬 Lab Practical</option>
+                <option value="urgent">🚨 Urgent / Important</option>
+              </select>
+            </div>
+          </div>
+          <div class="admin-field">
+            <label class="admin-label">Message *</label>
+            <textarea id="ann-message" class="admin-textarea" placeholder="Full announcement text..." rows="4"></textarea>
+          </div>
+          <div class="admin-field">
+            <label class="admin-label">Link / URL (optional)</label>
+            <input type="url" id="ann-link" class="admin-input-field" placeholder="https://... (link to resource, form, or PDF)"/>
+          </div>
+          <div class="admin-form-actions">
+            <button class="admin-action-btn" onclick="closeAnnouncementForm()">Cancel</button>
+            <button class="admin-action-btn primary" onclick="saveAnnouncement()">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+              Publish Announcement
+            </button>
+          </div>
+        </div>
+
+        <div id="announcements-list" class="admin-items-list">
+          <!-- Populated dynamically -->
+        </div>
+      </section>
+
+      <!-- TAB 2: LECTURE LOGS -->
+      <section id="tab-lectures" class="admin-tab-panel">
+        <div class="admin-panel-header">
+          <div>
+            <h2 class="admin-panel-title serif">Lecture Logs</h2>
+            <p class="admin-panel-desc">Add and manage class lecture logs across all 7 subjects. All logs appear in student subject modals.</p>
+          </div>
+          <button class="admin-action-btn primary" onclick="openLectureForm()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            Add Lecture
+          </button>
+        </div>
+
+        <!-- Add Lecture Form -->
+        <div id="lecture-form" class="admin-form-card" style="display:none;">
+          <h3 class="admin-form-title">Add Lecture Entry</h3>
+          <div class="admin-form-grid">
+            <div class="admin-field">
+              <label class="admin-label">Subject *</label>
+              <select id="lec-subject" class="admin-input-field">
+                <option value="comp-arch">Computer Architecture (301)</option>
+                <option value="data-structures">Data Structures (302)</option>
+                <option value="numerical-methods">Numerical Methods (303)</option>
+                <option value="machine-learning">Machine Learning (304)</option>
+                <option value="english-3">English-3 (AEC)</option>
+                <option value="web-dev">Web Development (MDC)</option>
+                <option value="backend-dev">Backend Web Dev (SEC)</option>
+              </select>
+            </div>
+            <div class="admin-field">
+              <label class="admin-label">Date *</label>
+              <input type="date" id="lec-date" class="admin-input-field"/>
+            </div>
+            <div class="admin-field">
+              <label class="admin-label">Time</label>
+              <input type="time" id="lec-time" class="admin-input-field"/>
+            </div>
+            <div class="admin-field">
+              <label class="admin-label">Unit</label>
+              <select id="lec-unit" class="admin-input-field">
+                <option value="Unit I">Unit I</option>
+                <option value="Unit II">Unit II</option>
+                <option value="Unit III">Unit III</option>
+                <option value="Unit IV">Unit IV</option>
+                <option value="Lab">Lab / Practical</option>
+              </select>
+            </div>
+          </div>
+          <div class="admin-field">
+            <label class="admin-label">Topic Covered *</label>
+            <input type="text" id="lec-topic" class="admin-input-field" placeholder="e.g. Register Transfer Language, ALU Design"/>
+          </div>
+          <div class="admin-field">
+            <label class="admin-label">Notes / Description</label>
+            <textarea id="lec-notes" class="admin-textarea" placeholder="Detailed notes, key points from lecture..." rows="3"></textarea>
+          </div>
+          <div class="admin-field">
+            <label class="admin-label">Resource Link (optional)</label>
+            <input type="url" id="lec-link" class="admin-input-field" placeholder="https://... PDF, slides, video link"/>
+          </div>
+          <div class="admin-form-actions">
+            <button class="admin-action-btn" onclick="closeLectureForm()">Cancel</button>
+            <button class="admin-action-btn primary" onclick="saveLecture()">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path></svg>
+              Save Lecture Log
+            </button>
+          </div>
+        </div>
+
+        <!-- Subject Filter -->
+        <div class="admin-filter-bar">
+          <button class="filter-pill active" onclick="filterLectures('all', this)">All Subjects</button>
+          <button class="filter-pill" onclick="filterLectures('comp-arch', this)">Computer Arch</button>
+          <button class="filter-pill" onclick="filterLectures('data-structures', this)">Data Structures</button>
+          <button class="filter-pill" onclick="filterLectures('numerical-methods', this)">Numerical Methods</button>
+          <button class="filter-pill" onclick="filterLectures('machine-learning', this)">Machine Learning</button>
+          <button class="filter-pill" onclick="filterLectures('english-3', this)">English-3</button>
+          <button class="filter-pill" onclick="filterLectures('web-dev', this)">Web Dev</button>
+          <button class="filter-pill" onclick="filterLectures('backend-dev', this)">Backend Dev</button>
+        </div>
+
+        <div id="lectures-list" class="admin-items-list">
+          <!-- Populated dynamically -->
+        </div>
+      </section>
+
+      <!-- TAB 3: CLASS AGENDA -->
+      <section id="tab-agenda" class="admin-tab-panel">
+        <div class="admin-panel-header">
+          <div>
+            <h2 class="admin-panel-title serif">Today's Class Agenda</h2>
+            <p class="admin-panel-desc">Manage the agenda visible to all students on the main hub (auto-pulled from lectures on today's date).</p>
+          </div>
+          <button class="admin-action-btn primary" onclick="openAgendaForm()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            Add Agenda Item
+          </button>
+        </div>
+
+        <div id="agenda-form" class="admin-form-card" style="display:none;">
+          <h3 class="admin-form-title">Add Agenda Item</h3>
+          <div class="admin-form-grid">
+            <div class="admin-field">
+              <label class="admin-label">Subject</label>
+              <select id="agenda-subject" class="admin-input-field">
+                <option value="comp-arch">Computer Architecture</option>
+                <option value="data-structures">Data Structures</option>
+                <option value="numerical-methods">Numerical Methods</option>
+                <option value="machine-learning">Machine Learning</option>
+                <option value="english-3">English-3</option>
+                <option value="web-dev">Web Development</option>
+                <option value="backend-dev">Backend Web Dev</option>
+              </select>
+            </div>
+            <div class="admin-field">
+              <label class="admin-label">Date</label>
+              <input type="date" id="agenda-date" class="admin-input-field"/>
+            </div>
+            <div class="admin-field">
+              <label class="admin-label">Time</label>
+              <input type="time" id="agenda-time" class="admin-input-field"/>
+            </div>
+            <div class="admin-field">
+              <label class="admin-label">Room / Location</label>
+              <input type="text" id="agenda-room" class="admin-input-field" placeholder="e.g. Room 203, Lab B"/>
+            </div>
+          </div>
+          <div class="admin-field">
+            <label class="admin-label">Topic / Agenda</label>
+            <input type="text" id="agenda-topic" class="admin-input-field" placeholder="What will be covered today?"/>
+          </div>
+          <div class="admin-form-actions">
+            <button class="admin-action-btn" onclick="closeAgendaForm()">Cancel</button>
+            <button class="admin-action-btn primary" onclick="saveAgendaItem()">Save Agenda Item</button>
+          </div>
+        </div>
+
+        <div id="agenda-list" class="admin-items-list">
+          <!-- Populated dynamically -->
+        </div>
+      </section>
+
+      <!-- TAB 4: STUDY TASKS -->
+      <section id="tab-todos" class="admin-tab-panel">
+        <div class="admin-panel-header">
+          <div>
+            <h2 class="admin-panel-title serif">Study Tasks</h2>
+            <p class="admin-panel-desc">Manage the study task list shown to students on the main hub.</p>
+          </div>
+          <button class="admin-action-btn primary" onclick="openTodoForm()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            Add Task
+          </button>
+        </div>
+
+        <div id="todo-form" class="admin-form-card" style="display:none;">
+          <h3 class="admin-form-title">New Study Task</h3>
+          <div class="admin-form-grid">
+            <div class="admin-field">
+              <label class="admin-label">Task *</label>
+              <input type="text" id="todo-text" class="admin-input-field" placeholder="e.g. Complete Unit II DS notes"/>
+            </div>
+            <div class="admin-field">
+              <label class="admin-label">Priority</label>
+              <select id="todo-priority" class="admin-input-field">
+                <option value="high">🔴 High Priority</option>
+                <option value="medium" selected>🟡 Medium Priority</option>
+                <option value="low">🟢 Low Priority</option>
+              </select>
+            </div>
+            <div class="admin-field">
+              <label class="admin-label">Due Date (optional)</label>
+              <input type="date" id="todo-due" class="admin-input-field"/>
+            </div>
+            <div class="admin-field">
+              <label class="admin-label">Subject</label>
+              <select id="todo-subject" class="admin-input-field">
+                <option value="">All / General</option>
+                <option value="comp-arch">Computer Architecture</option>
+                <option value="data-structures">Data Structures</option>
+                <option value="numerical-methods">Numerical Methods</option>
+                <option value="machine-learning">Machine Learning</option>
+                <option value="english-3">English-3</option>
+                <option value="web-dev">Web Dev</option>
+                <option value="backend-dev">Backend Dev</option>
+              </select>
+            </div>
+          </div>
+          <div class="admin-form-actions">
+            <button class="admin-action-btn" onclick="closeTodoForm()">Cancel</button>
+            <button class="admin-action-btn primary" onclick="saveTodo()">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"></polyline></svg>
+              Add Task
+            </button>
+          </div>
+        </div>
+
+        <div id="todos-list" class="admin-items-list">
+          <!-- Populated dynamically -->
+        </div>
+      </section>
+
+    </main>
+
+    <!-- ADMIN TOAST -->
+    <div id="admin-toast" class="admin-toast"></div>
+
+  </div>
+
+  <script src="admin.js"></script>
+</body>
+</html>

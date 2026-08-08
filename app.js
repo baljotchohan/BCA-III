@@ -280,37 +280,92 @@ function saveNewLecture() {
   showToast(`✓ Class record logged for ${subject.title}!`);
 }
 
-/* --- 6. Dashboard Widgets: Today's Agenda & Study To-Dos --- */
+/* --- 6. Dashboard Widgets: Admin-Driven Agenda, Todos & Announcements --- */
 function initDashboardWidgets() {
+  renderAnnouncementsBanner();
   renderAgendaWidget();
   renderTodoWidget();
 }
 
+// Pull admin-controlled announcements and show as banner
+function renderAnnouncementsBanner() {
+  const banner    = document.getElementById('announcements-banner');
+  const container = document.getElementById('announcements-container');
+  if (!banner || !container) return;
+
+  let list = [];
+  try { list = JSON.parse(localStorage.getItem('bca_announcements')) || []; } catch {}
+
+  if (!list.length) { banner.style.display = 'none'; return; }
+
+  banner.style.display = 'block';
+  const catIcons = { notice:'📌', exam:'📅', assignment:'📝', lab:'🔬', urgent:'🚨' };
+
+  container.innerHTML = list.slice(0, 5).map(a => `
+    <div class="announcement-card ${a.category === 'urgent' ? 'urgent' : ''}" style="
+      background:var(--bg-surface);
+      border:1px solid ${a.category==='urgent'?'rgba(212,79,79,0.4)':'var(--border-color)'};
+      border-left:3px solid ${a.category==='urgent'?'#d44f4f':'var(--color-coral)'};
+      border-radius:var(--radius-md);
+      padding:1rem 1.25rem;
+      margin-bottom:0.65rem;
+      display:flex; align-items:flex-start; gap:0.85rem;
+    ">
+      <span style="font-size:1.1rem; flex-shrink:0;">${catIcons[a.category] || '📌'}</span>
+      <div style="flex:1; min-width:0;">
+        <div style="font-size:0.9375rem; font-weight:600; color:var(--text-main); margin-bottom:0.2rem;">${escHtmlMain(a.title)}</div>
+        <div style="font-size:0.85rem; color:var(--text-muted); line-height:1.45;">${escHtmlMain(a.message)}</div>
+        ${a.link ? `<a href="${escHtmlMain(a.link)}" target="_blank" style="font-size:0.8rem; color:var(--color-coral); text-decoration:none; margin-top:0.3rem; display:inline-block;">↗ View Resource</a>` : ''}
+      </div>
+      <span style="font-size:0.75rem; color:var(--text-subtle); flex-shrink:0; margin-top:0.15rem;">${escHtmlMain(a.date)}</span>
+    </div>
+  `).join('');
+}
+
+function escHtmlMain(str) {
+  if (!str) return '';
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+            .replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+}
+
+// Render Today's Class Agenda from admin data
 function renderAgendaWidget() {
   const container = document.getElementById('agenda-items-container');
   if (!container) return;
 
-  let allLecs = [];
-  BCA_3RD_SEM_DATA.subjects.forEach(sub => {
-    const stored = JSON.parse(localStorage.getItem(`bca_lectures_${sub.id}`) || 'null') || sub.lectures || [];
-    stored.forEach(l => allLecs.push({ ...l, subjectTitle: sub.title, subjectId: sub.id }));
-  });
+  const today = new Date().toISOString().split('T')[0];
 
-  if (allLecs.length === 0) {
-    container.innerHTML = `
-      <div style="padding:1.25rem; text-align:center; color:var(--text-muted); font-size:0.875rem;">
-        No lectures scheduled yet. Click "+ Log Class" to add one!
-      </div>
-    `;
+  // Pull from admin agenda store
+  let adminAgenda = [];
+  try { adminAgenda = JSON.parse(localStorage.getItem('bca_admin_agenda')) || []; } catch {}
+
+  // Also pull today's lectures from admin lecture logs
+  let adminLectures = [];
+  try { adminLectures = JSON.parse(localStorage.getItem('bca_lecture_logs')) || []; } catch {}
+
+  const todayLectures = adminLectures
+    .filter(l => l.date === today)
+    .map(l => ({ ...l, topic: l.topic, subjectTitle: SUBJECT_MAP[l.subject] || l.subject }));
+
+  const todayAgenda = adminAgenda
+    .filter(a => a.date === today)
+    .map(a => ({ ...a, subjectTitle: SUBJECT_MAP[a.subject] || a.subject }));
+
+  const combined = [...todayAgenda, ...todayLectures];
+
+  if (!combined.length) {
+    container.innerHTML = `<div style="padding:1.25rem; text-align:center; color:var(--text-muted); font-size:0.875rem;">
+      No classes scheduled for today — check back later! 📅
+    </div>`;
     return;
   }
 
-  container.innerHTML = allLecs.slice(0, 4).map(l => `
-    <div class="agenda-item" onclick="openSubjectModal('${l.subjectId}')" style="cursor:pointer;">
+  container.innerHTML = combined.slice(0, 5).map(item => `
+    <div class="agenda-item" onclick="openSubjectModal('${item.subject}')" style="cursor:pointer;">
       <div>
-        <div class="agenda-time">${l.date} • ${l.time || '10:00 AM'}</div>
-        <div class="agenda-topic">${l.topic}</div>
-        <div style="font-size:0.75rem; color:var(--text-subtle);">${l.subjectTitle}</div>
+        <div class="agenda-time">${item.date} • ${item.time ? formatTimeSt(item.time) : ''}</div>
+        <div class="agenda-topic">${escHtmlMain(item.topic)}</div>
+        <div style="font-size:0.75rem; color:var(--text-subtle);">${item.subjectTitle}${item.room ? ' • 📍 ' + item.room : ''}</div>
       </div>
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--text-subtle);">
         <polyline points="9 18 15 12 9 6"></polyline>
@@ -319,54 +374,48 @@ function renderAgendaWidget() {
   `).join('');
 }
 
+// Render admin-controlled Study Tasks
 function renderTodoWidget() {
   const container = document.getElementById('todo-items-container');
   if (!container) return;
 
-  const todos = JSON.parse(localStorage.getItem('bca_study_todos') || 'null') || BCA_3RD_SEM_DATA.todos;
+  let todos = [];
+  try { todos = JSON.parse(localStorage.getItem('bca_admin_todos')) || []; } catch {}
+
+  if (!todos.length) {
+    container.innerHTML = `<div style="padding:1.25rem; text-align:center; color:var(--text-muted); font-size:0.875rem;">
+      No study tasks posted yet — check back later! 📚
+    </div>`;
+    return;
+  }
+
+  const prioColors = { high: '#d44f4f', medium: 'var(--color-coral)', low: 'var(--text-muted)' };
 
   container.innerHTML = todos.map(t => `
-    <div class="todo-item-row ${t.done ? 'completed' : ''}" id="todo-row-${t.id}">
-      <input type="checkbox" class="todo-checkbox" ${t.done ? 'checked' : ''} onchange="toggleTodoItem(${t.id})"/>
-      <span class="todo-text">${t.text}</span>
-      <span class="todo-subject-badge">${t.subject}</span>
+    <div class="todo-item-row ${t.done ? 'completed' : ''}" style="pointer-events:none; opacity:${t.done ? '0.6' : '1'};">
+      <input type="checkbox" class="todo-checkbox" ${t.done ? 'checked' : ''} style="pointer-events:none;" readonly/>
+      <span class="todo-text" style="${t.done ? 'text-decoration:line-through;' : ''}">${escHtmlMain(t.text)}</span>
+      ${t.subject ? `<span class="todo-subject-badge">${escHtmlMain(SUBJECT_MAP[t.subject] || t.subject)}</span>` : ''}
+      ${t.priority === 'high' ? '<span style="font-size:0.7rem; color:#d44f4f; font-weight:700;">HIGH</span>' : ''}
     </div>
   `).join('');
 }
 
-window.toggleTodoItem = function(todoId) {
-  const todos = JSON.parse(localStorage.getItem('bca_study_todos') || 'null') || BCA_3RD_SEM_DATA.todos;
-  const item = todos.find(t => t.id === todoId);
-  if (item) {
-    item.done = !item.done;
-    localStorage.setItem('bca_study_todos', JSON.stringify(todos));
-    renderTodoWidget();
-    showToast(item.done ? '✓ Task marked completed!' : 'Task active');
-  }
-};
+function formatTimeSt(timeStr) {
+  if (!timeStr) return '';
+  const [h, m] = timeStr.split(':').map(Number);
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  return `${h % 12 || 12}:${String(m).padStart(2,'0')} ${ampm}`;
+}
 
-window.openAddTodoPrompt = function() {
-  const task = prompt('Enter new study task / revision goal:');
-  if (!task || !task.trim()) return;
-
-  const todos = JSON.parse(localStorage.getItem('bca_study_todos') || 'null') || BCA_3RD_SEM_DATA.todos;
-  const newTodo = {
-    id: Date.now(),
-    text: task.trim(),
-    subject: 'Core BCA III',
-    done: false,
-    date: new Date().toISOString().split('T')[0]
-  };
-
-  todos.unshift(newTodo);
-  localStorage.setItem('bca_study_todos', JSON.stringify(todos));
-  renderTodoWidget();
-  showToast('✓ New study goal added to your tracker!');
-};
-
-window.openAddLectureModal = function() {
-  openSubjectModal('comp-arch');
-  switchSubjectTab('lectures');
+const SUBJECT_MAP = {
+  'comp-arch': 'Computer Architecture',
+  'data-structures': 'Data Structures',
+  'numerical-methods': 'Numerical Methods',
+  'machine-learning': 'Machine Learning',
+  'english-3': 'English-3',
+  'web-dev': 'Web Development',
+  'backend-dev': 'Backend Web Dev',
 };
 
 /* --- 7. Global Command Palette (⌘K) --- */

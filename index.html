@@ -503,44 +503,36 @@
 
     </div>
 
-    <!-- 4. DASHBOARD WIDGETS: TODAY'S AGENDA & INTERACTIVE STUDY TO-DO LIST -->
+    <!-- 4. ADMIN-CONTROLLED ANNOUNCEMENTS BANNER (shown when admin has posted) -->
+    <div id="announcements-banner" class="page-wrapper" style="display:none; padding-top:0;">
+      <div id="announcements-container"></div>
+    </div>
+
+    <!-- 4b. DASHBOARD WIDGETS: TODAY'S AGENDA & STUDY TO-DO LIST (Admin-Controlled) -->
     <div class="page-wrapper study-widgets-grid" id="study-widgets">
       
-      <!-- WIDGET 1: TODAY'S AGENDA -->
+      <!-- WIDGET 1: TODAY'S CLASS AGENDA (Admin-populated) -->
       <div class="widget-card">
         <div class="widget-header">
           <div class="widget-title">Today's Class Agenda</div>
-          <button class="widget-action-btn" onclick="openAddLectureModal()">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <line x1="12" y1="5" x2="12" y2="19"></line>
-              <line x1="5" y1="12" x2="19" y2="12"></line>
-            </svg>
-            <span>Log Class</span>
-          </button>
         </div>
         <div class="widget-items-list" id="agenda-items-container">
-          <!-- Populated dynamically by app.js -->
+          <!-- Populated dynamically from admin data -->
         </div>
       </div>
 
-      <!-- WIDGET 2: STUDY TO-DO LIST -->
+      <!-- WIDGET 2: STUDY TO-DO LIST (Admin-populated) -->
       <div class="widget-card">
         <div class="widget-header">
           <div class="widget-title">Study Tasks &amp; Goals</div>
-          <button class="widget-action-btn" onclick="openAddTodoPrompt()">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <line x1="12" y1="5" x2="12" y2="19"></line>
-              <line x1="5" y1="12" x2="19" y2="12"></line>
-            </svg>
-            <span>Add Task</span>
-          </button>
         </div>
         <div class="widget-items-list" id="todo-items-container">
-          <!-- Populated dynamically by app.js -->
+          <!-- Populated dynamically from admin data -->
         </div>
       </div>
 
     </div>
+
 
     <!-- 5. NEWSLETTER & EXAM ALERTS -->
     <section class="EducationHomePage-module-scss-module__rHWy6q__newsletter-section">
