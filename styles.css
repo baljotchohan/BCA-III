@@ -1565,6 +1565,17 @@ ul, ol {
 /* ==========================================================================
    Mobile Responsive Navigation & Media Queries
    ========================================================================== */
+/* ==========================================================================
+   Mobile Responsive Navigation & Media Queries
+   ========================================================================== */
+
+/* Prevent any accidental horizontal overflow across all devices */
+html, body {
+  overflow-x: hidden;
+  max-width: 100vw;
+  width: 100%;
+}
+
 @media (max-width: 1024px) {
   .SiteHeader-module-scss-module__zKj4Ca__nav {
     display: none;
@@ -1589,22 +1600,262 @@ ul, ol {
 }
 
 @media (max-width: 768px) {
+  :root {
+    --header-height: 62px;
+  }
+
+  .page-wrapper {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  /* Header compact sizing */
+  .SiteHeader-module-scss-module__zKj4Ca__contentWrapper {
+    gap: 0.4rem;
+  }
+
+  .brand-main-title {
+    font-size: 1.15rem;
+  }
+
+  .brand-pu-tag {
+    display: none; /* Hide on small screens to save header space */
+  }
+
+  .SiteHeader-module-scss-module__zKj4Ca__claudeCtaButton {
+    padding: 0.4rem 0.75rem;
+    font-size: 0.75rem;
+  }
+
+  .SiteHeader-module-scss-module__zKj4Ca__claudeCtaButton span {
+    display: none; /* Show icon only or compact text */
+  }
+
+  .SiteHeader-module-scss-module__zKj4Ca__claudeCtaButton::after {
+    content: 'PDF';
+    font-weight: 600;
+  }
+
+  .SiteHeader-module-scss-module__zKj4Ca__claudeCtaDropdownTrigger {
+    display: none;
+  }
+
+  .header-icon-btn {
+    width: 32px;
+    height: 32px;
+  }
+
+  /* Hero Section */
+  .LandingPageSection-module-scss-module__ZSMdoa__root {
+    padding-top: 2rem;
+    padding-bottom: 1.25rem;
+  }
+
+  .Hero-module-scss-module__sp7muW__title {
+    font-size: 2rem;
+    line-height: 1.15;
+  }
+
+  .Hero-module-scss-module__sp7muW__summary {
+    font-size: 0.95rem;
+  }
+
+  /* Scrollable Category Filter Bar on Mobile */
+  .academy-filter-bar {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 0.65rem;
+    margin-top: 1.25rem;
+    padding-top: 0.85rem;
+    gap: 0.4rem;
+    scrollbar-width: none;
+  }
+
+  .academy-filter-bar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .filter-pill {
+    white-space: nowrap;
+    padding: 0.4rem 0.8rem;
+    font-size: 0.75rem;
+    flex-shrink: 0;
+  }
+
+  /* Featured Course Banner */
+  .PackageBanner-module-scss-module__FhS4PW__banner {
+    padding: 1.25rem;
+    border-radius: var(--radius-md);
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .PackageBanner-module-scss-module__FhS4PW__package {
+    padding: 1rem 1.15rem;
+  }
+
+  .PackageBanner-module-scss-module__FhS4PW__summary {
+    font-size: 1.1rem;
+  }
+
+  /* Subject Cards */
+  .EducationSections-module-scss-module__dxNdua__sectionWrapper {
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  .EducationSections-module-scss-module__dxNdua__section {
+    padding: 1.25rem;
+    border-radius: var(--radius-md);
+  }
+
   .EducationSections-module-scss-module__dxNdua__sectionInner {
-    flex-direction: column-reverse;
+    flex-direction: column;
     align-items: flex-start;
+    gap: 1rem;
   }
 
   .EducationSections-module-scss-module__dxNdua__illustrationWrapper {
-    width: 120px;
-    height: 120px;
+    display: none; /* Hide heavy illustrations on phone screens */
+  }
+
+  .EducationSections-module-scss-module__dxNdua__contentWrapper h2 {
+    font-size: 1.4rem;
+  }
+
+  .EducationSections-module-scss-module__dxNdua__contentWrapper p {
+    font-size: 0.9rem;
+  }
+
+  .topic-tags-row {
+    gap: 0.35rem;
+  }
+
+  .topic-badge {
+    font-size: 0.6875rem;
+    padding: 2px 6px;
+  }
+
+  /* Study Widgets & To-Dos */
+  .study-widgets-grid {
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  .widget-card {
+    padding: 1.25rem;
+    border-radius: var(--radius-md);
+  }
+
+  .widget-title {
+    font-size: 1.2rem;
+  }
+
+  .agenda-item, .todo-item-row {
+    padding: 0.65rem 0.75rem;
+  }
+
+  /* Newsletter Section */
+  .NewsletterSubscribe-module-scss-module__MOPAja__wrapper {
+    padding: 1.25rem;
+    border-radius: var(--radius-md);
   }
 
   .NewsletterSubscribe-module-scss-module__MOPAja__content--inline {
     grid-template-columns: 1fr;
+    gap: 1.25rem;
+  }
+
+  .NewsletterSubscribe-module-scss-module__MOPAja__title {
+    font-size: 1.35rem;
+  }
+
+  .NewsletterSubscribe-module-scss-module__MOPAja__input-wrapper {
+    width: 100%;
+  }
+
+  .NewsletterSubscribe-module-scss-module__MOPAja__email-input {
+    padding: 0.6rem 0.75rem;
+    font-size: 0.85rem;
+  }
+
+  .NewsletterSubscribe-module-scss-module__MOPAja__submit-button {
+    width: 38px;
+    height: 38px;
+  }
+
+  /* Modals */
+  .anthropic-modal-backdrop {
+    padding: 0.75rem;
+  }
+
+  .anthropic-modal-card {
+    max-height: 94vh;
+    border-radius: var(--radius-md);
+  }
+
+  .modal-header {
+    padding: 1rem 1.25rem;
+  }
+
+  .modal-title {
+    font-size: 1.35rem;
+  }
+
+  .modal-body {
+    padding: 1rem 1.25rem;
+    gap: 1rem;
+  }
+
+  .modal-tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 0.4rem;
+    gap: 0.35rem;
+    scrollbar-width: none;
+  }
+
+  .modal-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .modal-tab-btn {
+    white-space: nowrap;
+    padding: 0.35rem 0.75rem;
+    font-size: 0.75rem;
+    flex-shrink: 0;
+  }
+
+  .form-row-2 {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+
+  /* Footer */
+  .SiteFooter-module-scss-module__JdOqwq__root {
+    padding-top: 2.5rem;
+    padding-bottom: 2rem;
+  }
+
+  .SiteFooter-module-scss-module__JdOqwq__footer {
+    gap: 2rem;
   }
 
   .SiteFooter-module-scss-module__JdOqwq__linksWrapper {
     grid-template-columns: 1fr;
+    gap: 1.75rem;
+  }
+
+  .SiteFooter-module-scss-module__JdOqwq__columnSection {
+    gap: 1.5rem;
+  }
+
+  .SiteFooter-module-scss-module__JdOqwq__socialWrapper {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
   }
 }
 
@@ -1616,7 +1867,7 @@ ul, ol {
   background-color: var(--bg-page);
   display: flex;
   flex-direction: column;
-  padding: 1.5rem;
+  padding: 1.25rem;
   transform: translateX(100%);
   transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   overflow-y: auto;
@@ -1630,19 +1881,21 @@ ul, ol {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-bottom: 1.5rem;
+  padding-bottom: 1.25rem;
   border-bottom: 1px solid var(--border-color);
 }
 
 .mobile-drawer-links {
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
-  padding-top: 1.5rem;
+  gap: 1rem;
+  padding-top: 1.25rem;
 }
 
 .mobile-nav-link {
   font-family: var(--font-serif);
-  font-size: 1.35rem;
+  font-size: 1.15rem;
   color: var(--text-main);
+  padding: 0.35rem 0;
 }
+
