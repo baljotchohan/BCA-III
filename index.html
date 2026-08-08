@@ -149,12 +149,7 @@
 
         <!-- DOWNLOAD SYLLABUS PDF CTA & CONNECT AI CTA -->
         <div class="SiteHeader-module-scss-module__zKj4Ca__claudeCtaWrapper" style="display: flex; gap: 0.5rem; align-items: center;">
-          <button onclick="openMcpModal()" class="SiteHeader-module-scss-module__zKj4Ca__claudeCtaButton body-3" style="background: linear-gradient(135deg, #e07a5f, #d44f4f); color: white; border: none; cursor: pointer;" title="Connect Claude & ChatGPT AI (MCP Server)">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
-            </svg>
-            <span>Connect AI</span>
-          </button>
+
           <a href="./Syllabus.pdf" target="_blank" class="SiteHeader-module-scss-module__zKj4Ca__claudeCtaButton body-3" title="Download Official PU Syllabus PDF">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
@@ -1099,89 +1094,7 @@
   <!-- TOAST NOTIFICATION -->
   <div id="toast" class="toast-popup"></div>
 
-  <!-- ========================================================================
-       CONNECT AI (MCP & REST SERVER) MODAL
-       ======================================================================== -->
-  <div id="mcp-modal" class="anthropic-modal-backdrop" style="display: none; z-index: 10000;" onclick="closeMcpModal(event)">
-    <div class="anthropic-modal-card" style="max-width: 680px; padding: 1.75rem; overflow-y: auto;" onclick="event.stopPropagation()">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.85rem;">
-        <div style="display: flex; align-items: center; gap: 0.6rem;">
-          <div style="width: 34px; height: 34px; border-radius: 8px; background: rgba(224, 122, 95, 0.15); color: var(--color-coral); display: flex; align-items: center; justify-content: center; font-size: 1.15rem;">⚡</div>
-          <div>
-            <h3 style="font-size: 1.15rem; font-weight: 700; margin: 0;">Connect AI to BCA III Hub</h3>
-            <span style="font-size: 0.75rem; color: #2ecc71; font-weight: 600;">🟢 MCP &amp; REST Server Active on Port 3000</span>
-          </div>
-        </div>
-        <button onclick="closeMcpModal()" style="background: none; border: none; font-size: 1.3rem; cursor: pointer; color: var(--text-muted);">&times;</button>
-      </div>
 
-      <!-- Tabs -->
-      <div style="display: flex; gap: 0.5rem; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; overflow-x: auto;">
-        <button class="mcp-tab-btn active" id="mcp-tab-claude" onclick="switchMcpTab('claude')">Claude Desktop</button>
-        <button class="mcp-tab-btn" id="mcp-tab-ide" onclick="switchMcpTab('ide')">Cursor / Antigravity</button>
-        <button class="mcp-tab-btn" id="mcp-tab-gpt" onclick="switchMcpTab('gpt')">ChatGPT Custom GPT</button>
-        <button class="mcp-tab-btn" id="mcp-tab-sse" onclick="switchMcpTab('sse')">Claude Web (SSE)</button>
-      </div>
-
-      <!-- Tab Content: Claude Desktop -->
-      <div class="mcp-tab-content" id="mcp-content-claude">
-        <p style="font-size: 0.875rem; color: var(--text-subtle); margin-bottom: 0.75rem;">
-          Add this JSON configuration to your <strong>Claude Desktop</strong> config file (<code>claude_desktop_config.json</code>). It securely runs the official server directly from GitHub:
-        </p>
-        <div style="position: relative;">
-          <pre class="notion-code-block" style="background: var(--bg-page); padding: 1rem; border-radius: 8px; font-size: 0.8rem; overflow-x: auto; font-family: var(--font-mono); border: 1px solid var(--border-color); color: var(--text-main);">{
-  "mcpServers": {
-    "bca3-hub": {
-      "command": "npx",
-      "args": ["-y", "github:baljotchohan/BCA-III#main"]
-    }
-  }
-}</pre>
-          <button onclick="copyMcpText('{\n  &quot;mcpServers&quot;: {\n    &quot;bca3-hub&quot;: {\n      &quot;command&quot;: &quot;npx&quot;,\n      &quot;args&quot;: [&quot;-y&quot;, &quot;github:baljotchohan/BCA-III#main&quot;]\n    }\n  }\n}')" class="copy-code-btn" style="position: absolute; top: 0.5rem; right: 0.5rem; cursor: pointer;">📋 Copy Config JSON</button>
-        </div>
-      </div>
-
-      <!-- Tab Content: Cursor / Antigravity -->
-      <div class="mcp-tab-content" id="mcp-content-ide" style="display: none;">
-        <p style="font-size: 0.875rem; color: var(--text-subtle); margin-bottom: 0.75rem;">
-          Add a command MCP server in Cursor / Antigravity settings:
-        </p>
-        <div style="position: relative;">
-          <pre class="notion-code-block" style="background: var(--bg-page); padding: 1rem; border-radius: 8px; font-size: 0.8rem; overflow-x: auto; font-family: var(--font-mono); border: 1px solid var(--border-color); color: var(--text-main);">npx -y github:baljotchohan/BCA-III#main</pre>
-          <button onclick="copyMcpText('npx -y github:baljotchohan/BCA-III#main')" class="copy-code-btn" style="position: absolute; top: 0.5rem; right: 0.5rem; cursor: pointer;">📋 Copy Command</button>
-        </div>
-      </div>
-
-      <!-- Tab Content: ChatGPT -->
-      <div class="mcp-tab-content" id="mcp-content-gpt" style="display: none;">
-        <p style="font-size: 0.875rem; color: var(--text-subtle); margin-bottom: 0.75rem;">
-          In <strong>ChatGPT Custom GPT -> Actions -> Import from URL</strong>, paste this official Cloud OpenAPI URL:
-        </p>
-        <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
-          <input type="text" readonly value="https://bca-iii.vercel.app/openapi.json" id="mcp-gpt-url" class="admin-input-field" style="flex: 1; font-family: var(--font-mono); font-size: 0.85rem; background: var(--bg-page);" />
-          <button onclick="copyMcpText('https://bca-iii.vercel.app/openapi.json')" class="admin-action-btn primary" style="cursor: pointer;">📋 Copy Cloud Spec URL</button>
-        </div>
-        <span style="font-size: 0.75rem; color: var(--text-subtle);">REST API powered by Vercel Serverless.</span>
-      </div>
-
-      <!-- Tab Content: SSE -->
-      <div class="mcp-tab-content" id="mcp-content-sse" style="display: none;">
-        <div style="background: rgba(212, 79, 79, 0.1); border: 1px solid rgba(212, 79, 79, 0.3); padding: 0.8rem; border-radius: 6px; margin-bottom: 0.75rem;">
-          <span style="font-size: 0.8rem; color: #d44f4f; font-weight: 600;">⚠️ Vercel SSE Limitations</span>
-          <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">
-            Vercel forcefully closes connections after 10-15s, making SSE unstable. For a robust connection, please use the <strong>Claude Desktop (npx)</strong> command or deploy this server to Render/Glitch.
-          </p>
-        </div>
-        <p style="font-size: 0.875rem; color: var(--text-subtle); margin-bottom: 0.75rem;">
-          Use this URL in OpenWebUI or Remote MCP tools that handle reconnections:
-        </p>
-        <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
-          <input type="text" readonly value="https://bca-iii.vercel.app/sse" id="mcp-sse-url" class="admin-input-field" style="flex: 1; font-family: var(--font-mono); font-size: 0.85rem; background: var(--bg-page);" />
-          <button onclick="copyMcpText('https://bca-iii.vercel.app/sse')" class="admin-action-btn primary" style="cursor: pointer;">📋 Copy Cloud SSE Link</button>
-        </div>
-      </div>
-    </div>
-  </div>
 
   <!-- SCRIPTS -->
   <script src="syllabus-data.js"></script>
