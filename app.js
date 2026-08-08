@@ -280,29 +280,52 @@ function saveNewLecture() {
   showToast(`✓ Class record logged for ${subject.title}!`);
 }
 
-/* --- 6. Dashboard Widgets: Admin-Driven Agenda, Todos & Announcements --- */
+/* --- 6. Dashboard Widgets — Live from Firebase RTDB (/bca3) --- */
+
+const _RTDB = 'https://bca2nd-5c622-default-rtdb.firebaseio.com/bca3';
+
+async function _fbFetch(path) {
+  try {
+    const res  = await fetch(`${_RTDB}/${path}.json`);
+    const data = await res.json();
+    if (!data || data.error) return [];
+    return Object.values(data).sort((a, b) => (b.timestamp||0) - (a.timestamp||0));
+  } catch { return []; }
+}
+
+const SUBJECT_MAP = {
+  'comp-arch':'Computer Architecture','data-structures':'Data Structures',
+  'numerical-methods':'Numerical Methods','machine-learning':'Machine Learning',
+  'english-3':'English-3','web-dev':'Web Development','backend-dev':'Backend Web Dev',
+};
+
 function initDashboardWidgets() {
+  // Initial load
   renderAnnouncementsBanner();
   renderAgendaWidget();
   renderTodoWidget();
+
+  // Real-time: re-fetch from Firebase every 30 seconds
+  setInterval(() => {
+    renderAnnouncementsBanner();
+    renderAgendaWidget();
+    renderTodoWidget();
+  }, 30000);
 }
 
-// Pull admin-controlled announcements and show as banner
-function renderAnnouncementsBanner() {
+async function renderAnnouncementsBanner() {
   const banner    = document.getElementById('announcements-banner');
   const container = document.getElementById('announcements-container');
   if (!banner || !container) return;
 
-  let list = [];
-  try { list = JSON.parse(localStorage.getItem('bca_announcements')) || []; } catch {}
-
+  const list = await _fbFetch('announcements');
   if (!list.length) { banner.style.display = 'none'; return; }
 
   banner.style.display = 'block';
   const catIcons = { notice:'📌', exam:'📅', assignment:'📝', lab:'🔬', urgent:'🚨' };
 
   container.innerHTML = list.slice(0, 5).map(a => `
-    <div class="announcement-card ${a.category === 'urgent' ? 'urgent' : ''}" style="
+    <div style="
       background:var(--bg-surface);
       border:1px solid ${a.category==='urgent'?'rgba(212,79,79,0.4)':'var(--border-color)'};
       border-left:3px solid ${a.category==='urgent'?'#d44f4f':'var(--color-coral)'};
@@ -311,50 +334,35 @@ function renderAnnouncementsBanner() {
       margin-bottom:0.65rem;
       display:flex; align-items:flex-start; gap:0.85rem;
     ">
-      <span style="font-size:1.1rem; flex-shrink:0;">${catIcons[a.category] || '📌'}</span>
-      <div style="flex:1; min-width:0;">
-        <div style="font-size:0.9375rem; font-weight:600; color:var(--text-main); margin-bottom:0.2rem;">${escHtmlMain(a.title)}</div>
-        <div style="font-size:0.85rem; color:var(--text-muted); line-height:1.45;">${escHtmlMain(a.message)}</div>
-        ${a.link ? `<a href="${escHtmlMain(a.link)}" target="_blank" style="font-size:0.8rem; color:var(--color-coral); text-decoration:none; margin-top:0.3rem; display:inline-block;">↗ View Resource</a>` : ''}
+      <span style="font-size:1.1rem;flex-shrink:0;">${catIcons[a.category]||'📌'}</span>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:0.9375rem;font-weight:600;color:var(--text-main);margin-bottom:0.2rem;">${_esc(a.title)}</div>
+        <div style="font-size:0.85rem;color:var(--text-muted);line-height:1.45;">${_esc(a.message)}</div>
+        ${a.link?`<a href="${_esc(a.link)}" target="_blank" style="font-size:0.8rem;color:var(--color-coral);text-decoration:none;margin-top:0.3rem;display:inline-block;">↗ View Resource</a>`:''}
       </div>
-      <span style="font-size:0.75rem; color:var(--text-subtle); flex-shrink:0; margin-top:0.15rem;">${escHtmlMain(a.date)}</span>
+      <span style="font-size:0.75rem;color:var(--text-subtle);flex-shrink:0;margin-top:0.15rem;">${_esc(a.date||'')}</span>
     </div>
   `).join('');
 }
 
-function escHtmlMain(str) {
-  if (!str) return '';
-  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
-            .replace(/"/g,'&quot;').replace(/'/g,'&#039;');
-}
-
-// Render Today's Class Agenda from admin data
-function renderAgendaWidget() {
+async function renderAgendaWidget() {
   const container = document.getElementById('agenda-items-container');
   if (!container) return;
 
   const today = new Date().toISOString().split('T')[0];
 
-  // Pull from admin agenda store
-  let adminAgenda = [];
-  try { adminAgenda = JSON.parse(localStorage.getItem('bca_admin_agenda')) || []; } catch {}
+  // Combine admin agenda + today's lectures from Firebase
+  const [agendaAll, lecturesAll] = await Promise.all([
+    _fbFetch('agenda'),
+    _fbFetch('lectures'),
+  ]);
 
-  // Also pull today's lectures from admin lecture logs
-  let adminLectures = [];
-  try { adminLectures = JSON.parse(localStorage.getItem('bca_lecture_logs')) || []; } catch {}
-
-  const todayLectures = adminLectures
-    .filter(l => l.date === today)
-    .map(l => ({ ...l, topic: l.topic, subjectTitle: SUBJECT_MAP[l.subject] || l.subject }));
-
-  const todayAgenda = adminAgenda
-    .filter(a => a.date === today)
-    .map(a => ({ ...a, subjectTitle: SUBJECT_MAP[a.subject] || a.subject }));
-
-  const combined = [...todayAgenda, ...todayLectures];
+  const todayAgenda   = agendaAll.filter(a => a.date === today);
+  const todayLectures = lecturesAll.filter(l => l.date === today);
+  const combined      = [...todayAgenda, ...todayLectures];
 
   if (!combined.length) {
-    container.innerHTML = `<div style="padding:1.25rem; text-align:center; color:var(--text-muted); font-size:0.875rem;">
+    container.innerHTML = `<div style="padding:1.25rem;text-align:center;color:var(--text-muted);font-size:0.875rem;">
       No classes scheduled for today — check back later! 📅
     </div>`;
     return;
@@ -363,9 +371,9 @@ function renderAgendaWidget() {
   container.innerHTML = combined.slice(0, 5).map(item => `
     <div class="agenda-item" onclick="openSubjectModal('${item.subject}')" style="cursor:pointer;">
       <div>
-        <div class="agenda-time">${item.date} • ${item.time ? formatTimeSt(item.time) : ''}</div>
-        <div class="agenda-topic">${escHtmlMain(item.topic)}</div>
-        <div style="font-size:0.75rem; color:var(--text-subtle);">${item.subjectTitle}${item.room ? ' • 📍 ' + item.room : ''}</div>
+        <div class="agenda-time">${item.date}${item.time ? ' • ' + _fmtTime(item.time) : ''}</div>
+        <div class="agenda-topic">${_esc(item.topic)}</div>
+        <div style="font-size:0.75rem;color:var(--text-subtle);">${SUBJECT_MAP[item.subject]||item.subject}${item.room?' • 📍 '+item.room:''}</div>
       </div>
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--text-subtle);">
         <polyline points="9 18 15 12 9 6"></polyline>
@@ -374,49 +382,41 @@ function renderAgendaWidget() {
   `).join('');
 }
 
-// Render admin-controlled Study Tasks
-function renderTodoWidget() {
+async function renderTodoWidget() {
   const container = document.getElementById('todo-items-container');
   if (!container) return;
 
-  let todos = [];
-  try { todos = JSON.parse(localStorage.getItem('bca_admin_todos')) || []; } catch {}
+  const todos = await _fbFetch('todos');
 
   if (!todos.length) {
-    container.innerHTML = `<div style="padding:1.25rem; text-align:center; color:var(--text-muted); font-size:0.875rem;">
+    container.innerHTML = `<div style="padding:1.25rem;text-align:center;color:var(--text-muted);font-size:0.875rem;">
       No study tasks posted yet — check back later! 📚
     </div>`;
     return;
   }
 
-  const prioColors = { high: '#d44f4f', medium: 'var(--color-coral)', low: 'var(--text-muted)' };
-
+  const prioIcons = { high:'🔴', medium:'🟡', low:'🟢' };
   container.innerHTML = todos.map(t => `
-    <div class="todo-item-row ${t.done ? 'completed' : ''}" style="pointer-events:none; opacity:${t.done ? '0.6' : '1'};">
-      <input type="checkbox" class="todo-checkbox" ${t.done ? 'checked' : ''} style="pointer-events:none;" readonly/>
-      <span class="todo-text" style="${t.done ? 'text-decoration:line-through;' : ''}">${escHtmlMain(t.text)}</span>
-      ${t.subject ? `<span class="todo-subject-badge">${escHtmlMain(SUBJECT_MAP[t.subject] || t.subject)}</span>` : ''}
-      ${t.priority === 'high' ? '<span style="font-size:0.7rem; color:#d44f4f; font-weight:700;">HIGH</span>' : ''}
+    <div class="todo-item-row ${t.done?'completed':''}" style="opacity:${t.done?'0.6':'1'};">
+      <input type="checkbox" class="todo-checkbox" ${t.done?'checked':''} style="pointer-events:none;" readonly/>
+      <span class="todo-text" style="${t.done?'text-decoration:line-through;':''}">${prioIcons[t.priority]||'🟡'} ${_esc(t.text)}</span>
+      ${t.subject?`<span class="todo-subject-badge">${_esc(SUBJECT_MAP[t.subject]||t.subject)}</span>`:''}
+      ${t.priority==='high'?'<span style="font-size:0.7rem;color:#d44f4f;font-weight:700;">HIGH</span>':''}
     </div>
   `).join('');
 }
 
-function formatTimeSt(timeStr) {
-  if (!timeStr) return '';
-  const [h, m] = timeStr.split(':').map(Number);
-  const ampm = h >= 12 ? 'PM' : 'AM';
-  return `${h % 12 || 12}:${String(m).padStart(2,'0')} ${ampm}`;
+function _fmtTime(t) {
+  const [h,m] = t.split(':').map(Number);
+  return `${h%12||12}:${String(m).padStart(2,'0')} ${h>=12?'PM':'AM'}`;
 }
 
-const SUBJECT_MAP = {
-  'comp-arch': 'Computer Architecture',
-  'data-structures': 'Data Structures',
-  'numerical-methods': 'Numerical Methods',
-  'machine-learning': 'Machine Learning',
-  'english-3': 'English-3',
-  'web-dev': 'Web Development',
-  'backend-dev': 'Backend Web Dev',
-};
+function _esc(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+                  .replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+}
+
 
 /* --- 7. Global Command Palette (⌘K) --- */
 function initCommandPalette() {
