@@ -191,8 +191,8 @@ function createMcpServer() {
     if (name === "add_announcement") {
       const payload = {
         title: args.title,
-        desc: args.desc,
-        badge: args.badge || "NOTICE",
+        message: args.desc,
+        category: args.badge || "NOTICE",
         date: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
         link: args.link || "#",
         timestamp: Date.now(),
