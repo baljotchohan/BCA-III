@@ -257,6 +257,14 @@ ul, ol {
   flex-shrink: 0;
 }
 
+.brand-logo-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  flex-shrink: 0;
+  display: block;
+}
+
 .brand-name-wrap {
   display: flex;
   align-items: center;

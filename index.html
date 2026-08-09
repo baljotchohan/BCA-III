@@ -7,20 +7,37 @@
   <meta name="description" content="Official Panjab University BCA 3rd Semester Academic Hub. Dedicated subject workspaces, Notion-style digital notes, daily lecture logs, calendar switcher, and admin notes management."/>
   <meta name="theme-color" content="#141413"/>
   
-  <!-- Icons & Web App Manifest -->
-  <link rel="icon" type="image/x-icon" href="favicon.ico"/>
-  <link rel="shortcut icon" type="image/x-icon" href="favicon.ico"/>
-  <link rel="icon" type="image/png" sizes="64x64" href="favicon.png"/>
+  <!-- Comprehensive Icons & Favicons -->
   <link rel="icon" type="image/svg+xml" href="favicon.svg"/>
+  <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png"/>
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png"/>
+  <link rel="icon" type="image/png" sizes="64x64" href="favicon.png"/>
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png"/>
+  <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png"/>
+  <link rel="shortcut icon" href="favicon.ico"/>
   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png"/>
+  <link rel="apple-touch-icon-precomposed" href="apple-touch-icon.png"/>
   <link rel="manifest" href="manifest.json"/>
   
-  <!-- iOS Safari Web App Meta -->
+  <!-- Mobile & PWA Web App Meta -->
+  <meta name="mobile-web-app-capable" content="yes"/>
   <meta name="apple-mobile-web-app-capable" content="yes"/>
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
   <meta name="apple-mobile-web-app-title" content="BCA III Hub"/>
-  <meta name="mobile-web-app-capable" content="yes"/>
   <meta name="application-name" content="BCA III Hub"/>
+  <meta name="theme-color" content="#141413"/>
+  <meta name="msapplication-TileColor" content="#141413"/>
+  <meta name="msapplication-TileImage" content="icon-192.png"/>
+
+  <!-- Social & Open Graph Previews -->
+  <meta property="og:title" content="BCA 3 Hub — Panjab University Academic Hub"/>
+  <meta property="og:description" content="Panjab University BCA 3rd Semester Academic Hub, Syllabus Dashboard & Digital Notes"/>
+  <meta property="og:image" content="icon-512.png"/>
+  <meta property="og:type" content="website"/>
+  <meta name="twitter:card" content="summary"/>
+  <meta name="twitter:title" content="BCA 3 Hub — Panjab University"/>
+  <meta name="twitter:description" content="Panjab University BCA 3rd Semester Academic Hub & Syllabus Dashboard"/>
+  <meta name="twitter:image" content="icon-512.png"/>
 
   <link rel="stylesheet" href="styles.css"/>
 </head>
@@ -37,6 +54,7 @@
       
       <!-- BRAND HEADER LINK -->
       <a href="#/" class="brand-header-link" onclick="navigateToDashboard(event)" aria-label="BCA III Academic Hub Home">
+        <img src="favicon.svg" class="brand-logo-icon" alt="BCA III Logo" width="28" height="28"/>
         <div class="brand-name-wrap">
           <span class="brand-main-title">BCA<span class="brand-roman-accent">III</span></span>
           <span class="brand-hub-badge">Hub</span>
@@ -844,9 +862,12 @@
       
       <!-- Modal Header -->
       <div class="admin-modal-header">
-        <div class="admin-modal-title-wrap">
-          <span class="admin-lock-badge" id="admin-status-badge">Admin Access</span>
-          <h2 class="admin-modal-title" id="admin-modal-heading">Academic Management Portal</h2>
+        <div class="admin-modal-title-wrap" style="display: flex; align-items: center; gap: 0.65rem;">
+          <img src="favicon.svg" class="brand-logo-icon" alt="BCA III Logo" width="28" height="28"/>
+          <div>
+            <span class="admin-lock-badge" id="admin-status-badge">Admin Access</span>
+            <h2 class="admin-modal-title" id="admin-modal-heading">Academic Management Portal</h2>
+          </div>
         </div>
         <button class="header-icon-btn" onclick="closeAdminModal()" title="Close Admin Modal">✕</button>
       </div>
@@ -1105,7 +1126,14 @@
   <div id="mobile-drawer-backdrop" class="mobile-drawer-backdrop"></div>
   <div id="mobile-nav-drawer" class="mobile-nav-drawer">
     <button id="mobile-drawer-close" class="mobile-drawer-close">&times;</button>
-    <div style="margin-top: 2rem;">
+    <div style="margin-top: 1rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.65rem;">
+      <img src="favicon.svg" alt="BCA III Logo" width="32" height="32" style="border-radius: 8px;"/>
+      <div class="brand-name-wrap">
+        <span class="brand-main-title" style="font-size: 1.2rem;">BCA<span class="brand-roman-accent">III</span></span>
+        <span class="brand-hub-badge">Hub</span>
+      </div>
+    </div>
+    <div>
       <div style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-subtle); margin-bottom: 0.75rem; font-weight: 600;">Subjects</div>
       <a class="mobile-drawer-link" href="#" onclick="navigateToSubject('comp-arch')">Computer Architecture</a>
       <a class="mobile-drawer-link" href="#" onclick="navigateToSubject('data-structures')">Data Structures</a>
