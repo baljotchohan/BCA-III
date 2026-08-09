@@ -1559,6 +1559,7 @@ function initTheme() {
   const saved = localStorage.getItem('bca_hub_theme') || 'light';
   document.documentElement.setAttribute('data-theme', saved);
   updateThemeButton(saved);
+  updateThemeMeta(saved);
 }
 
 function toggleTheme() {
@@ -1567,7 +1568,14 @@ function toggleTheme() {
   document.documentElement.setAttribute('data-theme', next);
   localStorage.setItem('bca_hub_theme', next);
   updateThemeButton(next);
+  updateThemeMeta(next);
   showToast(`Switched to ${next === 'dark' ? 'Midnight Slate Dark' : 'Warm Ivory Light'} theme`);
+}
+
+function updateThemeMeta(theme) {
+  const color = theme === 'dark' ? '#141413' : '#faf9f5';
+  const metaTags = document.querySelectorAll('meta[name="theme-color"]');
+  metaTags.forEach(tag => tag.setAttribute('content', color));
 }
 
 function updateThemeButton(theme) {

@@ -40,6 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const theme = localStorage.getItem('bca_hub_theme') || 'light';
   document.documentElement.setAttribute('data-theme', theme);
   updateAdminThemeBtn(theme);
+  updateAdminThemeMeta(theme);
 
   if (sessionStorage.getItem(SESSION_KEY) === 'authenticated') {
     showDashboard();
@@ -106,7 +107,14 @@ function toggleAdminTheme() {
   document.documentElement.setAttribute('data-theme', next);
   localStorage.setItem('bca_hub_theme', next);
   updateAdminThemeBtn(next);
+  updateAdminThemeMeta(next);
   showAdminToast(`Switched to ${next === 'dark' ? 'Dark' : 'Light'} mode`);
+}
+
+function updateAdminThemeMeta(theme) {
+  const color = theme === 'dark' ? '#141413' : '#faf9f5';
+  const metaTags = document.querySelectorAll('meta[name="theme-color"]');
+  metaTags.forEach(tag => tag.setAttribute('content', color));
 }
 
 function updateAdminThemeBtn(theme) {

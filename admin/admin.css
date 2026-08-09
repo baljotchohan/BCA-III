@@ -6,11 +6,16 @@
 /* Admin Lock Screen */
 .admin-lock-screen {
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   align-items: center;
   justify-content: center;
   background: var(--bg-page);
   padding: 1.5rem;
+  padding-top: calc(1.5rem + env(safe-area-inset-top, 0px));
+  padding-bottom: calc(1.5rem + env(safe-area-inset-bottom, 0px));
+  padding-left: calc(1rem + env(safe-area-inset-left, 0px));
+  padding-right: calc(1rem + env(safe-area-inset-right, 0px));
 }
 
 .admin-lock-card {
@@ -182,6 +187,9 @@
   border-bottom: 1px solid var(--border-color);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
 }
 
 .admin-header-inner {
@@ -587,8 +595,8 @@
 /* Admin Toast */
 .admin-toast {
   position: fixed;
-  bottom: 1.5rem;
-  right: 1.5rem;
+  bottom: calc(1.5rem + env(safe-area-inset-bottom, 0px));
+  right: calc(1.5rem + env(safe-area-inset-right, 0px));
   z-index: 9999;
   background: var(--text-main);
   color: var(--text-inverse);
