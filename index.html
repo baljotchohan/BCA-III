@@ -604,11 +604,22 @@
 
         <!-- Subject Hero Card -->
         <div class="subject-hero-card" id="ws-hero-card">
-          <div class="subject-hero-top">
+          <div class="subject-hero-header-row">
             <div class="subject-meta-pill-group">
               <span class="subject-code-badge" id="ws-code-badge">BCA-DSC-3(Maj)-301</span>
               <span class="subject-credit-tag" id="ws-credit-tag">4 Credits • 60 Theory Hrs</span>
-              <span class="subject-credit-tag" style="background-color: var(--color-cactus); color: var(--text-main);">Curriculum Active</span>
+              <span class="subject-status-tag" id="ws-status-tag">Curriculum Active</span>
+            </div>
+          </div>
+
+          <h1 class="subject-hero-title" id="ws-subject-title">Computer Architecture</h1>
+          <p class="subject-hero-desc" id="ws-subject-desc">
+            Computer organization, digital logic circuits, ALU design, memory hierarchy, 8086 microprocessor architecture, and I/O organization.
+          </p>
+
+          <div class="subject-hero-footer-row">
+            <div class="topic-tags-row" id="ws-tags-row">
+              <!-- Populated dynamically -->
             </div>
 
             <div class="subject-hero-actions">
@@ -639,73 +650,12 @@
               </a>
             </div>
           </div>
-
-          <h1 class="subject-hero-title" id="ws-subject-title">Computer Architecture</h1>
-          <p class="subject-hero-desc" id="ws-subject-desc">
-            Computer organization, digital logic circuits, ALU design, memory hierarchy, 8086 microprocessor architecture, and I/O organization.
-          </p>
-
-          <div class="topic-tags-row" id="ws-tags-row">
-            <!-- Populated dynamically -->
-          </div>
         </div>
 
-        <!-- Notion-Style Workspace Grid (Sidebar Tree + Main Content) -->
+        <!-- Notion-Style Workspace Grid (Main Content + Sidebar) -->
         <div class="subject-workspace-grid">
           
-          <!-- LEFT SIDEBAR TREE -->
-          <aside class="workspace-sidebar">
-            
-            <!-- Quick Navigation Tree -->
-            <div class="sidebar-tree-card">
-              <div class="sidebar-tree-header">
-                <span>Workspace Tree</span>
-                <span class="tree-item-badge">BCA III</span>
-              </div>
-              <div class="sidebar-tree-list">
-                <div class="sidebar-tree-item active" data-target-tab="units" onclick="switchWorkspaceTab('units')">
-                  <span><span class="tree-item-icon">📑</span> Syllabus Units</span>
-                  <span class="tree-item-badge" id="tree-units-count">4 Units</span>
-                </div>
-                <div class="sidebar-tree-item" data-target-tab="notes" onclick="switchWorkspaceTab('notes')">
-                  <span><span class="tree-item-icon">📝</span> Digital Notes</span>
-                  <span class="tree-item-badge" id="tree-notes-count">Active</span>
-                </div>
-                <div class="sidebar-tree-item" data-target-tab="calendar" onclick="switchWorkspaceTab('calendar')">
-                  <span><span class="tree-item-icon">📅</span> Lecture &amp; Calendar</span>
-                  <span class="tree-item-badge" id="tree-lectures-count">Logs</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- Switch to Other Subjects -->
-            <div class="sidebar-tree-card">
-              <div class="sidebar-tree-header">
-                <span>All Subjects</span>
-                <span class="tree-item-badge">7 Total</span>
-              </div>
-              <div class="sidebar-subjects-switcher" id="ws-sidebar-subjects">
-                <!-- Populated dynamically by app.js -->
-              </div>
-            </div>
-
-            <!-- Admin Shortcut Card -->
-            <div class="sidebar-tree-card" style="background-color: var(--color-oat);">
-              <div class="sidebar-tree-header" style="color: var(--color-coral);">
-                <span>Admin Actions</span>
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-              </div>
-              <p class="body-3" style="color: var(--text-muted); margin-bottom: 0.75rem;">
-                Create new lecture logs and publish digital notes for this subject.
-              </p>
-              <button class="Button-module-scss-module__f9ZZrG__button Button-module-scss-module__f9ZZrG__secondary" style="width: 100%; justify-content: center; font-size: 0.75rem;" onclick="openAdminModal()">
-                <span>+ Publish Note / Lecture</span>
-              </button>
-            </div>
-
-          </aside>
-
-          <!-- RIGHT MAIN WORKSPACE -->
+          <!-- PRIMARY WORKSPACE CONTENT -->
           <div class="workspace-main-content">
             
             <!-- Tab Navigation Header -->
@@ -716,7 +666,7 @@
               </button>
               <button class="workspace-tab-btn" data-tab="notes" onclick="switchWorkspaceTab('notes')">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-                <span>Digital Notes Repository</span>
+                <span>Digital Notes</span>
               </button>
               <button class="workspace-tab-btn" data-tab="calendar" onclick="switchWorkspaceTab('calendar')">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
@@ -826,6 +776,58 @@
             </div>
 
           </div>
+
+          <!-- SIDEBAR (Quick Tree on Desktop, Quick Navigator & Actions) -->
+          <aside class="workspace-sidebar">
+            
+            <!-- Quick Navigation Tree (Desktop Only) -->
+            <div class="sidebar-tree-card desktop-only-card">
+              <div class="sidebar-tree-header">
+                <span>Workspace Tree</span>
+                <span class="tree-item-badge">BCA III</span>
+              </div>
+              <div class="sidebar-tree-list">
+                <div class="sidebar-tree-item active" data-target-tab="units" onclick="switchWorkspaceTab('units')">
+                  <span><span class="tree-item-icon">📑</span> Syllabus Units</span>
+                  <span class="tree-item-badge" id="tree-units-count">4 Units</span>
+                </div>
+                <div class="sidebar-tree-item" data-target-tab="notes" onclick="switchWorkspaceTab('notes')">
+                  <span><span class="tree-item-icon">📝</span> Digital Notes</span>
+                  <span class="tree-item-badge" id="tree-notes-count">Active</span>
+                </div>
+                <div class="sidebar-tree-item" data-target-tab="calendar" onclick="switchWorkspaceTab('calendar')">
+                  <span><span class="tree-item-icon">📅</span> Lecture &amp; Calendar</span>
+                  <span class="tree-item-badge" id="tree-lectures-count">Logs</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Switch to Other Subjects -->
+            <div class="sidebar-tree-card">
+              <div class="sidebar-tree-header">
+                <span>Explore Other Subjects</span>
+                <span class="tree-item-badge">7 Total</span>
+              </div>
+              <div class="sidebar-subjects-switcher" id="ws-sidebar-subjects">
+                <!-- Populated dynamically by app.js -->
+              </div>
+            </div>
+
+            <!-- Admin Shortcut Card -->
+            <div class="sidebar-tree-card admin-shortcut-card">
+              <div class="sidebar-tree-header" style="color: var(--color-coral);">
+                <span>Admin Actions</span>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+              </div>
+              <p class="body-3" style="color: var(--text-muted); margin-bottom: 0.75rem;">
+                Create new lecture logs and publish digital notes for this subject.
+              </p>
+              <button class="Button-module-scss-module__f9ZZrG__button Button-module-scss-module__f9ZZrG__secondary" style="width: 100%; justify-content: center; font-size: 0.8125rem;" onclick="openAdminModal()">
+                <span>+ Publish Note / Lecture</span>
+              </button>
+            </div>
+
+          </aside>
 
         </div>
 
