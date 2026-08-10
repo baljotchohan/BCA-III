@@ -172,6 +172,14 @@
         <!-- DOWNLOAD SYLLABUS PDF CTA & CONNECT AI CTA -->
         <div class="SiteHeader-module-scss-module__zKj4Ca__claudeCtaWrapper" style="display: flex; gap: 0.5rem; align-items: center;">
 
+          <button class="header-mcp-btn" onclick="openMcpModal()" title="Connect AI Models (Claude, ChatGPT, Gemini, Cursor) to BCA III Hub via MCP">
+            <svg class="mcp-sparkle-svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2L14.4 8.6L21 11L14.4 13.4L12 20L9.6 13.4L3 11L9.6 8.6L12 2Z"/>
+            </svg>
+            <span>Connect AI</span>
+            <span class="mcp-live-pill">MCP</span>
+          </button>
+
           <a href="./Syllabus.pdf" target="_blank" class="SiteHeader-module-scss-module__zKj4Ca__claudeCtaButton body-3" title="Download Official PU Syllabus PDF">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
@@ -1157,6 +1165,7 @@
       <a class="mobile-drawer-link" href="#" onclick="navigateToSubject('web-dev')">Web Development</a>
       <a class="mobile-drawer-link" href="#" onclick="navigateToSubject('backend-dev')">Backend Development</a>
       <div style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-subtle); margin: 1.25rem 0 0.75rem 0; font-weight: 600;">Quick Links</div>
+      <a class="mobile-drawer-link" href="#" onclick="openMcpModal(); return false;" style="color: #a855f7; font-weight: 600;">✨ Connect AI (MCP Hub)</a>
       <a class="mobile-drawer-link" href="#study-widgets">Lecture Log</a>
       <a class="mobile-drawer-link" href="#study-widgets">To-Do Tracker</a>
       <a class="mobile-drawer-link" href="./Syllabus.pdf" target="_blank">Download Syllabus PDF</a>
@@ -1164,7 +1173,259 @@
     </div>
   </div>
 
+  <!-- ========================================================================
+       CONNECT AI & MCP HUB MODAL (CLAUDE, CHATGPT, GEMINI, CURSOR)
+       ======================================================================== -->
+  <div id="mcp-modal" class="mcp-modal-backdrop" style="display: none;">
+    <div class="mcp-modal-card">
+      
+      <!-- Modal Header -->
+      <div class="mcp-modal-header">
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+          <div style="width: 32px; height: 32px; border-radius: 8px; background: linear-gradient(135deg, #a855f7 0%, #d946ef 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 1.1rem; box-shadow: 0 2px 8px rgba(168, 85, 247, 0.4);">
+            ✨
+          </div>
+          <div>
+            <h2 class="mcp-modal-title">Connect AI &amp; Live MCP Hub</h2>
+            <p style="margin: 0; font-size: 0.78rem; color: var(--text-subtle);">Bridge Claude, ChatGPT, Gemini &amp; Cursor to live BCA III syllabus and notes</p>
+          </div>
+        </div>
+        <button class="header-icon-btn" onclick="closeMcpModal()" title="Close MCP Modal">✕</button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="mcp-modal-body">
+        
+        <!-- Live Status & Protocol Bar -->
+        <div class="mcp-status-banner">
+          <div class="mcp-status-left">
+            <div class="mcp-pulse-dot"></div>
+            <div>
+              <span style="font-weight: 600; font-size: 0.86rem; color: var(--text-main);">Live Streamable HTTP &amp; SSE Online</span>
+              <span style="font-size: 0.76rem; color: var(--text-subtle); display: block;">Protocol: MCP 2024-11-05 • JSON-RPC 2.0 • Zero Setup Required</span>
+            </div>
+          </div>
+          <div style="display: flex; gap: 0.4rem; flex-wrap: wrap;">
+            <span class="mcp-live-pill" style="background: rgba(168, 85, 247, 0.15); color: #a855f7; border: 1px solid rgba(168, 85, 247, 0.3);">6 Tools</span>
+            <span class="mcp-live-pill" style="background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3);">PU 2026-27</span>
+          </div>
+        </div>
+
+        <!-- Universal Live Endpoint Box -->
+        <div class="mcp-endpoint-box">
+          <div style="display: flex; align-items: center; justify-content: space-between;">
+            <span style="font-size: 0.76rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-subtle);">Universal Remote MCP Endpoint</span>
+            <span style="font-size: 0.74rem; color: #10b981; font-weight: 600;">● HTTPS / Streamable HTTP</span>
+          </div>
+          <div class="mcp-endpoint-url-bar">
+            <span class="mcp-endpoint-url-text" id="mcp-remote-url-display">https://bca-iii.vercel.app/api/mcp</span>
+            <button class="mcp-copy-btn" id="mcp-main-copy-btn" onclick="copyMcpUrl('https://bca-iii.vercel.app/api/mcp', 'mcp-main-copy-btn')">
+              <span>📋 Copy Server URL</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Platform Configuration Tabs -->
+        <div class="mcp-tabs-bar">
+          <button class="mcp-tab-btn active" data-mcptab="claude" onclick="switchMcpTab('claude')">
+            <span>🟣 Claude Desktop &amp; Web</span>
+          </button>
+          <button class="mcp-tab-btn" data-mcptab="chatgpt" onclick="switchMcpTab('chatgpt')">
+            <span>🟢 ChatGPT</span>
+          </button>
+          <button class="mcp-tab-btn" data-mcptab="gemini" onclick="switchMcpTab('gemini')">
+            <span>🔵 Gemini &amp; Antigravity</span>
+          </button>
+          <button class="mcp-tab-btn" data-mcptab="cursor" onclick="switchMcpTab('cursor')">
+            <span>⚡ Cursor / IDEs</span>
+          </button>
+          <button class="mcp-tab-btn" data-mcptab="playground" onclick="switchMcpTab('playground')">
+            <span>🧪 Live Tool Playground</span>
+          </button>
+        </div>
+
+        <!-- 1. CLAUDE TAB -->
+        <div id="mcp-tab-claude" class="mcp-tab-pane" style="display: block;">
+          <div style="display: flex; flex-direction: column; gap: 0.9rem;">
+            <div>
+              <h4 style="margin: 0 0 0.25rem 0; font-size: 0.95rem; color: var(--text-main);">Option 1: Claude Desktop (One-Click JSON Config)</h4>
+              <p style="margin: 0 0 0.5rem 0; font-size: 0.82rem; color: var(--text-subtle);">
+                Add to <code style="font-size: 0.78rem; background: var(--bg-surface-subtle); padding: 0.15rem 0.4rem; border-radius: 4px;">~/Library/Application Support/Claude/claude_desktop_config.json</code>:
+              </p>
+              <div class="mcp-code-block">
+                <button class="mcp-code-copy-floating" onclick="copyMcpCode('claude-desktop-snippet', this)">Copy JSON</button>
+                <pre id="claude-desktop-snippet" style="margin: 0;">{
+  "mcpServers": {
+    "bca3-hub": {
+      "url": "https://bca-iii.vercel.app/api/mcp"
+    }
+  }
+}</pre>
+              </div>
+            </div>
+
+            <div style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 0.9rem 1.1rem;">
+              <h4 style="margin: 0 0 0.25rem 0; font-size: 0.95rem; color: var(--text-main);">Option 2: Claude Web &amp; Mobile (Custom Connectors)</h4>
+              <ol style="margin: 0.4rem 0 0 1.25rem; padding: 0; font-size: 0.82rem; color: var(--text-subtle); line-height: 1.6;">
+                <li>Open <strong>Claude.ai</strong> → <strong>Settings</strong> → <strong>Connectors</strong>.</li>
+                <li>Click <strong>Add custom connector</strong>.</li>
+                <li>Paste server URL: <code style="color: var(--text-main); font-weight: 600;">https://bca-iii.vercel.app/api/mcp</code>.</li>
+              </ol>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. CHATGPT TAB -->
+        <div id="mcp-tab-chatgpt" class="mcp-tab-pane" style="display: none;">
+          <div style="display: flex; flex-direction: column; gap: 0.9rem;">
+            <div>
+              <h4 style="margin: 0 0 0.25rem 0; font-size: 0.95rem; color: var(--text-main);">Option 1: ChatGPT Developer Mode MCP</h4>
+              <p style="margin: 0 0 0.5rem 0; font-size: 0.82rem; color: var(--text-subtle);">
+                In ChatGPT Settings → <strong>Developer Mode</strong> → <strong>Connectors</strong> → Select <strong>Streamable HTTP</strong> and enter:
+              </p>
+              <div class="mcp-endpoint-url-bar">
+                <span class="mcp-endpoint-url-text">https://bca-iii.vercel.app/api/mcp</span>
+                <button class="mcp-copy-btn" onclick="copyMcpUrl('https://bca-iii.vercel.app/api/mcp', this)">Copy</button>
+              </div>
+            </div>
+
+            <div style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 0.9rem 1.1rem;">
+              <h4 style="margin: 0 0 0.25rem 0; font-size: 0.95rem; color: var(--text-main);">Option 2: Custom GPT Actions (OpenAPI 3.0 Schema)</h4>
+              <p style="margin: 0 0 0.5rem 0; font-size: 0.82rem; color: var(--text-subtle);">
+                In GPT Builder → <strong>Actions</strong> → <strong>Import from URL</strong>:
+              </p>
+              <div class="mcp-endpoint-url-bar" style="margin-bottom: 0.6rem;">
+                <span class="mcp-endpoint-url-text">https://bca-iii.vercel.app/api/openapi</span>
+                <button class="mcp-copy-btn" onclick="copyMcpUrl('https://bca-iii.vercel.app/api/openapi', this)">Copy Schema URL</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. GEMINI TAB -->
+        <div id="mcp-tab-gemini" class="mcp-tab-pane" style="display: none;">
+          <div style="display: flex; flex-direction: column; gap: 0.9rem;">
+            <div>
+              <h4 style="margin: 0 0 0.25rem 0; font-size: 0.95rem; color: var(--text-main);">Gemini CLI &amp; Antigravity Tool Setup</h4>
+              <p style="margin: 0 0 0.5rem 0; font-size: 0.82rem; color: var(--text-subtle);">
+                Run this command in your terminal to instantly add BCA III Hub to your Gemini CLI:
+              </p>
+              <div class="mcp-code-block">
+                <button class="mcp-code-copy-floating" onclick="copyMcpCode('gemini-cli-snippet', this)">Copy Command</button>
+                <pre id="gemini-cli-snippet" style="margin: 0;">gemini mcp add bca3 --url "https://bca-iii.vercel.app/api/mcp"</pre>
+              </div>
+            </div>
+
+            <div>
+              <h4 style="margin: 0 0 0.25rem 0; font-size: 0.95rem; color: var(--text-main);">Or Add to <code>~/.gemini/settings.json</code>:</h4>
+              <div class="mcp-code-block">
+                <button class="mcp-code-copy-floating" onclick="copyMcpCode('gemini-json-snippet', this)">Copy JSON</button>
+                <pre id="gemini-json-snippet" style="margin: 0;">{
+  "mcpServers": {
+    "bca3": {
+      "url": "https://bca-iii.vercel.app/api/mcp"
+    }
+  }
+}</pre>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. CURSOR / IDES TAB -->
+        <div id="mcp-tab-cursor" class="mcp-tab-pane" style="display: none;">
+          <div style="display: flex; flex-direction: column; gap: 0.9rem;">
+            <div>
+              <h4 style="margin: 0 0 0.25rem 0; font-size: 0.95rem; color: var(--text-main);">Cursor &amp; Windsurf IDE Config</h4>
+              <p style="margin: 0 0 0.5rem 0; font-size: 0.82rem; color: var(--text-subtle);">
+                Paste into your project's <code style="font-size: 0.78rem; background: var(--bg-surface-subtle); padding: 0.15rem 0.4rem; border-radius: 4px;">.cursor/mcp.json</code> or global settings:
+              </p>
+              <div class="mcp-code-block">
+                <button class="mcp-code-copy-floating" onclick="copyMcpCode('cursor-json-snippet', this)">Copy Config</button>
+                <pre id="cursor-json-snippet" style="margin: 0;">{
+  "mcpServers": {
+    "bca3-syllabus-hub": {
+      "url": "https://bca-iii.vercel.app/api/mcp"
+    }
+  }
+}</pre>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 5. LIVE PLAYGROUND TAB -->
+        <div id="mcp-tab-playground" class="mcp-tab-pane" style="display: none;">
+          <div class="mcp-playground-container">
+            <div style="display: flex; align-items: center; justify-content: space-between;">
+              <span style="font-weight: 600; font-size: 0.9rem; color: var(--text-main);">🧪 Test Live MCP Tools in Browser</span>
+              <span id="mcp-test-status" style="font-size: 0.75rem; color: var(--text-subtle); font-family: monospace;">● Ready to execute</span>
+            </div>
+
+            <div class="mcp-param-grid">
+              <div>
+                <label style="display: block; font-size: 0.75rem; font-weight: 600; margin-bottom: 0.35rem; color: var(--text-subtle);">Select MCP Tool</label>
+                <select id="mcp-tool-select" class="mcp-input" onchange="handleMcpToolChange()">
+                  <option value="get_syllabus">get_syllabus (Full Subject Curriculum)</option>
+                  <option value="get_unit_details">get_unit_details (Unit I–IV Breakdown)</option>
+                  <option value="search_digital_notes">search_digital_notes (Search Live Notes)</option>
+                  <option value="get_daily_lectures">get_daily_lectures (Daily Lecture Logs)</option>
+                  <option value="get_announcements">get_announcements (PU Notices)</option>
+                </select>
+              </div>
+
+              <div id="mcp-param-subject-wrap">
+                <label style="display: block; font-size: 0.75rem; font-weight: 600; margin-bottom: 0.35rem; color: var(--text-subtle);">Subject ID</label>
+                <select id="mcp-param-subject" class="mcp-input">
+                  <option value="comp-arch">Computer Architecture (comp-arch)</option>
+                  <option value="data-structures">Data Structures (data-structures)</option>
+                  <option value="numerical-methods">Numerical Methods (numerical-methods)</option>
+                  <option value="machine-learning">Machine Learning (machine-learning)</option>
+                  <option value="english-3">English-3 (english-3)</option>
+                  <option value="web-dev">Web Development (web-dev)</option>
+                  <option value="backend-dev">Backend Development (backend-dev)</option>
+                  <option value="all">All Subjects (all)</option>
+                </select>
+              </div>
+
+              <div id="mcp-param-unit-wrap" style="display: none;">
+                <label style="display: block; font-size: 0.75rem; font-weight: 600; margin-bottom: 0.35rem; color: var(--text-subtle);">Unit Number</label>
+                <select id="mcp-param-unit" class="mcp-input">
+                  <option value="Unit I">Unit I</option>
+                  <option value="Unit II">Unit II</option>
+                  <option value="Unit III">Unit III</option>
+                  <option value="Unit IV">Unit IV</option>
+                </select>
+              </div>
+
+              <div id="mcp-param-query-wrap" style="display: none;">
+                <label style="display: block; font-size: 0.75rem; font-weight: 600; margin-bottom: 0.35rem; color: var(--text-subtle);">Search Query</label>
+                <input type="text" id="mcp-param-query" class="mcp-input" placeholder="e.g. 8086, stack, newton..." value="8086"/>
+              </div>
+            </div>
+
+            <div>
+              <button class="mcp-run-btn" onclick="executeMcpPlaygroundTest()">
+                <span>⚡ Send JSON-RPC Request</span>
+              </button>
+            </div>
+
+            <div>
+              <div style="display: flex; justify-content: space-between; margin-bottom: 0.35rem;">
+                <span style="font-size: 0.72rem; font-weight: 700; text-transform: uppercase; color: var(--text-subtle);">JSON-RPC 2.0 Response Output</span>
+                <span id="mcp-latency-tag" style="font-size: 0.72rem; color: #10b981; font-family: monospace;"></span>
+              </div>
+              <pre id="mcp-playground-output" class="mcp-output-box">// Click 'Send JSON-RPC Request' to test tool response</pre>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
   <!-- SCRIPTS -->
+
   <script src="syllabus-data.js?v=3.0"></script>
   <script src="firebase-config.js"></script>
   <script src="visuals-engine.js?v=3.0"></script>

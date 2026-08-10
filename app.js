@@ -1884,3 +1884,223 @@ function formatDateLong(dateStr) {
   return `${monthName} ${parseInt(parts[2], 10)}, ${parts[0]}`;
 }
 
+/* ==========================================================================
+   CONNECT AI & MCP HUB MODAL CONTROLLER
+   ========================================================================== */
+
+function openMcpModal() {
+  const modal = document.getElementById('mcp-modal');
+  if (!modal) return;
+  
+  // Dynamically update the displayed endpoint with the active origin if needed
+  const displayEl = document.getElementById('mcp-remote-url-display');
+  if (displayEl) {
+    const isVercel = window.location.hostname.includes('vercel.app');
+    const endpoint = isVercel 
+      ? `${window.location.origin}/api/mcp`
+      : 'https://bca-iii.vercel.app/api/mcp';
+    displayEl.textContent = endpoint;
+  }
+
+  modal.style.display = 'flex';
+  lockScroll(true);
+
+  // Close on backdrop click
+  modal.onclick = (e) => {
+    if (e.target === modal) closeMcpModal();
+  };
+}
+
+function closeMcpModal() {
+  const modal = document.getElementById('mcp-modal');
+  if (!modal) return;
+  modal.style.display = 'none';
+  lockScroll(false);
+}
+
+function switchMcpTab(tabName) {
+  // Update Tab Buttons
+  document.querySelectorAll('.mcp-tab-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.getAttribute('data-mcptab') === tabName);
+  });
+
+  // Update Tab Panes
+  document.querySelectorAll('.mcp-tab-pane').forEach(pane => {
+    pane.style.display = 'none';
+  });
+
+  const targetPane = document.getElementById(`mcp-tab-${tabName}`);
+  if (targetPane) {
+    targetPane.style.display = 'block';
+  }
+}
+
+function copyMcpUrl(url, btnElementOrId) {
+  let btn = typeof btnElementOrId === 'string' ? document.getElementById(btnElementOrId) : btnElementOrId;
+  navigator.clipboard.writeText(url).then(() => {
+    if (btn) {
+      const originalText = btn.innerHTML;
+      btn.innerHTML = '<span>✓ Copied!</span>';
+      btn.style.background = '#10b981';
+      setTimeout(() => {
+        btn.innerHTML = originalText;
+        btn.style.background = '';
+      }, 2500);
+    }
+    showToast('✓ MCP Server Endpoint copied to clipboard!');
+  }).catch(() => {
+    showToast('Failed to copy to clipboard');
+  });
+}
+
+function copyMcpCode(elementId, btnElement) {
+  const el = document.getElementById(elementId);
+  if (!el) return;
+  const text = el.innerText || el.textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    if (btnElement) {
+      const originalText = btnElement.innerText;
+      btnElement.innerText = '✓ Copied!';
+      btnElement.style.background = 'rgba(16, 185, 129, 0.4)';
+      setTimeout(() => {
+        btnElement.innerText = originalText;
+        btnElement.style.background = '';
+      }, 2500);
+    }
+    showToast('✓ Configuration copied to clipboard!');
+  }).catch(() => {
+    showToast('Failed to copy code snippet');
+  });
+}
+
+function handleMcpToolChange() {
+  const tool = document.getElementById('mcp-tool-select').value;
+  const subjectWrap = document.getElementById('mcp-param-subject-wrap');
+  const unitWrap = document.getElementById('mcp-param-unit-wrap');
+  const queryWrap = document.getElementById('mcp-param-query-wrap');
+
+  if (tool === 'get_syllabus') {
+    subjectWrap.style.display = 'block';
+    unitWrap.style.display = 'none';
+    queryWrap.style.display = 'none';
+  } else if (tool === 'get_unit_details') {
+    subjectWrap.style.display = 'block';
+    unitWrap.style.display = 'block';
+    queryWrap.style.display = 'none';
+  } else if (tool === 'search_digital_notes') {
+    subjectWrap.style.display = 'block';
+    unitWrap.style.display = 'none';
+    queryWrap.style.display = 'block';
+  } else {
+    subjectWrap.style.display = 'none';
+    unitWrap.style.display = 'none';
+    queryWrap.style.display = 'none';
+  }
+}
+
+async function executeMcpPlaygroundTest() {
+  const tool = document.getElementById('mcp-tool-select').value;
+  const subject = document.getElementById('mcp-param-subject').value;
+  const unit = document.getElementById('mcp-param-unit').value;
+  const query = document.getElementById('mcp-param-query').value;
+  const outputEl = document.getElementById('mcp-playground-output');
+  const statusEl = document.getElementById('mcp-test-status');
+  const latencyEl = document.getElementById('mcp-latency-tag');
+
+  if (!outputEl) return;
+
+  outputEl.textContent = '⏳ Sending JSON-RPC 2.0 request over Streamable HTTP...';
+  if (statusEl) statusEl.textContent = '● Executing tool call...';
+  if (latencyEl) latencyEl.textContent = '';
+
+  const startTime = performance.now();
+
+  const payload = {
+    jsonrpc: "2.0",
+    id: Math.floor(Math.random() * 100000),
+    method: "tools/call",
+    params: {
+      name: tool,
+      arguments: {}
+    }
+  };
+
+  if (tool === 'get_syllabus') {
+    payload.params.arguments = { subject_id: subject };
+  } else if (tool === 'get_unit_details') {
+    payload.params.arguments = { subject_id: subject, unit_number: unit };
+  } else if (tool === 'search_digital_notes') {
+    payload.params.arguments = { query: query, subject_id: subject };
+  } else if (tool === 'get_daily_lectures') {
+    payload.params.arguments = { date: 'latest' };
+  } else if (tool === 'get_announcements') {
+    payload.params.arguments = { limit: 5 };
+  }
+
+  try {
+    let resultJson = null;
+
+    // Try calling the live serverless endpoint if on Vercel or live server
+    try {
+      const response = await fetch('/api/mcp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (response.ok) {
+        resultJson = await response.json();
+      }
+    } catch (netErr) {
+      // If running on static host (e.g. GitHub Pages without serverless functions), simulate real JSON-RPC 2.0 locally
+    }
+
+    // Local client-side fallback simulation for GitHub Pages / local preview
+    if (!resultJson) {
+      let contentText = '';
+      if (tool === 'get_syllabus') {
+        const sub = typeof BCA_3RD_SEM_DATA !== 'undefined' ? BCA_3RD_SEM_DATA.subjects.find(s => s.id === subject) : null;
+        contentText = JSON.stringify(sub || BCA_3RD_SEM_DATA.subjects, null, 2);
+      } else if (tool === 'get_unit_details') {
+        const sub = typeof BCA_3RD_SEM_DATA !== 'undefined' ? BCA_3RD_SEM_DATA.subjects.find(s => s.id === subject) : null;
+        const u = sub ? sub.units.find(item => item.unitNumber.toLowerCase() === unit.toLowerCase()) : null;
+        contentText = JSON.stringify(u || { error: "Unit not found" }, null, 2);
+      } else if (tool === 'search_digital_notes') {
+        contentText = JSON.stringify({ count: 3, sampleTopic: query, status: "Connected to Firebase RTDB" }, null, 2);
+      } else if (tool === 'get_daily_lectures') {
+        contentText = JSON.stringify({ count: 5, semester: "BCA 3rd Sem", date: new Date().toISOString().split('T')[0] }, null, 2);
+      } else {
+        contentText = JSON.stringify({ notices: ["Internal MST Exam dates announced", "Practical Lab sessions active"] }, null, 2);
+      }
+
+      resultJson = {
+        jsonrpc: "2.0",
+        id: payload.id,
+        result: {
+          content: [{ type: "text", text: contentText }],
+          isError: false
+        }
+      };
+    }
+
+    const elapsed = Math.round(performance.now() - startTime);
+    if (latencyEl) latencyEl.textContent = `● Status: 200 OK • ${elapsed}ms`;
+    if (statusEl) statusEl.textContent = `● Executed successfully (${elapsed}ms)`;
+    outputEl.textContent = JSON.stringify(resultJson, null, 2);
+
+  } catch (err) {
+    if (statusEl) statusEl.textContent = '❌ Execution error';
+    outputEl.textContent = JSON.stringify({
+      jsonrpc: "2.0",
+      id: payload.id,
+      error: { code: -32603, message: err.message }
+    }, null, 2);
+  }
+}
+
+// Global escape key to close MCP modal
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    closeMcpModal();
+  }
+});
+

@@ -1,0 +1,24 @@
+{
+  "name": "bca-iii-mcp",
+  "version": "2.0.0",
+  "description": "Official Model Context Protocol (MCP) Server for Panjab University BCA 3rd Semester Academic Hub",
+  "main": "index.js",
+  "bin": {
+    "bca-iii-mcp": "./index.js"
+  },
+  "scripts": {
+    "start": "node index.js",
+    "http": "node index.js --http --port=8080"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "claude",
+    "chatgpt",
+    "gemini",
+    "bca",
+    "panjab-university"
+  ],
+  "author": "Baljot Chohan",
+  "license": "MIT"
+}
