@@ -1,11 +1,13 @@
 /**
  * Official Model Context Protocol (MCP) Serverless Endpoint for BCA III Hub
- * Compatible with Claude (Desktop & Web), ChatGPT, Gemini, Cursor & Windsurf.
+ * Supports both Public Student Mode and Authenticated Admin Mode.
  * Transport: Streamable HTTP (JSON-RPC 2.0 over HTTP POST & GET)
  * Protocol Version: 2024-11-05
  */
 
 const https = require('https');
+
+const ADMIN_PASSKEY = "Defenderbhabhiontop";
 
 // Complete Panjab University BCA 3rd Sem Syllabus Data (Pre-indexed for fast execution)
 const SYLLABUS_INDEX = {
@@ -91,8 +93,8 @@ const SYLLABUS_INDEX = {
 
 const PROTOCOL_VERSION = "2024-11-05";
 
-// Tool Registry Definition
-const TOOLS = [
+// Public Tools (Available to All Students and AI Agents)
+const PUBLIC_TOOLS = [
   {
     name: "get_syllabus",
     description: "Get full Panjab University BCA 3rd Sem syllabus for a specific subject or all subjects.",
@@ -183,6 +185,72 @@ const TOOLS = [
   }
 ];
 
+// Admin Tools (Unlocked with Admin Passkey / Bearer Token)
+const ADMIN_TOOLS = [
+  {
+    name: "publish_digital_note",
+    description: "[ADMIN ONLY] Publish a complete digital study guide/note to the live BCA III Hub under any subject workspace.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        passkey: { type: "string", description: "Admin authorization passkey (optional if sent in Authorization header)" },
+        subject: { type: "string", description: "Subject ID: 'comp-arch', 'data-structures', 'numerical-methods', 'machine-learning', 'english-3', 'web-dev', 'backend-dev'" },
+        topic: { type: "string", description: "Topic title (e.g. '8086 Memory Segmentation')" },
+        unit: { type: "string", description: "Unit number (e.g. 'Unit III')" },
+        content: { type: "string", description: "Full markdown notes with formulas, explanation, code, and key takeaways" },
+        tags: { type: "string", description: "Comma-separated tags (e.g. '8086, BIU, EU, Hardware')" },
+        readTime: { type: "string", description: "Estimated read time (e.g. '6 min read')", default: "5 min read" }
+      },
+      required: ["subject", "topic", "unit", "content"]
+    }
+  },
+  {
+    name: "publish_lecture_log",
+    description: "[ADMIN ONLY] Record and publish a daily classroom lecture log for the batch.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        passkey: { type: "string", description: "Admin authorization passkey" },
+        subject: { type: "string", description: "Subject ID" },
+        topic: { type: "string", description: "Topics covered in class" },
+        unit: { type: "string", description: "Unit (e.g. 'Unit I')" },
+        notes: { type: "string", description: "Lecture summary or homework assigned" },
+        date: { type: "string", description: "Date in YYYY-MM-DD (defaults to today)" },
+        room: { type: "string", description: "Classroom/Lab number", default: "Lab-3" }
+      },
+      required: ["subject", "topic", "notes"]
+    }
+  },
+  {
+    name: "publish_announcement",
+    description: "[ADMIN ONLY] Broadcast an official notice, MST exam timetable, or urgent alert to the entire batch.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        passkey: { type: "string", description: "Admin authorization passkey" },
+        title: { type: "string", description: "Announcement headline" },
+        desc: { type: "string", description: "Detailed announcement body" },
+        badge: { type: "string", description: "Category badge (e.g. 'EXAM', 'NOTICE', 'HOLIDAY')", default: "NOTICE" },
+        link: { type: "string", description: "Optional URL link", default: "#" }
+      },
+      required: ["title", "desc"]
+    }
+  },
+  {
+    name: "delete_hub_record",
+    description: "[ADMIN ONLY] Delete an outdated note, lecture, or announcement from the database.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        passkey: { type: "string", description: "Admin authorization passkey" },
+        collection: { type: "string", enum: ["notes", "lectures", "announcements", "todos"], description: "Database collection" },
+        id: { type: "string", description: "Firebase record ID/key" }
+      },
+      required: ["collection", "id"]
+    }
+  }
+];
+
 // Resources Registry Definition
 const RESOURCES = [
   {
@@ -210,10 +278,11 @@ const PROMPTS = [
     ]
   },
   {
-    name: "generate_lecture_summary",
-    description: "Synthesize lecture notes and generate key formula sheets and practice questions.",
+    name: "admin_draft_and_publish_note",
+    description: "[ADMIN] Draft a complete university-standard digital study guide and publish it to the hub.",
     arguments: [
-      { name: "topic", description: "Topic name", required: true }
+      { name: "subject_id", description: "Subject ID", required: true },
+      { name: "topic", description: "Topic to cover comprehensively", required: true }
     ]
   }
 ];
@@ -272,11 +341,36 @@ function pushFirebaseData(endpoint, payload) {
   });
 }
 
+// Helper: Delete JSON from Firebase RTDB
+function deleteFirebaseData(endpoint, id) {
+  return new Promise((resolve, reject) => {
+    const options = {
+      hostname: 'bca2nd-5c622-default-rtdb.firebaseio.com',
+      path: `/bca3/${endpoint}/${id}.json`,
+      method: 'DELETE'
+    };
+    const req = https.request(options, (res) => {
+      resolve(res.statusCode === 200 || res.statusCode === 204);
+    });
+    req.on('error', reject);
+    req.end();
+  });
+}
+
+// Helper: Verify Admin Access
+function verifyAdmin(authHeader, passkeyArg) {
+  if (passkeyArg && passkeyArg === ADMIN_PASSKEY) return true;
+  if (!authHeader) return false;
+  const token = authHeader.replace(/^Bearer\s+/i, '').trim();
+  return token === ADMIN_PASSKEY;
+}
+
 // Main MCP Dispatcher
-async function handleMcpRpc(payload) {
+async function handleMcpRpc(payload, authHeader = '') {
   const method = payload.method;
   const reqId = payload.id;
   const params = payload.params || {};
+  const isAdmin = verifyAdmin(authHeader, params.arguments?.passkey);
 
   // 1. Ping
   if (method === "ping") {
@@ -297,28 +391,30 @@ async function handleMcpRpc(payload) {
           logging: {}
         },
         serverInfo: {
-          name: "BCA III Academic Hub MCP Server",
+          name: isAdmin ? "BCA III Hub MCP Server [ADMIN MODE]" : "BCA III Academic Hub MCP Server",
           version: "2.0.0"
         },
-        instructions: (
-          "BCA III Hub MCP Server provides real-time access to official Panjab University " +
-          "BCA 3rd Semester syllabi (Comp Arch, Data Structures, Numerical Methods, ML, English, Web Dev), " +
-          "live lecture notes, daily classroom logs, and study tasks. Use get_syllabus or get_unit_details " +
-          "to fetch accurate syllabus breakdowns for exam preparation and answering student questions."
-        )
+        instructions: isAdmin
+          ? "ADMIN MODE ACTIVE: You have full read/write/publish permissions to create notes, publish daily lectures, post announcements, and manage data on the live BCA III Hub."
+          : "BCA III Hub MCP Server provides real-time access to official Panjab University BCA 3rd Sem syllabi, notes, lectures, and tasks."
       }
     };
   }
 
-  // 3. Tools
+  // 3. Tools List
   if (method === "tools/list") {
-    return { jsonrpc: "2.0", id: reqId, result: { tools: TOOLS } };
+    // If authenticated as admin, return both public and admin tools!
+    const availableTools = isAdmin ? [...PUBLIC_TOOLS, ...ADMIN_TOOLS] : [...PUBLIC_TOOLS, ...ADMIN_TOOLS];
+    return { jsonrpc: "2.0", id: reqId, result: { tools: availableTools } };
   }
 
+  // 4. Tools Call
   if (method === "tools/call") {
     const name = params.name;
     const args = params.arguments || {};
+    const hasAdminAccess = verifyAdmin(authHeader, args.passkey);
 
+    // --- PUBLIC TOOLS ---
     if (name === "get_syllabus") {
       const subId = args.subject_id || "all";
       if (subId === "all" || !SYLLABUS_INDEX[subId]) {
@@ -474,6 +570,115 @@ async function handleMcpRpc(payload) {
       };
     }
 
+    // --- ADMIN EXCLUSIVE TOOLS ---
+    if (name === "publish_digital_note") {
+      if (!hasAdminAccess) {
+        return {
+          jsonrpc: "2.0",
+          id: reqId,
+          result: { content: [{ type: "text", text: "❌ Unauthorized: Invalid or missing admin passkey." }], isError: true }
+        };
+      }
+      const today = new Date().toISOString().split("T")[0];
+      const payload = {
+        subject: args.subject,
+        topic: args.topic,
+        unit: args.unit || "Unit I",
+        title: args.topic,
+        content: args.content,
+        tags: args.tags ? args.tags.split(',').map(t => t.trim()) : [args.subject, args.unit],
+        author: "Admin via AI Agent",
+        readTime: args.readTime || "5 min read",
+        date: today,
+        timestamp: Date.now()
+      };
+      const key = await pushFirebaseData('notes', payload);
+      return {
+        jsonrpc: "2.0",
+        id: reqId,
+        result: {
+          content: [{ type: "text", text: `🎉 [ADMIN SUCCESS] Digital note published live on BCA III Hub!\nRecord ID: ${key}\nSubject: ${args.subject} (${args.unit})\nTopic: ${args.topic}` }],
+          isError: false
+        }
+      };
+    }
+
+    if (name === "publish_lecture_log") {
+      if (!hasAdminAccess) {
+        return {
+          jsonrpc: "2.0",
+          id: reqId,
+          result: { content: [{ type: "text", text: "❌ Unauthorized: Invalid or missing admin passkey." }], isError: true }
+        };
+      }
+      const today = new Date().toISOString().split("T")[0];
+      const payload = {
+        subject: args.subject,
+        topic: args.topic,
+        unit: args.unit || "General",
+        notes: args.notes,
+        date: args.date || today,
+        room: args.room || "Lab-3",
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        timestamp: Date.now()
+      };
+      const key = await pushFirebaseData('lectures', payload);
+      return {
+        jsonrpc: "2.0",
+        id: reqId,
+        result: {
+          content: [{ type: "text", text: `📅 [ADMIN SUCCESS] Lecture log published live!\nRecord ID: ${key}\nSubject: ${args.subject}\nTopic: ${args.topic}\nDate: ${payload.date}` }],
+          isError: false
+        }
+      };
+    }
+
+    if (name === "publish_announcement") {
+      if (!hasAdminAccess) {
+        return {
+          jsonrpc: "2.0",
+          id: reqId,
+          result: { content: [{ type: "text", text: "❌ Unauthorized: Invalid or missing admin passkey." }], isError: true }
+        };
+      }
+      const payload = {
+        title: args.title,
+        desc: args.desc,
+        badge: args.badge || "NOTICE",
+        date: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+        link: args.link || "#",
+        timestamp: Date.now()
+      };
+      const key = await pushFirebaseData('announcements', payload);
+      return {
+        jsonrpc: "2.0",
+        id: reqId,
+        result: {
+          content: [{ type: "text", text: `📢 [ADMIN SUCCESS] Announcement broadcasted live!\nRecord ID: ${key}\nHeadline: ${args.title}` }],
+          isError: false
+        }
+      };
+    }
+
+    if (name === "delete_hub_record") {
+      if (!hasAdminAccess) {
+        return {
+          jsonrpc: "2.0",
+          id: reqId,
+          result: { content: [{ type: "text", text: "❌ Unauthorized: Invalid or missing admin passkey." }], isError: true }
+        };
+      }
+      const success = await deleteFirebaseData(args.collection, args.id);
+      return {
+        jsonrpc: "2.0",
+        id: reqId,
+        result: {
+          content: [{ type: "text", text: success ? `🗑️ [ADMIN SUCCESS] Record deleted from ${args.collection} (ID: ${args.id})` : `Failed to delete record` }],
+          isError: !success
+        }
+      };
+    }
+
     return {
       jsonrpc: "2.0",
       id: reqId,
@@ -481,7 +686,7 @@ async function handleMcpRpc(payload) {
     };
   }
 
-  // 4. Resources
+  // 5. Resources
   if (method === "resources/list") {
     return { jsonrpc: "2.0", id: reqId, result: { resources: RESOURCES } };
   }
@@ -522,7 +727,7 @@ async function handleMcpRpc(payload) {
     };
   }
 
-  // 5. Prompts
+  // 6. Prompts
   if (method === "prompts/list") {
     return { jsonrpc: "2.0", id: reqId, result: { prompts: PROMPTS } };
   }
@@ -547,6 +752,22 @@ async function handleMcpRpc(payload) {
         }
       };
     }
+    if (promptName === "admin_draft_and_publish_note") {
+      return {
+        jsonrpc: "2.0",
+        id: reqId,
+        result: {
+          description: `Draft and publish study note for ${promptArgs.topic}`,
+          messages: [{
+            role: "user",
+            content: {
+              type: "text",
+              text: `Draft a comprehensive academic study note for BCA 3rd Sem on the topic '${promptArgs.topic}' (Subject: ${promptArgs.subject_id}). Once written, call the publish_digital_note tool with passkey 'Defenderbhabhiontop' to publish it live to the website.`
+            }
+          }]
+        }
+      };
+    }
     return {
       jsonrpc: "2.0",
       id: reqId,
@@ -563,46 +784,46 @@ async function handleMcpRpc(payload) {
 
 // Serverless Handler (Vercel Node.js Function)
 module.exports = async (req, res) => {
-  // Set CORS Headers for browser clients & AI hosts
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, Mcp-Session-Id');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Admin-Passkey, Mcp-Session-Id');
   res.setHeader('Access-Control-Expose-Headers', 'Mcp-Session-Id');
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
 
-  // GET Request: Return Server Info & Open Endpoints
+  const authHeader = req.headers['authorization'] || req.headers['x-admin-passkey'] || '';
+
   if (req.method === 'GET') {
+    const isAdmin = verifyAdmin(authHeader);
     return res.status(200).json({
       status: "online",
-      service: "BCA III Hub Official MCP Server",
+      service: isAdmin ? "BCA III Hub Official MCP Server [ADMIN MODE]" : "BCA III Hub Official MCP Server",
       protocolVersion: PROTOCOL_VERSION,
+      adminAuthenticated: isAdmin,
       transportsSupported: ["Streamable HTTP", "JSON-RPC 2.0"],
       capabilities: {
-        tools: TOOLS.length,
+        tools: isAdmin ? PUBLIC_TOOLS.length + ADMIN_TOOLS.length : PUBLIC_TOOLS.length,
+        adminToolsAvailable: ADMIN_TOOLS.map(t => t.name),
         resources: RESOURCES.length,
         prompts: PROMPTS.length
       },
       endpoints: {
         mcpEndpoint: "https://bca-iii.vercel.app/api/mcp",
-        openApiSchema: "https://bca-iii.vercel.app/api/openapi",
-        protectedResourceMetadata: "https://bca-iii.vercel.app/.well-known/oauth-protected-resource"
-      },
-      availableSubjects: Object.keys(SYLLABUS_INDEX).map(k => ({ id: k, ...SYLLABUS_INDEX[k] }))
+        openApiSchema: "https://bca-iii.vercel.app/api/openapi"
+      }
     });
   }
 
-  // POST Request: Handle JSON-RPC 2.0 (Single or Batch)
   if (req.method === 'POST') {
     try {
       const body = req.body || {};
       if (Array.isArray(body)) {
-        const results = await Promise.all(body.map(item => handleMcpRpc(item)));
+        const results = await Promise.all(body.map(item => handleMcpRpc(item, authHeader)));
         return res.status(200).json(results.filter(r => r.id !== undefined));
       } else {
-        const result = await handleMcpRpc(body);
+        const result = await handleMcpRpc(body, authHeader);
         return res.status(200).json(result);
       }
     } catch (err) {

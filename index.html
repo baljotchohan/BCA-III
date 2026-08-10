@@ -1239,6 +1239,9 @@
           <button class="mcp-tab-btn" data-mcptab="cursor" onclick="switchMcpTab('cursor')">
             <span>⚡ Cursor / IDEs</span>
           </button>
+          <button class="mcp-tab-btn" data-mcptab="admin" onclick="switchMcpTab('admin')" style="color: #ef4444; font-weight: 700;">
+            <span>🛡️ Admin Mode</span>
+          </button>
           <button class="mcp-tab-btn" data-mcptab="playground" onclick="switchMcpTab('playground')">
             <span>🧪 Live Tool Playground</span>
           </button>
@@ -1354,8 +1357,59 @@
           </div>
         </div>
 
-        <!-- 5. LIVE PLAYGROUND TAB -->
+        <!-- 5. ADMIN MODE TAB (UNLOCKED TOOLS) -->
+        <div id="mcp-tab-admin" class="mcp-tab-pane" style="display: none;">
+          <div style="display: flex; flex-direction: column; gap: 0.9rem;">
+            <div style="background: rgba(239, 68, 68, 0.06); border: 1px solid rgba(239, 68, 68, 0.25); border-radius: var(--radius-md); padding: 0.9rem 1.1rem;">
+              <div style="display: flex; align-items: center; gap: 0.45rem; margin-bottom: 0.35rem;">
+                <span style="font-size: 1.1rem;">🛡️</span>
+                <span style="font-weight: 700; font-size: 0.92rem; color: #dc2626;">Admin Superpowers via MCP</span>
+              </div>
+              <p style="margin: 0; font-size: 0.82rem; color: var(--text-subtle); line-height: 1.55;">
+                As the admin, connecting with your passkey unlocks <strong>4 exclusive write/publish tools</strong>: <code style="color: var(--text-main); font-weight: 600;">publish_digital_note</code>, <code style="color: var(--text-main); font-weight: 600;">publish_lecture_log</code>, <code style="color: var(--text-main); font-weight: 600;">publish_announcement</code>, and <code style="color: var(--text-main); font-weight: 600;">delete_hub_record</code>.
+              </p>
+            </div>
+
+            <div>
+              <h4 style="margin: 0 0 0.25rem 0; font-size: 0.95rem; color: var(--text-main);">Claude Desktop Admin Config</h4>
+              <p style="margin: 0 0 0.5rem 0; font-size: 0.82rem; color: var(--text-subtle);">
+                Paste into <code style="font-size: 0.78rem; background: var(--bg-surface-subtle); padding: 0.15rem 0.4rem; border-radius: 4px;">~/Library/Application Support/Claude/claude_desktop_config.json</code>:
+              </p>
+              <div class="mcp-code-block">
+                <button class="mcp-code-copy-floating" onclick="copyMcpCode('claude-admin-snippet', this)">Copy Admin Config</button>
+                <pre id="claude-admin-snippet" style="margin: 0;">{
+  "mcpServers": {
+    "bca3-admin": {
+      "url": "https://bca-iii.vercel.app/api/mcp",
+      "headers": {
+        "Authorization": "Bearer Defenderbhabhiontop"
+      }
+    }
+  }
+}</pre>
+              </div>
+            </div>
+
+            <div style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 0.9rem 1.1rem;">
+              <h4 style="margin: 0 0 0.35rem 0; font-size: 0.95rem; color: var(--text-main);">How to Command Your AI as Admin:</h4>
+              <div style="display: flex; flex-direction: column; gap: 0.45rem; font-size: 0.82rem; color: var(--text-subtle);">
+                <div style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 0.55rem 0.75rem; font-style: italic;">
+                  💬 <strong>"Claude, write a high-yield study note on 8086 Memory Segmentation with diagrams and publish it to Computer Architecture Unit III."</strong>
+                </div>
+                <div style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 0.55rem 0.75rem; font-style: italic;">
+                  💬 <strong>"Claude, log today's lecture for Data Structures covering AVL Tree rotations."</strong>
+                </div>
+                <div style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 0.55rem 0.75rem; font-style: italic;">
+                  💬 <strong>"Claude, broadcast an announcement: PU Internal MST Exams start next Monday."</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 6. LIVE PLAYGROUND TAB -->
         <div id="mcp-tab-playground" class="mcp-tab-pane" style="display: none;">
+
           <div class="mcp-playground-container">
             <div style="display: flex; align-items: center; justify-content: space-between;">
               <span style="font-weight: 600; font-size: 0.9rem; color: var(--text-main);">🧪 Test Live MCP Tools in Browser</span>

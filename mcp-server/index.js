@@ -1,16 +1,15 @@
 #!/usr/bin/env node
 /**
  * BCA III Hub — Official Model Context Protocol (MCP) Server
- * Supports:
- *   1. Stdio Mode (default): Claude Desktop, Cursor, Gemini CLI, Zed, Antigravity
- *   2. HTTP/SSE Mode (--http or --port=8080): Remote connections & testing
+ * Supports both Student Mode and Authenticated Admin Mode.
  */
 
 const readline = require('readline');
 const http = require('http');
 const https = require('https');
 
-// Complete Panjab University BCA 3rd Sem Syllabus Data
+const ADMIN_PASSKEY = process.env.ADMIN_PASSKEY || "Defenderbhabhiontop";
+
 const SYLLABUS_INDEX = {
   "comp-arch": {
     code: "BCA-DSC-3(Maj)-301",
@@ -94,7 +93,7 @@ const SYLLABUS_INDEX = {
 
 const PROTOCOL_VERSION = "2024-11-05";
 
-const TOOLS = [
+const PUBLIC_TOOLS = [
   {
     name: "get_syllabus",
     description: "Get full Panjab University BCA 3rd Sem syllabus for a specific subject or all subjects.",
@@ -155,23 +154,60 @@ const TOOLS = [
   }
 ];
 
+const ADMIN_TOOLS = [
+  {
+    name: "publish_digital_note",
+    description: "[ADMIN ONLY] Publish a complete digital study guide/note to the live BCA III Hub under any subject workspace.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        passkey: { type: "string", description: "Admin authorization passkey" },
+        subject: { type: "string", description: "Subject ID (e.g. comp-arch, data-structures)" },
+        topic: { type: "string", description: "Topic title" },
+        unit: { type: "string", description: "Unit number (e.g. Unit I)" },
+        content: { type: "string", description: "Full markdown notes" },
+        tags: { type: "string", description: "Comma-separated tags" }
+      },
+      required: ["subject", "topic", "unit", "content"]
+    }
+  },
+  {
+    name: "publish_lecture_log",
+    description: "[ADMIN ONLY] Record and publish a daily classroom lecture log for the batch.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        passkey: { type: "string", description: "Admin authorization passkey" },
+        subject: { type: "string", description: "Subject ID" },
+        topic: { type: "string", description: "Topics covered in class" },
+        notes: { type: "string", description: "Lecture summary or homework assigned" },
+        date: { type: "string", description: "Date in YYYY-MM-DD" }
+      },
+      required: ["subject", "topic", "notes"]
+    }
+  },
+  {
+    name: "publish_announcement",
+    description: "[ADMIN ONLY] Broadcast an official notice or alert to the entire batch.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        passkey: { type: "string", description: "Admin authorization passkey" },
+        title: { type: "string", description: "Announcement headline" },
+        desc: { type: "string", description: "Detailed announcement body" },
+        badge: { type: "string", description: "Category badge (e.g. NOTICE, EXAM)", default: "NOTICE" }
+      },
+      required: ["title", "desc"]
+    }
+  }
+];
+
 const RESOURCES = [
   {
     uri: "bca3://syllabus/all",
     name: "Complete BCA 3rd Sem Syllabus",
     description: "Full PU curriculum breakdown",
     mimeType: "application/json"
-  }
-];
-
-const PROMPTS = [
-  {
-    name: "exam_prep",
-    description: "Generate an exam preparation blueprint for a BCA 3rd Sem subject unit.",
-    arguments: [
-      { name: "subject_id", description: "Subject ID", required: true },
-      { name: "unit_number", description: "Unit number (e.g. Unit I)", required: true }
-    ]
   }
 ];
 
@@ -227,10 +263,18 @@ function pushFirebaseData(endpoint, payload) {
   });
 }
 
-async function handleMcpRpc(payload) {
+function verifyAdmin(authHeader, passkeyArg) {
+  if (passkeyArg && passkeyArg === ADMIN_PASSKEY) return true;
+  if (!authHeader) return false;
+  const token = authHeader.replace(/^Bearer\s+/i, '').trim();
+  return token === ADMIN_PASSKEY;
+}
+
+async function handleMcpRpc(payload, authHeader = '') {
   const method = payload.method;
   const reqId = payload.id;
   const params = payload.params || {};
+  const isAdmin = verifyAdmin(authHeader, params.arguments?.passkey);
 
   if (method === "ping") {
     return { jsonrpc: "2.0", id: reqId, result: {} };
@@ -242,19 +286,20 @@ async function handleMcpRpc(payload) {
       id: reqId,
       result: {
         protocolVersion: PROTOCOL_VERSION,
-        capabilities: { tools: { listChanged: false }, resources: { listChanged: false }, prompts: { listChanged: false } },
+        capabilities: { tools: { listChanged: false }, resources: { listChanged: false } },
         serverInfo: { name: "BCA III Hub MCP Server", version: "2.0.0" }
       }
     };
   }
 
   if (method === "tools/list") {
-    return { jsonrpc: "2.0", id: reqId, result: { tools: TOOLS } };
+    return { jsonrpc: "2.0", id: reqId, result: { tools: [...PUBLIC_TOOLS, ...ADMIN_TOOLS] } };
   }
 
   if (method === "tools/call") {
     const name = params.name;
     const args = params.arguments || {};
+    const hasAdmin = verifyAdmin(authHeader, args.passkey);
 
     if (name === "get_syllabus") {
       const subId = args.subject_id || "all";
@@ -262,10 +307,7 @@ async function handleMcpRpc(payload) {
       return {
         jsonrpc: "2.0",
         id: reqId,
-        result: {
-          content: [{ type: "text", text: JSON.stringify(data, null, 2) }],
-          isError: false
-        }
+        result: { content: [{ type: "text", text: JSON.stringify(data, null, 2) }], isError: false }
       };
     }
 
@@ -318,6 +360,49 @@ async function handleMcpRpc(payload) {
       };
     }
 
+    if (name === "publish_digital_note") {
+      if (!hasAdmin) return { jsonrpc: "2.0", id: reqId, result: { content: [{ type: "text", text: "Unauthorized: Invalid passkey" }], isError: true } };
+      const payload = {
+        subject: args.subject,
+        topic: args.topic,
+        unit: args.unit || "Unit I",
+        title: args.topic,
+        content: args.content,
+        tags: args.tags ? args.tags.split(',').map(t => t.trim()) : [args.subject],
+        author: "Admin via MCP",
+        date: new Date().toISOString().split("T")[0],
+        timestamp: Date.now()
+      };
+      const key = await pushFirebaseData('notes', payload);
+      return { jsonrpc: "2.0", id: reqId, result: { content: [{ type: "text", text: `Digital note published! Key: ${key}` }], isError: false } };
+    }
+
+    if (name === "publish_lecture_log") {
+      if (!hasAdmin) return { jsonrpc: "2.0", id: reqId, result: { content: [{ type: "text", text: "Unauthorized: Invalid passkey" }], isError: true } };
+      const payload = {
+        subject: args.subject,
+        topic: args.topic,
+        notes: args.notes,
+        date: args.date || new Date().toISOString().split("T")[0],
+        timestamp: Date.now()
+      };
+      const key = await pushFirebaseData('lectures', payload);
+      return { jsonrpc: "2.0", id: reqId, result: { content: [{ type: "text", text: `Lecture log published! Key: ${key}` }], isError: false } };
+    }
+
+    if (name === "publish_announcement") {
+      if (!hasAdmin) return { jsonrpc: "2.0", id: reqId, result: { content: [{ type: "text", text: "Unauthorized: Invalid passkey" }], isError: true } };
+      const payload = {
+        title: args.title,
+        desc: args.desc,
+        badge: args.badge || "NOTICE",
+        date: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+        timestamp: Date.now()
+      };
+      const key = await pushFirebaseData('announcements', payload);
+      return { jsonrpc: "2.0", id: reqId, result: { content: [{ type: "text", text: `Announcement published! Key: ${key}` }], isError: false } };
+    }
+
     return { jsonrpc: "2.0", id: reqId, error: { code: -32601, message: `Tool '${name}' not recognized` } };
   }
 
@@ -325,22 +410,10 @@ async function handleMcpRpc(payload) {
     return { jsonrpc: "2.0", id: reqId, result: { resources: RESOURCES } };
   }
 
-  if (method === "resources/read") {
-    return {
-      jsonrpc: "2.0",
-      id: reqId,
-      result: { contents: [{ uri: params.uri, mimeType: "application/json", text: JSON.stringify(SYLLABUS_INDEX, null, 2) }] }
-    };
-  }
-
-  if (method === "prompts/list") {
-    return { jsonrpc: "2.0", id: reqId, result: { prompts: PROMPTS } };
-  }
-
   return { jsonrpc: "2.0", id: reqId, error: { code: -32601, message: `Method '${method}' not supported` } };
 }
 
-// Check execution mode
+// Stdio / HTTP execution
 const args = process.argv.slice(2);
 const isHttp = args.includes('--http') || args.some(a => a.startsWith('--port='));
 
@@ -351,7 +424,7 @@ if (isHttp) {
   const server = http.createServer(async (req, res) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Admin-Passkey');
 
     if (req.method === 'OPTIONS') {
       res.writeHead(200);
@@ -360,7 +433,7 @@ if (isHttp) {
 
     if (req.method === 'GET') {
       res.writeHead(200, { 'Content-Type': 'application/json' });
-      return res.end(JSON.stringify({ status: "online", protocolVersion: PROTOCOL_VERSION, tools: TOOLS.length }));
+      return res.end(JSON.stringify({ status: "online", protocolVersion: PROTOCOL_VERSION }));
     }
 
     if (req.method === 'POST') {
@@ -368,8 +441,9 @@ if (isHttp) {
       req.on('data', chunk => { body += chunk; });
       req.on('end', async () => {
         try {
+          const authHeader = req.headers['authorization'] || req.headers['x-admin-passkey'] || '';
           const payload = JSON.parse(body);
-          const response = await handleMcpRpc(payload);
+          const response = await handleMcpRpc(payload, authHeader);
           res.writeHead(200, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify(response));
         } catch (e) {
@@ -386,17 +460,15 @@ if (isHttp) {
 
   server.listen(PORT, () => {
     console.error(`\n🚀 BCA III Hub MCP Server running on http://localhost:${PORT}/mcp`);
-    console.error(`📡 Streamable HTTP & JSON-RPC 2.0 active.\n`);
   });
 } else {
-  // Stdio Mode for Claude Desktop / Cursor
   const rl = readline.createInterface({ input: process.stdin, output: process.stdout, terminal: false });
 
   rl.on('line', async (line) => {
     if (!line.trim()) return;
     try {
       const payload = JSON.parse(line);
-      const response = await handleMcpRpc(payload);
+      const response = await handleMcpRpc(payload, `Bearer ${ADMIN_PASSKEY}`);
       process.stdout.write(JSON.stringify(response) + '\n');
     } catch (e) {
       process.stdout.write(JSON.stringify({ jsonrpc: "2.0", id: null, error: { code: -32700, message: "Parse error" } }) + '\n');
