@@ -9,6 +9,7 @@ let activeWorkspaceTab = 'units';
 let selectedCalendarDate = '2026-08-08';
 let currentNoteFilter = 'all';
 let _editingItem = null; // { type: 'note'|'lecture'|'announcement', fbKey, collection }
+let _currentSubjectNotes = []; // Cached active notes array for focus reader & export
 
 const ADMIN_PASSKEY = 'Defenderbhabhiontop';
 const ADMIN_SESSION_KEY = 'bca_admin_inapp_session';
@@ -234,33 +235,44 @@ async function renderSubjectNotes(subject) {
   const container = document.getElementById('ws-notes-stream');
   if (!container) return;
 
-  // Fetch both built-in notes, local custom notes, and live Firebase AI notes
-  let fbLectures = await _fbFetch('lectures');
-  fbLectures = fbLectures.filter(l => (l.subject === subject.id || l.subjectId === subject.id));
-  
-  const localNotes = getCustomNotesForSubject(subject.id);
-  // Map Firebase lectures to note format so they render properly
-  const fbNotes = fbLectures.map(l => ({
-    id: l.id || l.fbKey,
-    fbKey: l.fbKey,
-    unit: l.unit || 'General',
-    title: l.title || l.topic || 'Untitled Note',
-    content: l.content || l.notes || l.description || '',
-    date: l.date,
-    readTime: l.readTime || '6 min read',
-    tags: l.tags || ['Study Guide'],
-    imageUrl: l.imageUrl || '',
-    isAdminPublished: true
-  }));
+  // Fetch live digital notes from Firebase 'notes' collection (and fallback check 'lectures' for legacy items)
+  const [rawFbNotes, rawFbLectures] = await Promise.all([
+    _fbFetch('notes'),
+    _fbFetch('lectures')
+  ]);
 
-  const allNotes = [...(subject.digitalNotes || []), ...localNotes, ...fbNotes];
+  const subjectId = subject.id;
+  const fbNotes = rawFbNotes.filter(n => (n.subject === subjectId || n.subjectId === subjectId));
+  
+  // Also include any notes that were previously stored in lectures collection
+  const legacyLectureNotes = rawFbLectures
+    .filter(l => (l.subject === subjectId || l.subjectId === subjectId) && (l.isAdminPublished || (l.content && !l.topic) || l.readTime))
+    .map(l => ({
+      id: l.id || l.fbKey,
+      fbKey: l.fbKey,
+      unit: l.unit || 'General',
+      title: l.title || l.topic || 'Digital Note',
+      content: l.content || l.notes || l.description || '',
+      date: l.date,
+      readTime: l.readTime || '6 min read',
+      tags: l.tags || ['Study Guide'],
+      isAdminPublished: true
+    }));
+
+  const combinedCloudNotes = [
+    ...fbNotes,
+    ...legacyLectureNotes.filter(ln => !fbNotes.some(fn => fn.fbKey === ln.fbKey || fn.id === ln.id))
+  ];
+
+  const allNotes = [...(subject.digitalNotes || []), ...combinedCloudNotes];
+  _currentSubjectNotes = allNotes;
 
   if (!allNotes.length) {
     container.innerHTML = `
       <div class="empty-state" style="text-align: center; padding: 3rem 1rem; color: var(--text-subtle);">
         <p style="font-size: 1rem; margin-bottom: 1rem;">No digital notes published yet for ${escapeHtml(subject.title)}.</p>
         <button class="admin-submit-btn" style="display: inline-flex; width: auto; padding: 0.6rem 1.25rem;" onclick="openAdminModal()">
-          <span>+ Create Note as Admin</span>
+          <span>+ Create &amp; Publish Note as Admin</span>
         </button>
       </div>
     `;
@@ -272,10 +284,19 @@ async function renderSubjectNotes(subject) {
     filtered = allNotes.filter(n => n.unit === currentNoteFilter);
   }
 
+  if (!filtered.length) {
+    container.innerHTML = `
+      <div class="empty-state" style="text-align: center; padding: 2.5rem 1rem; color: var(--text-subtle);">
+        <p style="font-size: 0.95rem; margin-bottom: 1rem;">No notes found under <strong>${escapeHtml(currentNoteFilter)}</strong>.</p>
+        <button class="quick-date-pill" onclick="filterNotesByUnit('all', document.querySelector('#ws-notes-filter-bar .note-filter-btn'))">Show All Units</button>
+      </div>
+    `;
+    return;
+  }
+
   container.innerHTML = filtered.map(note => {
-    const deleteAction = note.fbKey
-      ? `deleteNoteLive('${note.fbKey}', event)`
-      : `deleteCustomNote('${note.id}')`;
+    const noteKey = note.fbKey || note.id;
+    const isCloud = Boolean(note.fbKey);
 
     return `
       <div class="digital-note-card">
@@ -283,17 +304,19 @@ async function renderSubjectNotes(subject) {
           <div class="note-meta-left">
             <span class="note-unit-badge">${escapeHtml(note.unit || 'General')}</span>
             <span class="note-read-time">⏱️ ${escapeHtml(note.readTime || '6 min read')}</span>
-            ${note.isAdminPublished ? '<span class="note-unit-badge" style="background-color: var(--color-cactus); color: var(--text-main);">Verified Note</span>' : ''}
+            ${note.isAdminPublished || isCloud ? '<span class="note-unit-badge" style="background-color: var(--color-cactus); color: var(--text-main);">☁️ Public Live Note</span>' : '<span class="note-unit-badge">Syllabus Guide</span>'}
           </div>
           <div class="note-actions-bar">
-            <button class="note-tool-btn" onclick="${deleteAction}" title="Delete Note" style="color: #d44f4f;">
-              <span>🗑️ Delete</span>
-            </button>
-            <button class="note-tool-btn" onclick="copyNoteContent('${note.id}')" title="Copy note text">
+            ${isCloud ? `
+              <button class="note-tool-btn" onclick="deleteNoteLive('${note.fbKey}', event)" title="Delete Public Note" style="color: #d44f4f;">
+                <span>🗑️ Delete</span>
+              </button>
+            ` : ''}
+            <button class="note-tool-btn" onclick="copyNoteContent('${noteKey}')" title="Copy note text">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
               <span>Copy</span>
             </button>
-            <button class="note-tool-btn" onclick="openZenReaderWithNote('${note.id}')" title="Focus view">
+            <button class="note-tool-btn" onclick="openZenReaderWithNote('${noteKey}')" title="Focus view">
               <span>Focus ↗</span>
             </button>
           </div>
@@ -301,7 +324,7 @@ async function renderSubjectNotes(subject) {
 
         <h2 class="note-card-title">${escapeHtml(note.title)}</h2>
 
-        <div class="note-content-body" id="note-body-${note.id}">
+        <div class="note-content-body" id="note-body-${noteKey}">
           ${renderMarkdownBlocks(note.content)}
         </div>
 
@@ -436,14 +459,13 @@ function exportCurrentSubjectNotes() {
   const subject = BCA_3RD_SEM_DATA.subjects.find(s => s.id === activeSubjectId);
   if (!subject) return;
 
-  const localNotes = getCustomNotesForSubject(subject.id);
-  const allNotes = [...(subject.digitalNotes || []), ...localNotes];
+  const allNotes = _currentSubjectNotes && _currentSubjectNotes.length ? _currentSubjectNotes : (subject.digitalNotes || []);
 
   let md = `# ${subject.title} (${subject.code})\n\n`;
   md += `Panjab University BCA 3rd Semester — ${subject.type} (${subject.credits} Credits)\n\n---\n\n`;
 
   allNotes.forEach(n => {
-    md += `## ${n.title}\nUnit: ${n.unit} | Date: ${n.date || 'Aug 2026'}\n\n`;
+    md += `## ${n.title}\nUnit: ${n.unit || 'General'} | Date: ${n.date || 'Aug 2026'}\n\n`;
     md += `${n.content}\n\n---\n\n`;
   });
 
@@ -474,19 +496,21 @@ async function _fbFetch(path) {
 async function deleteNoteLive(fbKey, e) {
   if (e) e.stopPropagation();
   if (!fbKey) return;
-  if (!confirm('Are you sure you want to permanently delete this item?')) return;
+  if (!confirm('Are you sure you want to permanently delete this public note?')) return;
 
-  showToast('⏳ Removing item from cloud...');
+  showToast('⏳ Removing note from cloud...');
   try {
-    const res = await fetch(`${FIREBASE_DB}/lectures/${fbKey}.json`, { method: 'DELETE' });
-    if (!res.ok) throw new Error('Delete failed');
-    showToast('🗑️ Item deleted successfully from cloud!');
-    renderDashboardLectures();
+    await Promise.all([
+      fetch(`${FIREBASE_DB}/notes/${fbKey}.json`, { method: 'DELETE' }),
+      fetch(`${FIREBASE_DB}/lectures/${fbKey}.json`, { method: 'DELETE' })
+    ]);
+    showToast('🗑️ Note permanently deleted from cloud!');
     const subject = BCA_3RD_SEM_DATA.subjects.find(s => s.id === activeSubjectId) || BCA_3RD_SEM_DATA.subjects[0];
     if (subject) {
-      renderSubjectCalendar(subject);
       renderSubjectNotes(subject);
     }
+    renderDashboardLectures();
+    renderAdminManageData();
   } catch (err) {
     showToast('❌ Deletion failed: ' + err.message);
   }
@@ -499,24 +523,12 @@ async function deleteFirebaseItem(collection, fbKey, e) {
 
   showToast('⏳ Removing item from cloud...');
   try {
-    // Delete from primary collection
     await fetch(`${FIREBASE_DB}/${collection}/${fbKey}.json`, { method: 'DELETE' });
-    // Also cleanup from secondary collection in case of legacy mapping
     if (collection === 'notes') {
       await fetch(`${FIREBASE_DB}/lectures/${fbKey}.json`, { method: 'DELETE' });
     } else if (collection === 'lectures') {
       await fetch(`${FIREBASE_DB}/notes/${fbKey}.json`, { method: 'DELETE' });
     }
-
-    // Clean local cache
-    let locNotes = getCustomNotes().filter(n => (n.fbKey !== fbKey && n.id !== fbKey));
-    localStorage.setItem('bca3_custom_notes', JSON.stringify(locNotes));
-
-    let locLecs = getCustomLectures().filter(l => (l.fbKey !== fbKey && l.id !== fbKey));
-    localStorage.setItem('bca3_custom_lectures', JSON.stringify(locLecs));
-
-    let locAnns = getStoredAnnouncements().filter(a => (a.fbKey !== fbKey && a.id !== fbKey));
-    localStorage.setItem('bca3_announcements_cache', JSON.stringify(locAnns));
 
     showToast('🗑️ Item deleted successfully from cloud!');
     
@@ -552,15 +564,14 @@ async function renderSubjectCalendar(subject) {
 
   // Fetch live lectures from Firebase
   let fbLectures = await _fbFetch('lectures');
-  fbLectures = fbLectures.filter(l => l.subject === subject.id);
+  fbLectures = fbLectures.filter(l => (l.subject === subject.id || l.subjectId === subject.id));
 
-  const localLectures = getCustomLecturesForSubject(subject.id);
-  const allLectures = [...fbLectures, ...(subject.lectures || []), ...localLectures];
+  const allLectures = [...fbLectures, ...(subject.lectures || [])];
 
   // Map of active dates
   const lectureDateMap = {};
   allLectures.forEach(l => {
-    lectureDateMap[l.date] = l;
+    if (l.date) lectureDateMap[l.date] = l;
   });
 
   // Generate August 2026 Calendar Grid (Aug 1, 2026 is a Saturday = index 6)
@@ -635,7 +646,7 @@ function updateActiveDayCard(subject, allLectures) {
     titleEl.innerText = `Lecture on ${dateFormatted}`;
     timeEl.innerText = lecture.time || '10:00 AM';
     topicEl.innerText = lecture.topic;
-    descEl.innerText = lecture.description || 'Core topics covered during class session.';
+    descEl.innerText = lecture.description || lecture.notes || 'Core topics covered during class session.';
   } else {
     titleEl.innerText = `No Lecture Logged for ${dateFormatted}`;
     timeEl.innerText = 'Free / Study Day';
@@ -687,7 +698,7 @@ function renderSubjectLecturesList(subject, allLectures) {
         ${l.fileUrl || l.link ? `<a href="${l.fileUrl || l.link}" target="_blank" rel="noopener" class="lecture-link-btn">↗ View Attached Resource</a>` : ''}
         ${l.fbKey ? `
           <div style="margin-top: 1rem;">
-            <button onclick="deleteNoteLive('${l.fbKey}', event)" title="Delete AI Note Live" style="background: rgba(212, 79, 79, 0.15); color: #d44f4f; border: 1px solid rgba(212, 79, 79, 0.35); border-radius: 6px; padding: 0.35rem 0.65rem; font-size: 0.75rem; font-weight: 600; cursor: pointer;">
+            <button onclick="deleteNoteLive('${l.fbKey}', event)" title="Delete Note Live" style="background: rgba(212, 79, 79, 0.15); color: #d44f4f; border: 1px solid rgba(212, 79, 79, 0.35); border-radius: 6px; padding: 0.35rem 0.65rem; font-size: 0.75rem; font-weight: 600; cursor: pointer;">
               🗑️ Delete this Note
             </button>
           </div>
@@ -720,7 +731,7 @@ async function renderDashboardLectures() {
     (s.lectures || []).forEach(l => staticLectures.push({ ...l, subjectName: s.title, subjectId: s.id }));
   });
 
-  const all = [...fbLectures.map(l => ({ ...l, subjectName: getSubjectName(l.subject), subjectId: l.subject })), ...staticLectures];
+  const all = [...fbLectures.map(l => ({ ...l, subjectName: getSubjectName(l.subject || l.subjectId), subjectId: l.subject || l.subjectId })), ...staticLectures];
 
   const badge = document.getElementById('lecture-count-badge');
   if (badge) badge.innerText = `${all.length} Notes/Lectures`;
@@ -737,9 +748,9 @@ async function renderDashboardLectures() {
         <span class="lecture-day">${l.date ? l.date.split('-')[2] || '01' : '01'}</span>
       </div>
       <div class="lecture-info" style="flex: 1; min-width: 0;">
-        <div class="lecture-topic-title">${escapeHtml(l.topic)}</div>
+        <div class="lecture-topic-title">${escapeHtml(l.topic || l.title || 'Lecture')}</div>
         <div class="lecture-meta-row">
-          <span class="lecture-subject-badge">${escapeHtml(l.subjectName || l.subject)}</span>
+          <span class="lecture-subject-badge">${escapeHtml(l.subjectName || l.subject || 'General')}</span>
           <span>⏱️ ${l.time || '10:00 AM'}</span>
           <span>${l.unit || ''}</span>
         </div>
@@ -753,12 +764,12 @@ async function renderDashboardLectures() {
   `).join('');
 }
 
-function renderDashboardTodos() {
+async function renderDashboardTodos() {
   const container = document.getElementById('dashboard-todos-list');
   const badge = document.getElementById('todo-progress-badge');
   if (!container) return;
 
-  const todos = getStoredTodos();
+  const todos = await _fbFetch('todos');
   const doneCount = todos.filter(t => t.done).length;
   if (badge) badge.innerText = `${doneCount}/${todos.length} Done`;
 
@@ -767,65 +778,74 @@ function renderDashboardTodos() {
     return;
   }
 
-  container.innerHTML = todos.map(t => `
-    <div class="todo-item-row ${t.done ? 'done' : ''}">
-      <input type="checkbox" class="todo-checkbox" ${t.done ? 'checked' : ''} onchange="toggleTodo(${t.id})" id="todo-cb-${t.id}">
-      <label for="todo-cb-${t.id}" class="todo-label-text">${escapeHtml(t.text)}</label>
-      <button class="todo-del-btn" onclick="deleteTodo(${t.id})" title="Delete Task">✕</button>
-    </div>
-  `).join('');
+  container.innerHTML = todos.map(t => {
+    const key = t.fbKey || t.id;
+    return `
+      <div class="todo-item-row ${t.done ? 'done' : ''}">
+        <input type="checkbox" class="todo-checkbox" ${t.done ? 'checked' : ''} onchange="toggleTodoLive('${key}', ${Boolean(t.done)})" id="todo-cb-${key}">
+        <label for="todo-cb-${key}" class="todo-label-text">${escapeHtml(t.text)}</label>
+        <button class="todo-del-btn" onclick="deleteTodoLive('${key}')" title="Delete Task">✕</button>
+      </div>
+    `;
+  }).join('');
 }
 
-function addNewTodo() {
+async function addNewTodo() {
   const input = document.getElementById('new-todo-input');
   if (!input || !input.value.trim()) return;
 
-  const todos = getStoredTodos();
-  const newTodo = {
-    id: Date.now(),
-    text: input.value.trim(),
-    subject: 'General Study',
-    done: false,
-    date: new Date().toISOString().split('T')[0]
-  };
-  todos.push(newTodo);
-  localStorage.setItem('bca3_todos_data', JSON.stringify(todos));
-  input.value = '';
-  renderDashboardTodos();
-  showToast('New study target added! 🎯');
-}
-
-function toggleTodo(id) {
-  const todos = getStoredTodos();
-  const target = todos.find(t => t.id === id);
-  if (target) {
-    target.done = !target.done;
-    localStorage.setItem('bca3_todos_data', JSON.stringify(todos));
-    renderDashboardTodos();
+  const text = input.value.trim();
+  showToast('⏳ Adding study target to cloud...');
+  try {
+    await fetch(`${FIREBASE_DB}/todos.json`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        text,
+        priority: 'medium',
+        due: '',
+        subject: 'General Study',
+        done: false,
+        timestamp: Date.now()
+      })
+    });
+    input.value = '';
+    showToast('New study target live for all students! 🎯');
+    await renderDashboardTodos();
+  } catch (err) {
+    showToast('❌ Failed to add task: ' + err.message);
   }
 }
 
-function deleteTodo(id) {
-  let todos = getStoredTodos();
-  todos = todos.filter(t => t.id !== id);
-  localStorage.setItem('bca3_todos_data', JSON.stringify(todos));
-  renderDashboardTodos();
-  showToast('Study task removed.');
-}
-
-function getStoredTodos() {
-  const stored = localStorage.getItem('bca3_todos_data');
-  if (stored) {
-    try { return JSON.parse(stored); } catch (e) {}
+async function toggleTodoLive(fbKey, currentDone) {
+  try {
+    await fetch(`${FIREBASE_DB}/todos/${fbKey}.json`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ done: !currentDone })
+    });
+    await renderDashboardTodos();
+  } catch (err) {
+    showToast('❌ Failed to update task status: ' + err.message);
   }
-  return (BCA_3RD_SEM_DATA.todos && BCA_3RD_SEM_DATA.todos.length) ? BCA_3RD_SEM_DATA.todos : [];
 }
 
-function renderDashboardAnnouncements() {
+async function deleteTodoLive(fbKey) {
+  if (!confirm('Remove this study target?')) return;
+  try {
+    await fetch(`${FIREBASE_DB}/todos/${fbKey}.json`, { method: 'DELETE' });
+    showToast('Study task removed.');
+    await renderDashboardTodos();
+  } catch (err) {
+    showToast('❌ Failed to remove task: ' + err.message);
+  }
+}
+
+async function renderDashboardAnnouncements() {
   const container = document.getElementById('dashboard-announcements-list');
   if (!container) return;
 
-  const announcements = getStoredAnnouncements();
+  const announcements = await _fbFetch('announcements');
   const catIcons = { notice: '📌', exam: '📅', assignment: '📝', urgent: '🚨' };
 
   if (!announcements.length) {
@@ -841,17 +861,9 @@ function renderDashboardAnnouncements() {
       </div>
       <div style="font-weight: 600; font-size: 0.95rem; margin-bottom: 0.25rem;">${escapeHtml(a.title)}</div>
       <p style="font-size: 0.85rem; line-height: 1.5; color: var(--text-muted);">${escapeHtml(a.message)}</p>
-      ${a.link ? `<a href="${a.link}" target="_blank" style="font-size: 0.75rem; color: var(--color-coral); text-decoration: none; display: inline-block; margin-top: 0.35rem;">↗ View Resource</a>` : ''}
+      ${a.link ? `<a href="${escapeHtml(a.link)}" target="_blank" rel="noopener" style="font-size: 0.75rem; color: var(--color-coral); text-decoration: none; display: inline-block; margin-top: 0.35rem;">↗ View Resource</a>` : ''}
     </div>
   `).join('');
-}
-
-function getStoredAnnouncements() {
-  const stored = localStorage.getItem('bca3_announcements_cache');
-  if (stored) {
-    try { return JSON.parse(stored); } catch (e) {}
-  }
-  return [];
 }
 
 /* ==========================================================================
@@ -931,7 +943,7 @@ function switchAdminTab(tabName) {
   }
 }
 
-// 1. Publish Note (supports create + edit)
+// 1. Publish Note (supports create + edit) - 100% Cloud Firebase RTDB
 async function publishAdminNote() {
   const subjectId = document.getElementById('adm-note-subject').value;
   const unit = document.getElementById('adm-note-unit').value;
@@ -946,35 +958,33 @@ async function publishAdminNote() {
   }
 
   const isEditing = _editingItem && _editingItem.type === 'note';
-  showToast(isEditing ? '⏳ Updating note...' : '⏳ Publishing note to all students...');
+  showToast(isEditing ? '⏳ Updating public note in cloud...' : '⏳ Publishing note live to all students...');
 
   const noteData = {
     id: isEditing ? _editingItem.id : `custom-note-${Date.now()}`,
-    subjectId,
+    subject: subjectId,
+    subjectId: subjectId,
     unit,
     title,
     readTime,
     tags: tagsStr ? tagsStr.split(',').map(t => t.trim()).filter(Boolean) : ['Revision'],
     content,
     isAdminPublished: true,
+    author: 'Admin',
     date: isEditing ? (_editingItem.date || new Date().toISOString().split('T')[0]) : new Date().toISOString().split('T')[0],
     timestamp: isEditing ? (_editingItem.timestamp || Date.now()) : Date.now()
   };
 
   try {
     if (isEditing && _editingItem.fbKey) {
-      // UPDATE existing item in Firebase
-      await fetch(`${FIREBASE_DB}/${_editingItem.collection}/${_editingItem.fbKey}.json`, {
+      const col = _editingItem.collection || 'notes';
+      await fetch(`${FIREBASE_DB}/${col}/${_editingItem.fbKey}.json`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(noteData)
       });
     } else {
-      // CREATE new item
-      const existing = getCustomNotes();
-      existing.push(noteData);
-      localStorage.setItem('bca3_custom_notes', JSON.stringify(existing));
-      await fetch(`${FIREBASE_DB}/lectures.json`, {
+      await fetch(`${FIREBASE_DB}/notes.json`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(noteData)
@@ -984,22 +994,21 @@ async function publishAdminNote() {
     console.warn('Firebase sync warning:', err);
   }
 
-  // Clear inputs & reset edit state
   document.getElementById('adm-note-title').value = '';
   document.getElementById('adm-note-tags').value = '';
   document.getElementById('adm-note-content').value = '';
   resetEditState('note');
 
-  showToast(isEditing ? '✅ Digital note updated in cloud!' : '✅ Digital note published live to workspace!');
+  showToast(isEditing ? '✅ Public note updated in cloud!' : '✅ Digital note published live to all students!');
   closeAdminModal();
 
-  if (activeSubjectId === subjectId) {
-    const subject = BCA_3RD_SEM_DATA.subjects.find(s => s.id === subjectId);
-    if (subject) renderSubjectNotes(subject);
+  const subject = BCA_3RD_SEM_DATA.subjects.find(s => s.id === subjectId) || BCA_3RD_SEM_DATA.subjects.find(s => s.id === activeSubjectId);
+  if (subject && activeSubjectId === subjectId) {
+    renderSubjectNotes(subject);
   }
 }
 
-// 2. Publish Lecture Log (supports create + edit)
+// 2. Publish Lecture Log (supports create + edit) - 100% Cloud Firebase RTDB
 async function publishAdminLecture() {
   const subjectId = document.getElementById('adm-lec-subject').value;
   const unit = document.getElementById('adm-lec-unit').value;
@@ -1015,17 +1024,20 @@ async function publishAdminLecture() {
   }
 
   const isEditing = _editingItem && _editingItem.type === 'lecture';
-  showToast(isEditing ? '⏳ Updating lecture...' : '⏳ Publishing lecture log...');
+  showToast(isEditing ? '⏳ Updating lecture log in cloud...' : '⏳ Publishing lecture log to all students...');
 
   const lecData = {
     id: isEditing ? _editingItem.id : `custom-lec-${Date.now()}`,
-    subjectId,
+    subject: subjectId,
+    subjectId: subjectId,
     unit,
     date,
     time,
     topic,
     description: desc,
+    notes: desc,
     fileUrl: link || 'Syllabus.pdf',
+    link: link || 'Syllabus.pdf',
     timestamp: isEditing ? (_editingItem.timestamp || Date.now()) : Date.now()
   };
 
@@ -1037,9 +1049,6 @@ async function publishAdminLecture() {
         body: JSON.stringify(lecData)
       });
     } else {
-      const existing = getCustomLectures();
-      existing.push(lecData);
-      localStorage.setItem('bca3_custom_lectures', JSON.stringify(existing));
       await fetch(`${FIREBASE_DB}/lectures.json`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1059,13 +1068,11 @@ async function publishAdminLecture() {
   closeAdminModal();
 
   renderDashboardLectures();
-  if (activeSubjectId === subjectId) {
-    const subject = BCA_3RD_SEM_DATA.subjects.find(s => s.id === subjectId);
-    if (subject) renderSubjectCalendar(subject);
-  }
+  const subject = BCA_3RD_SEM_DATA.subjects.find(s => s.id === subjectId);
+  if (subject) renderSubjectCalendar(subject);
 }
 
-// 3. Publish Announcement (supports create + edit)
+// 3. Publish Announcement (supports create + edit) - 100% Cloud Firebase RTDB
 async function publishAdminAnnouncement() {
   const title = document.getElementById('adm-ann-title').value.trim();
   const category = document.getElementById('adm-ann-category').value;
@@ -1078,7 +1085,7 @@ async function publishAdminAnnouncement() {
   }
 
   const isEditing = _editingItem && _editingItem.type === 'announcement';
-  showToast(isEditing ? '⏳ Updating announcement...' : '⏳ Publishing announcement...');
+  showToast(isEditing ? '⏳ Updating announcement in cloud...' : '⏳ Publishing announcement to all students...');
 
   const annData = {
     id: isEditing ? _editingItem.id : `custom-ann-${Date.now()}`,
@@ -1098,9 +1105,6 @@ async function publishAdminAnnouncement() {
         body: JSON.stringify(annData)
       });
     } else {
-      const existing = getStoredAnnouncements();
-      existing.unshift(annData);
-      localStorage.setItem('bca3_announcements_cache', JSON.stringify(existing));
       await fetch(`${FIREBASE_DB}/announcements.json`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1127,69 +1131,60 @@ async function renderAdminManageData() {
 
   container.innerHTML = `<div style="text-align: center; padding: 2rem; color: var(--text-subtle);">⏳ Loading data from Firebase...</div>`;
 
-  const [fbNotes, fbLectures, fbAnnouncements] = await Promise.all([
+  const [fbNotes, fbLectures, fbAnnouncements, fbTodos] = await Promise.all([
     _fbFetch('notes'),
     _fbFetch('lectures'),
-    _fbFetch('announcements')
+    _fbFetch('announcements'),
+    _fbFetch('todos')
   ]);
-
-  const localNotes = getCustomNotes();
-  const localLectures = getCustomLectures();
 
   let html = '';
 
   // --- NOTES SECTION ---
   const allNotes = [
     ...fbNotes.map(n => ({ ...n, _sourceCol: 'notes' })),
-    ...fbLectures.filter(l => l.notes || l.content || l.isAdminPublished).map(n => ({ ...n, _sourceCol: 'lectures' })),
-    ...localNotes.filter(n => !fbNotes.some(fb => fb.id === n.id) && !fbLectures.some(fb => fb.id === n.id))
+    ...fbLectures.filter(l => (l.content && !l.topic) || (l.isAdminPublished && !fbNotes.some(fn => fn.fbKey === l.fbKey))).map(n => ({ ...n, _sourceCol: 'lectures' }))
   ];
-  html += `<h4 style="font-size: 0.95rem; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.4rem;">📝 Notes & Study Material <span style="font-size: 0.75rem; background: var(--bg-surface-subtle); padding: 0.15rem 0.5rem; border-radius: var(--radius-full); color: var(--text-subtle);">${allNotes.length}</span></h4>`;
+  html += `<h4 style="font-size: 0.95rem; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.4rem;">📝 Digital Notes <span style="font-size: 0.75rem; background: var(--bg-surface-subtle); padding: 0.15rem 0.5rem; border-radius: var(--radius-full); color: var(--text-subtle);">${allNotes.length}</span></h4>`;
 
   if (!allNotes.length) {
-    html += `<p style="font-size: 0.8125rem; color: var(--text-subtle); margin-bottom: 1rem;">No published notes yet.</p>`;
+    html += `<p style="font-size: 0.8125rem; color: var(--text-subtle); margin-bottom: 1rem;">No published digital notes yet.</p>`;
   } else {
     html += allNotes.map(n => {
-      const col = n._sourceCol || (n.isAdminPublished ? 'lectures' : 'notes');
-      const deleteAction = n.fbKey
-        ? `deleteFirebaseItem('${col}', '${n.fbKey}', event)`
-        : `deleteCustomNote('${n.id}')`;
+      const col = n._sourceCol || 'notes';
       const subjectLabel = n.subjectId ? getSubjectName(n.subjectId) || n.subjectId : (n.subject ? getSubjectName(n.subject) || n.subject : 'General');
       return `
         <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.55rem 0.75rem; background: var(--bg-surface-subtle); border-radius: var(--radius-sm); margin-bottom: 0.35rem; font-size: 0.85rem;">
           <div style="min-width: 0; flex: 1; overflow: hidden;">
             <strong style="word-break: break-word;">${escapeHtml(n.title || n.topic || 'Untitled')}</strong>
-            <div style="font-size: 0.75rem; color: var(--text-subtle); margin-top: 0.15rem;">${escapeHtml(subjectLabel)} · ${n.date || '—'}${n.fbKey ? ' · <span style="color: #2ecc71;">☁️ Firebase</span>' : ' · 💾 Local'}</div>
+            <div style="font-size: 0.75rem; color: var(--text-subtle); margin-top: 0.15rem;">${escapeHtml(subjectLabel)} · ${n.date || '—'} · <span style="color: #2ecc71;">☁️ Public Live</span></div>
           </div>
           <div style="display: flex; gap: 0.35rem; flex-shrink: 0; margin-left: 0.5rem;">
-            ${n.fbKey ? `<button class="todo-del-btn" onclick="editNoteFromManage('${n.fbKey}', '${col}')" title="Edit" style="color: var(--color-coral);">✏️</button>` : ''}
-            <button class="todo-del-btn" onclick="${deleteAction}" title="Delete">🗑️</button>
+            <button class="todo-del-btn" onclick="editNoteFromManage('${n.fbKey}', '${col}')" title="Edit" style="color: var(--color-coral);">✏️</button>
+            <button class="todo-del-btn" onclick="deleteFirebaseItem('${col}', '${n.fbKey}', event)" title="Delete">🗑️</button>
           </div>
         </div>`;
     }).join('');
   }
 
   // --- LECTURES SECTION ---
-  const allLectures = [...fbLectures.filter(l => !l.isAdminPublished), ...localLectures.filter(l => !fbLectures.some(fb => fb.id === l.id))];
+  const allLectures = fbLectures.filter(l => l.topic && !l.content);
   html += `<h4 style="font-size: 0.95rem; margin: 1.25rem 0 0.5rem 0; display: flex; align-items: center; gap: 0.4rem;">📅 Lecture Logs <span style="font-size: 0.75rem; background: var(--bg-surface-subtle); padding: 0.15rem 0.5rem; border-radius: var(--radius-full); color: var(--text-subtle);">${allLectures.length}</span></h4>`;
 
   if (!allLectures.length) {
     html += `<p style="font-size: 0.8125rem; color: var(--text-subtle); margin-bottom: 1rem;">No lecture logs recorded.</p>`;
   } else {
     html += allLectures.map(l => {
-      const deleteAction = l.fbKey
-        ? `deleteFirebaseItem('lectures', '${l.fbKey}', event)`
-        : `deleteCustomLecture('${l.id}')`;
-      const subjectLabel = l.subjectId ? getSubjectName(l.subjectId) || l.subjectId : (l.subject ? getSubjectName(l.subject) || l.subject : 'General');
+      const subjectLabel = l.subjectId ? getSubjectName(l.subjectId) || l.subjectId : (l.subject ? getSubjectName(l.subject) || n.subject : 'General');
       return `
         <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.55rem 0.75rem; background: var(--bg-surface-subtle); border-radius: var(--radius-sm); margin-bottom: 0.35rem; font-size: 0.85rem;">
           <div style="min-width: 0; flex: 1; overflow: hidden;">
             <strong style="word-break: break-word;">${escapeHtml(l.topic || 'Untitled')}</strong>
-            <div style="font-size: 0.75rem; color: var(--text-subtle); margin-top: 0.15rem;">${escapeHtml(subjectLabel)} · ${l.date || '—'}${l.fbKey ? ' · <span style="color: #2ecc71;">☁️ Firebase</span>' : ' · 💾 Local'}</div>
+            <div style="font-size: 0.75rem; color: var(--text-subtle); margin-top: 0.15rem;">${escapeHtml(subjectLabel)} · ${l.date || '—'} · <span style="color: #2ecc71;">☁️ Public Live</span></div>
           </div>
           <div style="display: flex; gap: 0.35rem; flex-shrink: 0; margin-left: 0.5rem;">
-            ${l.fbKey ? `<button class="todo-del-btn" onclick="editLectureFromManage('${l.fbKey}')" title="Edit" style="color: var(--color-coral);">✏️</button>` : ''}
-            <button class="todo-del-btn" onclick="${deleteAction}" title="Delete">🗑️</button>
+            <button class="todo-del-btn" onclick="editLectureFromManage('${l.fbKey}')" title="Edit" style="color: var(--color-coral);">✏️</button>
+            <button class="todo-del-btn" onclick="deleteFirebaseItem('lectures', '${l.fbKey}', event)" title="Delete">🗑️</button>
           </div>
         </div>`;
     }).join('');
@@ -1205,11 +1200,30 @@ async function renderAdminManageData() {
       <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.55rem 0.75rem; background: var(--bg-surface-subtle); border-radius: var(--radius-sm); margin-bottom: 0.35rem; font-size: 0.85rem;">
         <div style="min-width: 0; flex: 1; overflow: hidden;">
           <strong style="word-break: break-word;">${escapeHtml(a.title || 'Untitled')}</strong>
-          <div style="font-size: 0.75rem; color: var(--text-subtle); margin-top: 0.15rem;">${a.category || 'notice'} · ${a.date || '—'} · <span style="color: #2ecc71;">☁️ Firebase</span></div>
+          <div style="font-size: 0.75rem; color: var(--text-subtle); margin-top: 0.15rem;">${escapeHtml(a.category || 'notice')} · ${a.date || '—'} · <span style="color: #2ecc71;">☁️ Public Live</span></div>
         </div>
         <div style="display: flex; gap: 0.35rem; flex-shrink: 0; margin-left: 0.5rem;">
           <button class="todo-del-btn" onclick="editAnnouncementFromManage('${a.fbKey}')" title="Edit" style="color: var(--color-coral);">✏️</button>
           <button class="todo-del-btn" onclick="deleteFirebaseItem('announcements', '${a.fbKey}', event)" title="Delete">🗑️</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  // --- STUDY TASKS (TODOS) SECTION ---
+  html += `<h4 style="font-size: 0.95rem; margin: 1.25rem 0 0.5rem 0; display: flex; align-items: center; gap: 0.4rem;">🎯 Study Tasks <span style="font-size: 0.75rem; background: var(--bg-surface-subtle); padding: 0.15rem 0.5rem; border-radius: var(--radius-full); color: var(--text-subtle);">${fbTodos.length}</span></h4>`;
+
+  if (!fbTodos.length) {
+    html += `<p style="font-size: 0.8125rem; color: var(--text-subtle);">No study tasks active.</p>`;
+  } else {
+    html += fbTodos.map(t => `
+      <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.55rem 0.75rem; background: var(--bg-surface-subtle); border-radius: var(--radius-sm); margin-bottom: 0.35rem; font-size: 0.85rem; ${t.done ? 'opacity: 0.6;' : ''}">
+        <div style="min-width: 0; flex: 1; overflow: hidden;">
+          <span style="${t.done ? 'text-decoration: line-through;' : ''}">${escapeHtml(t.text)}</span>
+          <div style="font-size: 0.75rem; color: var(--text-subtle); margin-top: 0.15rem;">${t.priority || 'medium'} priority · ${t.done ? '✓ Completed' : 'Pending'} · <span style="color: #2ecc71;">☁️ Public Live</span></div>
+        </div>
+        <div style="display: flex; gap: 0.35rem; flex-shrink: 0; margin-left: 0.5rem;">
+          <button class="todo-del-btn" onclick="deleteFirebaseItem('todos', '${t.fbKey}', event)" title="Delete">🗑️</button>
         </div>
       </div>
     `).join('');
@@ -1221,11 +1235,11 @@ async function renderAdminManageData() {
 // --- EDIT FUNCTIONS (Notion-style inline edit) ---
 
 async function editNoteFromManage(fbKey, collection) {
-  const items = await _fbFetch(collection);
+  const items = await _fbFetch(collection || 'notes');
   const item = items.find(i => i.fbKey === fbKey);
   if (!item) { showToast('❌ Item not found'); return; }
 
-  _editingItem = { type: 'note', fbKey, collection, id: item.id, date: item.date, timestamp: item.timestamp };
+  _editingItem = { type: 'note', fbKey, collection: collection || 'notes', id: item.id, date: item.date, timestamp: item.timestamp };
 
   // Pre-fill the note form
   const subjectEl = document.getElementById('adm-note-subject');
@@ -1248,7 +1262,7 @@ async function editLectureFromManage(fbKey) {
   const item = items.find(i => i.fbKey === fbKey);
   if (!item) { showToast('❌ Item not found'); return; }
 
-  _editingItem = { type: 'lecture', fbKey, id: item.id, date: item.date, timestamp: item.timestamp };
+  _editingItem = { type: 'lecture', fbKey, collection: 'lectures', id: item.id, date: item.date, timestamp: item.timestamp };
 
   const subjectEl = document.getElementById('adm-lec-subject');
   const unitEl = document.getElementById('adm-lec-unit');
@@ -1257,8 +1271,8 @@ async function editLectureFromManage(fbKey) {
   document.getElementById('adm-lec-date').value = item.date || '';
   document.getElementById('adm-lec-time').value = item.time || '';
   document.getElementById('adm-lec-topic').value = item.topic || '';
-  document.getElementById('adm-lec-desc').value = item.description || '';
-  document.getElementById('adm-lec-link').value = item.fileUrl || '';
+  document.getElementById('adm-lec-desc').value = item.description || item.notes || '';
+  document.getElementById('adm-lec-link').value = item.fileUrl || item.link || '';
 
   switchAdminTab('lecture');
   updateEditBanner('lecture', item.topic || 'Untitled');
@@ -1270,7 +1284,7 @@ async function editAnnouncementFromManage(fbKey) {
   const item = items.find(i => i.fbKey === fbKey);
   if (!item) { showToast('❌ Item not found'); return; }
 
-  _editingItem = { type: 'announcement', fbKey, id: item.id, date: item.date, timestamp: item.timestamp };
+  _editingItem = { type: 'announcement', fbKey, collection: 'announcements', id: item.id, date: item.date, timestamp: item.timestamp };
 
   document.getElementById('adm-ann-title').value = item.title || '';
   document.getElementById('adm-ann-category').value = item.category || 'notice';
@@ -1317,74 +1331,16 @@ function resetEditState(tabType) {
   }
 }
 
-function deleteCustomNote(noteId) {
-  let notes = getCustomNotes().filter(n => n.id !== noteId);
-  localStorage.setItem('bca3_custom_notes', JSON.stringify(notes));
-  showToast('🗑️ Note deleted.');
-  renderAdminManageData();
-  const subject = BCA_3RD_SEM_DATA.subjects.find(s => s.id === activeSubjectId);
-  if (subject) renderSubjectNotes(subject);
-}
-
-function deleteCustomLecture(lecId) {
-  let lectures = getCustomLectures().filter(l => l.id !== lecId);
-  localStorage.setItem('bca3_custom_lectures', JSON.stringify(lectures));
-  showToast('🗑️ Lecture deleted.');
-  renderAdminManageData();
-  const subject = BCA_3RD_SEM_DATA.subjects.find(s => s.id === activeSubjectId);
-  if (subject) renderSubjectCalendar(subject);
-  renderDashboardLectures();
-}
-
-function getCustomNotes() {
-  const stored = localStorage.getItem('bca3_custom_notes');
-  if (stored) {
-    try { return JSON.parse(stored); } catch (e) {}
-  }
-  return [];
-}
-
-function getCustomNotesForSubject(subjectId) {
-  return getCustomNotes().filter(n => n.subjectId === subjectId);
-}
-
-function getCustomLectures() {
-  const stored = localStorage.getItem('bca3_custom_lectures');
-  if (stored) {
-    try { return JSON.parse(stored); } catch (e) {}
-  }
-  return [];
-}
-
-function getCustomLecturesForSubject(subjectId) {
-  return getCustomLectures().filter(l => l.subjectId === subjectId);
-}
-
 // Background sync from Firebase Realtime Database
 async function syncFirebaseData() {
   try {
-    // 1. Sync lectures (notes are stored here too)
-    const resLec = await fetch(`${FIREBASE_DB}/lectures.json`);
-    if (resLec.ok) {
-      const data = await resLec.json();
-      if (data) {
-        const cloudLecs = Object.entries(data).map(([fbKey, val]) => ({ ...val, fbKey }));
-        localStorage.setItem('bca3_custom_lectures', JSON.stringify(cloudLecs));
-      }
-    }
-
-    // 2. Sync announcements
-    const resAnn = await fetch(`${FIREBASE_DB}/announcements.json`);
-    if (resAnn.ok) {
-      const data = await resAnn.json();
-      if (data) {
-        const cloudAnn = Object.entries(data).map(([fbKey, val]) => ({ ...val, fbKey }));
-        localStorage.setItem('bca3_announcements_cache', JSON.stringify(cloudAnn));
-        renderDashboardAnnouncements();
-      }
-    }
+    await Promise.all([
+      renderDashboardLectures(),
+      renderDashboardAnnouncements(),
+      renderDashboardTodos()
+    ]);
   } catch (err) {
-    // Fail gracefully with offline cache
+    console.warn('Firebase sync warning:', err);
   }
 }
 
@@ -1396,33 +1352,36 @@ function openZenReader() {
   const subject = BCA_3RD_SEM_DATA.subjects.find(s => s.id === activeSubjectId);
   if (!subject) return;
 
-  const localNotes = getCustomNotesForSubject(subject.id);
-  const allNotes = [...(subject.digitalNotes || []), ...localNotes];
+  const allNotes = _currentSubjectNotes && _currentSubjectNotes.length ? _currentSubjectNotes : (subject.digitalNotes || []);
 
   if (!allNotes.length) {
     showToast('No notes to display in focus reader.');
     return;
   }
 
-  openZenReaderWithNote(allNotes[0].id);
+  openZenReaderWithNote(allNotes[0].fbKey || allNotes[0].id);
 }
 
 function openZenReaderWithNote(noteId) {
   const subject = BCA_3RD_SEM_DATA.subjects.find(s => s.id === activeSubjectId);
-  const localNotes = getCustomNotesForSubject(subject.id);
-  const allNotes = [...(subject.digitalNotes || []), ...localNotes];
-  const note = allNotes.find(n => n.id === noteId) || allNotes[0];
+  const allNotes = _currentSubjectNotes && _currentSubjectNotes.length ? _currentSubjectNotes : (subject ? (subject.digitalNotes || []) : []);
+  const note = allNotes.find(n => (n.fbKey === noteId || n.id === noteId)) || allNotes[0];
+
+  if (!note) {
+    showToast('Note not found.');
+    return;
+  }
 
   const modal = document.getElementById('zen-reader-modal');
   const container = document.getElementById('zen-article-content');
   const badge = document.getElementById('zen-badge');
 
-  if (badge) badge.innerText = `${subject.title} • ${note.unit}`;
+  if (badge) badge.innerText = `${subject ? subject.title : 'BCA III'} • ${note.unit || 'General'}`;
   if (container) {
     container.innerHTML = `
-      <h1 class="serif" style="font-size: 2.25rem; margin-bottom: 0.5rem;">${note.title}</h1>
+      <h1 class="serif" style="font-size: 2.25rem; margin-bottom: 0.5rem;">${escapeHtml(note.title)}</h1>
       <p style="color: var(--text-subtle); margin-bottom: 1.75rem; font-size: 0.9rem;">
-        ${subject.code} · ${note.unit} · ${note.readTime || '6 min read'} · Panjab University
+        ${subject ? subject.code : 'BCA 3'} · ${escapeHtml(note.unit || 'General')} · ${escapeHtml(note.readTime || '6 min read')} · Panjab University
       </p>
       <div style="font-size: 1.1rem; line-height: 1.8; color: var(--text-main);">
         ${renderMarkdownBlocks(note.content)}

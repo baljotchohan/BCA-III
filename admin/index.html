@@ -111,13 +111,17 @@
       </div>
       <!-- ADMIN TABS -->
       <div class="admin-tabs-bar">
-        <button class="admin-tab active" data-tab="announcements" onclick="switchTab('announcements')">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8h1a4 4 0 0 1 0 8h-1"></path><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"></path><line x1="6" y1="1" x2="6" y2="4"></line><line x1="10" y1="1" x2="10" y2="4"></line><line x1="14" y1="1" x2="14" y2="4"></line></svg>
-          Announcements
+        <button class="admin-tab active" data-tab="notes" onclick="switchTab('notes')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+          Digital Notes
         </button>
         <button class="admin-tab" data-tab="lectures" onclick="switchTab('lectures')">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
           Lecture Logs
+        </button>
+        <button class="admin-tab" data-tab="announcements" onclick="switchTab('announcements')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8h1a4 4 0 0 1 0 8h-1"></path><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"></path><line x1="6" y1="1" x2="6" y2="4"></line><line x1="10" y1="1" x2="10" y2="4"></line><line x1="14" y1="1" x2="14" y2="4"></line></svg>
+          Announcements
         </button>
         <button class="admin-tab" data-tab="agenda" onclick="switchTab('agenda')">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
@@ -133,8 +137,90 @@
     <!-- ADMIN CONTENT AREA -->
     <main class="admin-main">
 
-      <!-- TAB 1: ANNOUNCEMENTS -->
-      <section id="tab-announcements" class="admin-tab-panel active">
+      <!-- TAB 1: DIGITAL NOTES -->
+      <section id="tab-notes" class="admin-tab-panel active">
+        <div class="admin-panel-header">
+          <div>
+            <h2 class="admin-panel-title serif">Digital Notes &amp; Study Guides</h2>
+            <p class="admin-panel-desc">Create and publish rich markdown digital notes live to subject workspaces for all students.</p>
+          </div>
+          <button class="admin-action-btn primary" onclick="openNoteForm()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            Publish Digital Note
+          </button>
+        </div>
+
+        <!-- Add Note Form -->
+        <div id="note-form" class="admin-form-card" style="display:none;">
+          <h3 class="admin-form-title">Publish Digital Note to Cloud</h3>
+          <div class="admin-form-grid">
+            <div class="admin-field">
+              <label class="admin-label">Subject *</label>
+              <select id="note-subject" class="admin-input-field">
+                <option value="comp-arch">Computer Architecture (301)</option>
+                <option value="data-structures">Data Structures (302)</option>
+                <option value="numerical-methods">Numerical Methods (303)</option>
+                <option value="machine-learning">Machine Learning (304)</option>
+                <option value="english-3">English-3 (AEC)</option>
+                <option value="web-dev">Web Development (MDC)</option>
+                <option value="backend-dev">Backend Web Dev (SEC)</option>
+              </select>
+            </div>
+            <div class="admin-field">
+              <label class="admin-label">Unit Mapping *</label>
+              <select id="note-unit" class="admin-input-field">
+                <option value="Unit I">Unit I</option>
+                <option value="Unit II">Unit II</option>
+                <option value="Unit III">Unit III</option>
+                <option value="Unit IV">Unit IV</option>
+                <option value="General">General Revision</option>
+              </select>
+            </div>
+            <div class="admin-field">
+              <label class="admin-label">Read Time</label>
+              <input type="text" id="note-readtime" class="admin-input-field" placeholder="e.g. 6 min read"/>
+            </div>
+            <div class="admin-field">
+              <label class="admin-label">Tags (comma separated)</label>
+              <input type="text" id="note-tags" class="admin-input-field" placeholder="e.g. 8086, Registers, Assembly"/>
+            </div>
+          </div>
+          <div class="admin-field">
+            <label class="admin-label">Note Title *</label>
+            <input type="text" id="note-title" class="admin-input-field" placeholder="e.g. 8086 Addressing Modes &amp; Physical Address Derivation"/>
+          </div>
+          <div class="admin-field">
+            <label class="admin-label">Note Content (Markdown supported with code blocks, tables, math formulas) *</label>
+            <textarea id="note-content" class="admin-textarea" placeholder="Write markdown notes here... Use ### for subheadings, ```cpp for code blocks, | tables |, etc." rows="10"></textarea>
+          </div>
+          <div class="admin-form-actions">
+            <button class="admin-action-btn" onclick="closeNoteForm()">Cancel</button>
+            <button class="admin-action-btn primary" onclick="saveNote()">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path></svg>
+              Publish Note Live
+            </button>
+          </div>
+        </div>
+
+        <!-- Subject Filter -->
+        <div class="admin-filter-bar">
+          <button class="filter-pill active" onclick="filterNotes('all', this)">All Subjects</button>
+          <button class="filter-pill" onclick="filterNotes('comp-arch', this)">Computer Arch</button>
+          <button class="filter-pill" onclick="filterNotes('data-structures', this)">Data Structures</button>
+          <button class="filter-pill" onclick="filterNotes('numerical-methods', this)">Numerical Methods</button>
+          <button class="filter-pill" onclick="filterNotes('machine-learning', this)">Machine Learning</button>
+          <button class="filter-pill" onclick="filterNotes('english-3', this)">English-3</button>
+          <button class="filter-pill" onclick="filterNotes('web-dev', this)">Web Dev</button>
+          <button class="filter-pill" onclick="filterNotes('backend-dev', this)">Backend Dev</button>
+        </div>
+
+        <div id="notes-list" class="admin-items-list">
+          <!-- Populated dynamically -->
+        </div>
+      </section>
+
+      <!-- TAB 2: ANNOUNCEMENTS -->
+      <section id="tab-announcements" class="admin-tab-panel">
         <div class="admin-panel-header">
           <div>
             <h2 class="admin-panel-title serif">Class Announcements</h2>

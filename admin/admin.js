@@ -134,10 +134,123 @@ function switchTab(tabName) {
 }
 
 function renderAll() {
-  renderAnnouncements();
+  renderNotes('all');
   renderLectures('all');
+  renderAnnouncements();
   renderAgenda();
   renderTodos();
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  0. DIGITAL NOTES
+// ─────────────────────────────────────────────────────────────────────────────
+let _noteFilter = 'all';
+
+function openNoteForm() {
+  const f = document.getElementById('note-form');
+  f.style.display = f.style.display === 'none' ? 'flex' : 'none';
+  if (f.style.display === 'flex') document.getElementById('note-title').focus();
+}
+
+function closeNoteForm() {
+  document.getElementById('note-form').style.display = 'none';
+  ['note-title','note-tags','note-readtime','note-content'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  document.getElementById('note-unit').value = 'Unit I';
+}
+
+async function saveNote() {
+  const subject  = document.getElementById('note-subject').value;
+  const unit     = document.getElementById('note-unit').value;
+  const title    = document.getElementById('note-title').value.trim();
+  const tagsStr  = document.getElementById('note-tags').value.trim();
+  const readTime = document.getElementById('note-readtime').value.trim() || '6 min read';
+  const content  = document.getElementById('note-content').value.trim();
+
+  if (!title || !content) {
+    showAdminToast('❌ Title and Note Content are required.');
+    return;
+  }
+
+  showAdminToast('⏳ Publishing digital note to cloud...');
+  try {
+    await fbPush('notes', {
+      subject,
+      subjectId: subject,
+      unit,
+      title,
+      tags: tagsStr ? tagsStr.split(',').map(t => t.trim()).filter(Boolean) : ['Revision'],
+      readTime,
+      content,
+      isAdminPublished: true,
+      author: 'Admin',
+      date: new Date().toISOString().split('T')[0],
+      timestamp: Date.now()
+    });
+    closeNoteForm();
+    await renderNotes(_noteFilter || 'all');
+    showAdminToast('✅ Digital note published live for all students!');
+  } catch (e) {
+    showAdminToast('❌ Failed: ' + e.message);
+  }
+}
+
+async function deleteNote(fbKey) {
+  if (!confirm('Permanently delete this digital note?')) return;
+  try {
+    await fbDelete('notes', fbKey);
+    await renderNotes(_noteFilter || 'all');
+    showAdminToast('Digital note removed from cloud.');
+  } catch (e) {
+    showAdminToast('❌ ' + e.message);
+  }
+}
+
+function filterNotes(filter, btn) {
+  _noteFilter = filter;
+  document.querySelectorAll('#tab-notes .filter-pill').forEach(p => p.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  renderNotes(filter);
+}
+
+async function renderNotes(filter) {
+  const container = document.getElementById('notes-list');
+  if (!container) return;
+  container.innerHTML = loadingState();
+  try {
+    let list = await fbGet('notes');
+    if (filter && filter !== 'all') {
+      list = list.filter(n => (n.subject === filter || n.subjectId === filter));
+    }
+    if (!list.length) {
+      container.innerHTML = emptyState(filter === 'all' ? 'No digital notes published yet. Add the first one!' : `No notes published for ${SUBJECT_NAMES[filter] || filter}.`);
+      return;
+    }
+    container.innerHTML = list.map(n => `
+      <div class="admin-item-card">
+        <div class="admin-item-content">
+          <div class="admin-item-title">${escHtml(n.title)}</div>
+          <div class="admin-item-meta">
+            <span class="admin-item-badge coral">${escHtml(SUBJECT_NAMES[n.subject || n.subjectId] || n.subject)}</span>
+            <span class="admin-item-badge">${escHtml(n.unit || 'General')}</span>
+            <span>${n.readTime || '6 min read'} · ${formatDate(n.date)}</span>
+          </div>
+          <div class="admin-item-desc" style="white-space: pre-wrap; max-height: 120px; overflow-y: auto;">${escHtml((n.content || '').slice(0, 300))}${(n.content || '').length > 300 ? '...' : ''}</div>
+          ${n.tags && n.tags.length ? `
+            <div style="display: flex; gap: 0.35rem; flex-wrap: wrap; margin-top: 0.5rem;">
+              ${n.tags.map(t => `<span style="font-size: 0.72rem; background: var(--bg-surface-subtle); padding: 0.15rem 0.45rem; border-radius: 4px; color: var(--text-subtle);">#${escHtml(t)}</span>`).join('')}
+            </div>
+          ` : ''}
+        </div>
+        <div class="admin-item-actions">
+          <button class="admin-item-btn delete" onclick="deleteNote('${n.fbKey}')" title="Delete Note">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path></svg>
+          </button>
+        </div>
+      </div>
+    `).join('');
+  } catch (e) {
+    container.innerHTML = errorState(e.message);
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
