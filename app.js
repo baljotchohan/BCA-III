@@ -10,10 +10,23 @@ let selectedCalendarDate = '2026-08-08';
 let currentNoteFilter = 'all';
 let _editingItem = null; // { type: 'note'|'lecture'|'announcement', fbKey, collection }
 let _currentSubjectNotes = []; // Cached active notes array for focus reader & export
+let _globalCloudData = { notes: [], lectures: [], announcements: [] }; // Global cache for search indexing
 
 const ADMIN_PASSKEY = 'Defenderbhabhiontop';
-const ADMIN_SESSION_KEY = 'bca_admin_inapp_session';
+const ADMIN_SESSION_KEY = 'bca_hub_admin_session';
 const FIREBASE_DB = 'https://bca2nd-5c622-default-rtdb.firebaseio.com/bca3';
+
+function isAdminAuthenticated() {
+  return sessionStorage.getItem(ADMIN_SESSION_KEY) === 'authenticated' || sessionStorage.getItem('bca_admin_session') === 'authenticated';
+}
+
+function lockScroll(lock) {
+  if (lock) {
+    document.body.classList.add('modal-open');
+  } else {
+    document.body.classList.remove('modal-open');
+  }
+}
 
 // Initialize on DOM Loaded
 document.addEventListener('DOMContentLoaded', () => {
@@ -24,6 +37,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initFilterPills();
   initCommandPalette();
   initMobileDrawer();
+  updateAdminHeaderUI();
   syncFirebaseData();
 });
 
@@ -307,9 +321,9 @@ async function renderSubjectNotes(subject) {
             ${note.isAdminPublished || isCloud ? '<span class="note-unit-badge" style="background-color: var(--color-cactus); color: var(--text-main);">☁️ Public Live Note</span>' : '<span class="note-unit-badge">Syllabus Guide</span>'}
           </div>
           <div class="note-actions-bar">
-            ${isCloud ? `
-              <button class="note-tool-btn" onclick="deleteNoteLive('${note.fbKey}', event)" title="Delete Public Note" style="color: #d44f4f;">
-                <span>🗑️ Delete</span>
+            ${isAdminAuthenticated() && isCloud ? `
+              <button class="note-tool-btn" onclick="deleteNoteLive('${note.fbKey}', event)" title="Admin: Delete Public Note" style="color: #d44f4f; border-color: rgba(212,79,79,0.4); background: rgba(212,79,79,0.08);">
+                <span>🛡️ Delete</span>
               </button>
             ` : ''}
             <button class="note-tool-btn" onclick="copyNoteContent('${noteKey}')" title="Copy note text">
@@ -486,8 +500,12 @@ async function _fbFetch(path) {
     const res = await fetch(`${FIREBASE_DB}/${path}.json`);
     const data = await res.json();
     if (!data || data.error) return [];
-    return Object.entries(data).map(([fbKey, val]) => ({ ...val, fbKey }))
+    const list = Object.entries(data).map(([fbKey, val]) => ({ ...val, fbKey }))
       .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+    if (_globalCloudData[path]) {
+      _globalCloudData[path] = list;
+    }
+    return list;
   } catch (err) {
     return [];
   }
@@ -496,7 +514,14 @@ async function _fbFetch(path) {
 async function deleteNoteLive(fbKey, e) {
   if (e) e.stopPropagation();
   if (!fbKey) return;
-  if (!confirm('Are you sure you want to permanently delete this public note?')) return;
+
+  if (!isAdminAuthenticated()) {
+    showToast('🔒 Administrator passkey required to delete content.');
+    openAdminModal();
+    return;
+  }
+
+  if (!confirm('Are you sure you want to permanently delete this public note from cloud?')) return;
 
   showToast('⏳ Removing note from cloud...');
   try {
@@ -519,7 +544,14 @@ async function deleteNoteLive(fbKey, e) {
 async function deleteFirebaseItem(collection, fbKey, e) {
   if (e) e.stopPropagation();
   if (!fbKey) return;
-  if (!confirm('Are you sure you want to permanently delete this item?')) return;
+
+  if (!isAdminAuthenticated()) {
+    showToast('🔒 Administrator passkey required to delete content.');
+    openAdminModal();
+    return;
+  }
+
+  if (!confirm('Are you sure you want to permanently delete this item from cloud?')) return;
 
   showToast('⏳ Removing item from cloud...');
   try {
@@ -696,10 +728,10 @@ function renderSubjectLecturesList(subject, allLectures) {
           </div>
         ` : ''}
         ${l.fileUrl || l.link ? `<a href="${l.fileUrl || l.link}" target="_blank" rel="noopener" class="lecture-link-btn">↗ View Attached Resource</a>` : ''}
-        ${l.fbKey ? `
+        ${isAdminAuthenticated() && l.fbKey ? `
           <div style="margin-top: 1rem;">
-            <button onclick="deleteNoteLive('${l.fbKey}', event)" title="Delete Note Live" style="background: rgba(212, 79, 79, 0.15); color: #d44f4f; border: 1px solid rgba(212, 79, 79, 0.35); border-radius: 6px; padding: 0.35rem 0.65rem; font-size: 0.75rem; font-weight: 600; cursor: pointer;">
-              🗑️ Delete this Note
+            <button onclick="deleteNoteLive('${l.fbKey}', event)" title="Admin: Delete Note Live" style="background: rgba(212, 79, 79, 0.12); color: #d44f4f; border: 1px solid rgba(212, 79, 79, 0.35); border-radius: 6px; padding: 0.35rem 0.65rem; font-size: 0.75rem; font-weight: 600; cursor: pointer;">
+              🛡️ Delete Lecture Log
             </button>
           </div>
         ` : ''}
@@ -755,9 +787,9 @@ async function renderDashboardLectures() {
           <span>${l.unit || ''}</span>
         </div>
       </div>
-      ${l.fbKey ? `
-        <button onclick="deleteNoteLive('${l.fbKey}', event)" title="Delete Note Live" style="background: rgba(212, 79, 79, 0.15); color: #d44f4f; border: 1px solid rgba(212, 79, 79, 0.35); border-radius: 6px; padding: 0.35rem 0.65rem; font-size: 0.75rem; font-weight: 600; cursor: pointer; flex-shrink: 0; align-self: center;">
-          🗑️ Delete
+      ${isAdminAuthenticated() && l.fbKey ? `
+        <button onclick="deleteNoteLive('${l.fbKey}', event)" title="Admin: Delete Note Live" style="background: rgba(212, 79, 79, 0.12); color: #d44f4f; border: 1px solid rgba(212, 79, 79, 0.35); border-radius: 6px; padding: 0.35rem 0.65rem; font-size: 0.75rem; font-weight: 600; cursor: pointer; flex-shrink: 0; align-self: center;">
+          🛡️ Delete
         </button>
       ` : ''}
     </div>
@@ -784,7 +816,7 @@ async function renderDashboardTodos() {
       <div class="todo-item-row ${t.done ? 'done' : ''}">
         <input type="checkbox" class="todo-checkbox" ${t.done ? 'checked' : ''} onchange="toggleTodoLive('${key}', ${Boolean(t.done)})" id="todo-cb-${key}">
         <label for="todo-cb-${key}" class="todo-label-text">${escapeHtml(t.text)}</label>
-        <button class="todo-del-btn" onclick="deleteTodoLive('${key}')" title="Delete Task">✕</button>
+        ${isAdminAuthenticated() ? `<button class="todo-del-btn" onclick="deleteTodoLive('${key}')" title="Admin: Delete Task">✕</button>` : ''}
       </div>
     `;
   }).join('');
@@ -831,7 +863,12 @@ async function toggleTodoLive(fbKey, currentDone) {
 }
 
 async function deleteTodoLive(fbKey) {
-  if (!confirm('Remove this study target?')) return;
+  if (!isAdminAuthenticated()) {
+    showToast('🔒 Administrator passkey required to delete shared study targets.');
+    openAdminModal();
+    return;
+  }
+  if (!confirm('Remove this study target from cloud?')) return;
   try {
     await fetch(`${FIREBASE_DB}/todos/${fbKey}.json`, { method: 'DELETE' });
     showToast('Study task removed.');
@@ -874,8 +911,9 @@ function openAdminModal() {
   const modal = document.getElementById('admin-modal');
   if (!modal) return;
   modal.style.display = 'flex';
+  lockScroll(true);
 
-  const isAuth = sessionStorage.getItem(ADMIN_SESSION_KEY) === 'authenticated';
+  const isAuth = isAdminAuthenticated();
   const authScreen = document.getElementById('admin-auth-screen');
   const controlsScreen = document.getElementById('admin-controls-screen');
   const badge = document.getElementById('admin-status-badge');
@@ -903,6 +941,7 @@ function openAdminModal() {
 function closeAdminModal() {
   const modal = document.getElementById('admin-modal');
   if (modal) modal.style.display = 'none';
+  lockScroll(false);
 }
 
 function handleInAppAdminLogin(e) {
@@ -914,7 +953,14 @@ function handleInAppAdminLogin(e) {
     sessionStorage.setItem(ADMIN_SESSION_KEY, 'authenticated');
     errEl.style.display = 'none';
     showToast('🛡️ Admin verification successful! Portal unlocked.');
+    updateAdminHeaderUI();
     openAdminModal();
+    
+    // Refresh active views to show admin actions
+    const subject = BCA_3RD_SEM_DATA.subjects.find(s => s.id === activeSubjectId);
+    if (subject) renderSubjectNotes(subject);
+    renderDashboardLectures();
+    renderDashboardTodos();
   } else {
     errEl.style.display = 'block';
     document.getElementById('inapp-passkey').value = '';
@@ -924,8 +970,47 @@ function handleInAppAdminLogin(e) {
 
 function handleInAppAdminLogout() {
   sessionStorage.removeItem(ADMIN_SESSION_KEY);
-  showToast('🔒 Admin signed out successfully.');
-  openAdminModal();
+  sessionStorage.removeItem('bca_admin_session');
+  showToast('🔒 Admin signed out. Returned to Student view.');
+  updateAdminHeaderUI();
+  closeAdminModal();
+
+  // Refresh active views to remove admin buttons
+  const subject = BCA_3RD_SEM_DATA.subjects.find(s => s.id === activeSubjectId);
+  if (subject) renderSubjectNotes(subject);
+  renderDashboardLectures();
+  renderDashboardTodos();
+}
+
+function updateAdminHeaderUI() {
+  const container = document.getElementById('header-admin-wrap');
+  if (!container) return;
+  const isAuth = isAdminAuthenticated();
+  if (isAuth) {
+    container.innerHTML = `
+      <div style="display: flex; align-items: center; gap: 0.35rem;">
+        <button class="header-admin-btn active" onclick="openAdminModal()" title="Admin Mode Active (Click to open portal)" style="background: var(--color-cactus); border-color: var(--color-cactus-border); color: var(--text-main);">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+          </svg>
+          <span>Admin Active</span>
+        </button>
+        <button onclick="handleInAppAdminLogout()" title="Log out of Admin mode" style="background: none; border: 1px solid var(--border-subtle); border-radius: var(--radius-xs); padding: 0.3rem 0.5rem; font-size: 0.72rem; color: var(--color-coral); cursor: pointer;">
+          Exit
+        </button>
+      </div>
+    `;
+  } else {
+    container.innerHTML = `
+      <button class="header-admin-btn" onclick="openAdminModal()" title="Open Admin Portal (Create &amp; Publish Notes)">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+        </svg>
+        <span>Admin</span>
+      </button>
+    `;
+  }
 }
 
 function switchAdminTab(tabName) {
@@ -1175,7 +1260,7 @@ async function renderAdminManageData() {
     html += `<p style="font-size: 0.8125rem; color: var(--text-subtle); margin-bottom: 1rem;">No lecture logs recorded.</p>`;
   } else {
     html += allLectures.map(l => {
-      const subjectLabel = l.subjectId ? getSubjectName(l.subjectId) || l.subjectId : (l.subject ? getSubjectName(l.subject) || n.subject : 'General');
+      const subjectLabel = l.subjectId ? getSubjectName(l.subjectId) || l.subjectId : (l.subject ? getSubjectName(l.subject) || l.subject : 'General');
       return `
         <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.55rem 0.75rem; background: var(--bg-surface-subtle); border-radius: var(--radius-sm); margin-bottom: 0.35rem; font-size: 0.85rem;">
           <div style="min-width: 0; flex: 1; overflow: hidden;">
@@ -1389,13 +1474,17 @@ function openZenReaderWithNote(noteId) {
     `;
   }
 
-  if (modal) modal.style.display = 'flex';
+  if (modal) {
+    modal.style.display = 'flex';
+    lockScroll(true);
+  }
 }
 
 function closeZenReader(e) {
   if (e && e.target && e.target.id !== 'zen-reader-modal' && e.type === 'click') return;
   const modal = document.getElementById('zen-reader-modal');
   if (modal) modal.style.display = 'none';
+  lockScroll(false);
 }
 
 /* ==========================================================================
@@ -1427,6 +1516,7 @@ function openCommandPalette() {
   const modal = document.getElementById('command-palette');
   if (modal) {
     modal.style.display = 'flex';
+    lockScroll(true);
     const input = document.getElementById('palette-search-input');
     if (input) {
       input.value = '';
@@ -1439,6 +1529,7 @@ function openCommandPalette() {
 function closeCommandPalette() {
   const modal = document.getElementById('command-palette');
   if (modal) modal.style.display = 'none';
+  lockScroll(false);
 }
 
 function searchPalette(query) {
@@ -1448,7 +1539,7 @@ function searchPalette(query) {
   const q = query.toLowerCase().trim();
   const results = [];
 
-  // Search subjects
+  // 1. Search static subjects
   BCA_3RD_SEM_DATA.subjects.forEach(s => {
     if (!q || s.title.toLowerCase().includes(q) || s.code.toLowerCase().includes(q)) {
       results.push({
@@ -1459,7 +1550,7 @@ function searchPalette(query) {
       });
     }
 
-    // Search units & topics
+    // 2. Search syllabus units & topics
     (s.units || []).forEach(u => {
       (u.topics || []).forEach(t => {
         if (q && t.toLowerCase().includes(q)) {
@@ -1473,9 +1564,9 @@ function searchPalette(query) {
       });
     });
 
-    // Search notes
+    // 3. Search built-in notes
     (s.digitalNotes || []).forEach(n => {
-      if (q && (n.title.toLowerCase().includes(q) || n.content.toLowerCase().includes(q))) {
+      if (q && (n.title.toLowerCase().includes(q) || (n.content && n.content.toLowerCase().includes(q)))) {
         results.push({
           type: 'Note',
           title: n.title,
@@ -1484,6 +1575,40 @@ function searchPalette(query) {
         });
       }
     });
+  });
+
+  // 4. Search Live Cloud Notes from Firebase
+  const cloudNotes = _globalCloudData.notes && _globalCloudData.notes.length ? _globalCloudData.notes : _currentSubjectNotes;
+  cloudNotes.forEach(n => {
+    const subId = n.subject || n.subjectId || 'comp-arch';
+    const subName = getSubjectName(subId);
+    if (q && (n.title?.toLowerCase().includes(q) || n.content?.toLowerCase().includes(q) || (n.tags && n.tags.some(t => t.toLowerCase().includes(q))))) {
+      // Avoid duplicate title if already added
+      if (!results.some(r => r.title === n.title)) {
+        results.push({
+          type: '☁️ Live Note',
+          title: n.title,
+          subtitle: `${subName} • ${n.unit || 'General'}`,
+          action: () => { closeCommandPalette(); navigateToSubject(subId); switchWorkspaceTab('notes'); }
+        });
+      }
+    }
+  });
+
+  // 5. Search Live Lecture Logs
+  (_globalCloudData.lectures || []).forEach(l => {
+    const subId = l.subject || l.subjectId || 'comp-arch';
+    const subName = getSubjectName(subId);
+    if (q && (l.topic?.toLowerCase().includes(q) || l.description?.toLowerCase().includes(q))) {
+      if (!results.some(r => r.title === l.topic)) {
+        results.push({
+          type: '📅 Lecture',
+          title: l.topic,
+          subtitle: `${subName} • ${l.date || 'Aug 2026'}`,
+          action: () => { closeCommandPalette(); navigateToSubject(subId); switchWorkspaceTab('calendar'); }
+        });
+      }
+    }
   });
 
   if (!results.length) {
@@ -1594,11 +1719,13 @@ function initMobileDrawer() {
     const drawer = document.getElementById('mobile-nav-drawer');
     if (drawer) drawer.classList.add('open');
     if (backdrop) backdrop.classList.add('open');
+    lockScroll(true);
   }
   function closeDrawer() {
     const drawer = document.getElementById('mobile-nav-drawer');
     if (drawer) drawer.classList.remove('open');
     if (backdrop) backdrop.classList.remove('open');
+    lockScroll(false);
   }
 
   if (hamburger) hamburger.addEventListener('click', openDrawer);

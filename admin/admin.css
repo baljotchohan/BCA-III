@@ -646,4 +646,18 @@
   .admin-badge {
     display: none;
   }
+
+  .admin-toast {
+    right: auto;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    width: max-content;
+    max-width: calc(100vw - 2rem);
+    text-align: center;
+    bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  .admin-toast.visible {
+    transform: translateX(-50%) translateY(0);
+  }
 }

@@ -5,8 +5,12 @@
  */
 
 const ADMIN_KEY   = 'Defenderbhabhiontop';
-const SESSION_KEY = 'bca_admin_session';
+const SESSION_KEY = 'bca_hub_admin_session';
 const DB          = 'https://bca2nd-5c622-default-rtdb.firebaseio.com/bca3';
+
+function isPortalAdminAuth() {
+  return sessionStorage.getItem(SESSION_KEY) === 'authenticated' || sessionStorage.getItem('bca_admin_session') === 'authenticated';
+}
 
 // ─── Firebase REST Helpers ────────────────────────────────────────────────────
 
@@ -42,7 +46,7 @@ document.addEventListener('DOMContentLoaded', () => {
   updateAdminThemeBtn(theme);
   updateAdminThemeMeta(theme);
 
-  if (sessionStorage.getItem(SESSION_KEY) === 'authenticated') {
+  if (isPortalAdminAuth()) {
     showDashboard();
   }
 
@@ -61,6 +65,7 @@ function handleLogin(e) {
 
   if (input === ADMIN_KEY) {
     sessionStorage.setItem(SESSION_KEY, 'authenticated');
+    sessionStorage.setItem('bca_admin_session', 'authenticated');
     err.classList.remove('visible');
     showDashboard();
   } else {
@@ -75,6 +80,7 @@ function handleLogin(e) {
 
 function logout() {
   sessionStorage.removeItem(SESSION_KEY);
+  sessionStorage.removeItem('bca_admin_session');
   document.getElementById('admin-dashboard').style.display = 'none';
   document.getElementById('admin-lock-screen').style.display = 'flex';
   document.getElementById('passkey-input').value = '';
