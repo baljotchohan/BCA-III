@@ -1659,7 +1659,7 @@ body.modal-open {
 }
 
 /* ==========================================================================
-   TAB 2: DIGITAL NOTES REPOSITORY (NOTION STYLE)
+   TAB 2: DIGITAL NOTES REPOSITORY
    ========================================================================== */
 
 .notes-repository-header {
@@ -1745,36 +1745,38 @@ body.modal-open {
 
 .note-unit-badge {
   font-family: var(--font-mono);
-  font-size: 0.75rem;
-  font-weight: 600;
-  padding: 0.2rem 0.55rem;
-  border-radius: var(--radius-full);
-  background-color: var(--color-cactus);
+  font-size: 0.72rem;
+  font-weight: 500;
+  padding: 0.18rem 0.5rem;
+  border-radius: var(--radius-xs);
+  background-color: var(--bg-surface-subtle);
+  border: 1px solid var(--border-color);
   color: var(--text-main);
 }
 
 .note-read-time {
   font-size: 0.75rem;
   color: var(--text-subtle);
+  font-family: var(--font-sans);
 }
 
 .note-actions-bar {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: 0.35rem;
   flex-wrap: wrap;
 }
 
 .note-tool-btn {
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
-  padding: 0.3rem 0.65rem;
+  gap: 0.3rem;
+  padding: 0.25rem 0.55rem;
   border-radius: var(--radius-xs);
   border: 1px solid var(--border-color);
   background-color: var(--bg-surface-subtle);
   color: var(--text-muted);
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.15s ease;
@@ -1784,14 +1786,32 @@ body.modal-open {
 .note-tool-btn:hover {
   background-color: var(--color-oat);
   color: var(--text-main);
+  border-color: var(--border-strong);
+}
+
+.topic-tag-pill {
+  font-size: 0.72rem;
+  font-family: var(--font-mono);
+  background-color: var(--bg-surface-subtle);
+  border: 1px solid var(--border-subtle);
+  padding: 2px 8px;
+  border-radius: var(--radius-xs);
+  color: var(--text-subtle);
+  transition: color 0.15s ease;
+}
+
+.topic-tag-pill:hover {
+  color: var(--text-main);
+  border-color: var(--border-color);
 }
 
 .note-card-title {
   font-family: var(--font-serif);
-  font-size: clamp(1.35rem, 2.2vw, 1.65rem);
+  font-size: clamp(1.25rem, 3.5vw, 1.55rem);
   font-weight: 600;
   color: var(--text-main);
   margin-bottom: 0.85rem;
+  line-height: 1.3;
 }
 
 .note-content-body {
@@ -1820,7 +1840,7 @@ body.modal-open {
   margin-bottom: 0.35rem;
 }
 
-/* Notion Code Container */
+/* Code Block Container */
 .notion-code-container {
   margin: 1.25rem 0;
   background-color: #1a1a19;
@@ -2654,47 +2674,79 @@ body.modal-open {
 
   .brand-header-link {
     gap: 0.35rem;
+    display: flex;
+    align-items: center;
   }
 
   .brand-main-title {
     font-size: 1.25rem;
+    font-weight: 700;
   }
 
   .SiteHeader-module-scss-module__zKj4Ca__contentWrapper {
     gap: 0.35rem;
+    display: flex;
+    align-items: center;
+  }
+
+  .header-utility-btns {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
   }
 
   .header-icon-btn {
-    width: 34px;
-    height: 34px;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .header-admin-btn {
-    padding: 0.3rem 0.6rem;
-    height: 34px;
-    font-size: 0.75rem;
+    padding: 0.35rem 0.65rem;
+    height: 36px;
+    font-size: 0.78rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
   }
 
   .SiteHeader-module-scss-module__zKj4Ca__mobileIcon {
-    width: 34px;
-    height: 34px;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
   /* Hero & Filter bar */
   .LandingPageSection-module-scss-module__ZSMdoa__root {
-    padding-top: 1.75rem;
+    padding-top: 1.5rem;
     padding-bottom: 1.25rem;
   }
 
+  .Hero-module-scss-module__sp7muW__title {
+    font-size: clamp(1.85rem, 6.5vw, 2.35rem);
+    line-height: 1.15;
+    margin-bottom: 0.65rem;
+  }
+
+  .Hero-module-scss-module__sp7muW__summary {
+    font-size: 0.95rem;
+    line-height: 1.55;
+    color: var(--text-muted);
+  }
+
   .academy-filter-bar {
+    display: flex;
     flex-wrap: nowrap;
     overflow-x: auto;
     scrollbar-width: none;
     -webkit-overflow-scrolling: touch;
-    padding-bottom: 0.4rem;
-    margin-top: 1.15rem;
-    padding-top: 0.85rem;
-    gap: 0.4rem;
+    padding: 0.65rem 0.25rem;
+    margin-top: 1rem;
+    gap: 0.45rem;
   }
 
   .academy-filter-bar::-webkit-scrollbar {
@@ -2702,34 +2754,54 @@ body.modal-open {
   }
 
   .filter-pill {
-    padding: 0.35rem 0.75rem;
+    padding: 0.38rem 0.8rem;
     font-size: 0.78rem;
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+
+  /* Banner Section on Mobile */
+  .PackageBanner-module-scss-module__FhS4PW__banner {
+    padding: 1.35rem 1.15rem;
+    border-radius: var(--radius-md);
+  }
+
+  .PackageBanner-module-scss-module__FhS4PW__package {
+    padding: 0.85rem 1rem;
   }
 
   /* 7 Subject Cards */
   .EducationSections-module-scss-module__dxNdua__section {
-    padding: 1.35rem 1.15rem;
+    padding: 1.25rem 1.1rem;
+    margin-bottom: 1.15rem;
+    border-radius: var(--radius-md);
   }
 
   .EducationSections-module-scss-module__dxNdua__sectionInner {
     flex-direction: column;
     align-items: flex-start;
-    gap: 1.25rem;
+    gap: 1rem;
   }
 
   .EducationSections-module-scss-module__dxNdua__illustrationWrapper {
-    display: none; /* Hide large illustrations on mobile for clean focus */
+    display: none; /* Hide decorative SVG on mobile for clean focus */
+  }
+
+  .EducationSections-module-scss-module__dxNdua__contentCtaWrapper {
+    width: 100%;
   }
 
   .EducationSections-module-scss-module__dxNdua__contentCtaWrapper button {
     width: 100%;
     justify-content: center;
+    height: 42px;
   }
 
   /* Subject Workspace Hero Card Mobile Layout */
   .subject-hero-card {
-    padding: 1.35rem 1.15rem;
-    margin-bottom: 1.5rem;
+    padding: 1.25rem 1.1rem;
+    margin-bottom: 1.25rem;
+    border-radius: var(--radius-md);
   }
 
   .subject-hero-header-row {
@@ -2740,6 +2812,7 @@ body.modal-open {
 
   .subject-meta-pill-group {
     gap: 0.35rem;
+    flex-wrap: wrap;
   }
 
   .subject-code-badge, .subject-credit-tag, .subject-status-tag {
@@ -2749,52 +2822,69 @@ body.modal-open {
 
   .subject-hero-title {
     font-size: 1.65rem;
+    line-height: 1.2;
     margin-bottom: 0.5rem;
   }
 
   .subject-hero-desc {
-    font-size: 0.95rem;
+    font-size: 0.92rem;
+    line-height: 1.55;
     margin-bottom: 1rem;
   }
 
   .subject-hero-footer-row {
     flex-direction: column;
     align-items: stretch;
-    gap: 0.85rem;
+    gap: 0.75rem;
   }
 
   .subject-hero-actions {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
     gap: 0.45rem;
     width: 100%;
-  }
-
-  .subject-hero-actions .subject-hero-btn:last-child {
-    grid-column: span 2;
-    justify-content: center;
   }
 
   .subject-hero-btn {
     justify-content: center;
     padding: 0.45rem 0.75rem;
     font-size: 0.78rem;
+    height: 38px;
   }
 
   /* Workspace Tabs Navigation Mobile */
   .workspace-tabs-nav {
-    gap: 0.25rem;
+    display: flex;
+    gap: 0.35rem;
     margin-bottom: 1.25rem;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 0.25rem;
+  }
+
+  .workspace-tabs-nav::-webkit-scrollbar {
+    display: none;
   }
 
   .workspace-tab-btn {
-    padding: 0.55rem 0.85rem;
-    font-size: 0.84rem;
+    padding: 0.5rem 0.85rem;
+    font-size: 0.82rem;
     gap: 0.35rem;
+    white-space: nowrap;
+    flex-shrink: 0;
   }
 
   .notes-repository-header {
-    gap: 0.65rem;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+    margin-bottom: 1.15rem;
+  }
+
+  .notes-filter-pills {
+    width: 100%;
+    padding-bottom: 0.25rem;
   }
 
   .note-tool-btn {
@@ -2803,21 +2893,30 @@ body.modal-open {
   }
 
   .digital-note-card {
-    padding: 1.15rem;
+    padding: 1.15rem 1rem;
+    margin-bottom: 1.15rem;
+    border-radius: var(--radius-md);
+  }
+
+  .note-card-meta {
+    margin-bottom: 0.65rem;
   }
 
   .note-card-title {
-    font-size: 1.35rem;
+    font-size: 1.3rem;
+    line-height: 1.3;
+    margin-bottom: 0.65rem;
   }
 
   /* Admin Modal on Mobile */
   .admin-modal-card {
-    max-height: 95vh;
+    max-height: min(90vh, 90dvh);
     border-radius: var(--radius-md);
+    margin: 0.5rem;
   }
 
   .admin-modal-header {
-    padding: 0.95rem 1.15rem;
+    padding: 0.85rem 1.15rem;
   }
 
   .admin-modal-body {
@@ -2826,7 +2925,7 @@ body.modal-open {
 
   /* Breadcrumb Mobile truncation */
   .breadcrumb-current {
-    max-width: 140px;
+    max-width: 160px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -2835,15 +2934,30 @@ body.modal-open {
 
 /* Small Mobile Screens (<= 480px) */
 @media (max-width: 480px) {
+  .page-wrapper {
+    padding-left: 0.85rem;
+    padding-right: 0.85rem;
+  }
+
   .subject-hero-actions {
     grid-template-columns: 1fr;
   }
 
-  .subject-hero-actions .subject-hero-btn:last-child {
-    grid-column: span 1;
+  .cal-day-cell {
+    font-size: 0.72rem;
   }
 
-  .cal-day-cell {
-    font-size: 0.75rem;
+  .todo-add-box {
+    flex-direction: column;
+  }
+
+  .todo-add-box button {
+    width: 100%;
+  }
+
+  .note-actions-bar {
+    width: 100%;
+    justify-content: flex-end;
+    margin-top: 0.25rem;
   }
 }

@@ -1,6 +1,6 @@
 /**
  * BCA 3 Hub — Panjab University 2026-27 Study Dashboard Controller
- * Full SPA Routing (Dedicated Subject Workspaces), Notion-Style Digital Notes Repository,
+ * Full SPA Routing (Dedicated Subject Workspaces), Digital Study Notes Repository,
  * Interactive Calendar Switcher and Integrated In-App Admin Portal.
  */
 
@@ -242,7 +242,7 @@ function toggleTopicCheck(topicKey, checkbox) {
 }
 
 /* ==========================================================================
-   4. NOTION-STYLE DIGITAL NOTES REPOSITORY
+   4. DIGITAL NOTES REPOSITORY & FOCUS VIEWER
    ========================================================================== */
 
 async function renderSubjectNotes(subject) {
@@ -316,17 +316,16 @@ async function renderSubjectNotes(subject) {
       <div class="digital-note-card">
         <div class="note-card-meta">
           <div class="note-meta-left">
-            <span class="note-unit-badge">${escapeHtml(note.unit || 'General')}</span>
-            <span class="note-read-time">⏱️ ${escapeHtml(note.readTime || '6 min read')}</span>
-            ${note.isAdminPublished || isCloud ? '<span class="note-unit-badge" style="background-color: var(--color-cactus); color: var(--text-main);">☁️ Public Live Note</span>' : '<span class="note-unit-badge">Syllabus Guide</span>'}
+            <span class="note-unit-badge">${escapeHtml(note.unit || 'Unit I')}</span>
+            <span class="note-read-time">${escapeHtml(note.readTime || '5 min read')}</span>
           </div>
           <div class="note-actions-bar">
             ${isAdminAuthenticated() && isCloud ? `
-              <button class="note-tool-btn" onclick="deleteNoteLive('${note.fbKey}', event)" title="Admin: Delete Public Note" style="color: #d44f4f; border-color: rgba(212,79,79,0.4); background: rgba(212,79,79,0.08);">
-                <span>🛡️ Delete</span>
+              <button class="note-tool-btn" onclick="deleteNoteLive('${note.fbKey}', event)" title="Admin: Delete Note" style="color: #d44f4f; border-color: rgba(212,79,79,0.3); background: rgba(212,79,79,0.06);">
+                <span>🗑️ Delete</span>
               </button>
             ` : ''}
-            <button class="note-tool-btn" onclick="copyNoteContent('${noteKey}')" title="Copy note text">
+            <button class="note-tool-btn" onclick="copyNoteContent('${noteKey}')" title="Copy note">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
               <span>Copy</span>
             </button>
@@ -343,8 +342,8 @@ async function renderSubjectNotes(subject) {
         </div>
 
         ${note.tags && note.tags.length ? `
-          <div class="topic-tags-row" style="margin-top: 1.25rem;">
-            ${note.tags.map(t => `<span class="topic-badge">#${escapeHtml(t)}</span>`).join('')}
+          <div class="topic-tags-row">
+            ${note.tags.map(t => `<span class="topic-tag-pill">${escapeHtml(t.replace(/^#/, ''))}</span>`).join('')}
           </div>
         ` : ''}
       </div>
@@ -1317,7 +1316,7 @@ async function renderAdminManageData() {
   container.innerHTML = html;
 }
 
-// --- EDIT FUNCTIONS (Notion-style inline edit) ---
+// --- EDIT FUNCTIONS (Interactive live cloud edit) ---
 
 async function editNoteFromManage(fbKey, collection) {
   const items = await _fbFetch(collection || 'notes');
