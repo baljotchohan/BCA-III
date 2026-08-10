@@ -349,6 +349,10 @@ async function renderSubjectNotes(subject) {
       </div>
     `;
   }).join('');
+
+  if (window.ManimVisuals) {
+    setTimeout(() => window.ManimVisuals.mountAll(container), 40);
+  }
 }
 
 function filterNotesByUnit(unit, btn) {
@@ -359,6 +363,18 @@ function filterNotesByUnit(unit, btn) {
   if (subject) renderSubjectNotes(subject);
 }
 
+function insertVisualTagToEditor(tag) {
+  if (!tag) return;
+  const textarea = document.getElementById('adm-note-content');
+  if (!textarea) return;
+  const start = textarea.selectionStart || 0;
+  const end = textarea.selectionEnd || 0;
+  const text = textarea.value;
+  textarea.value = text.substring(0, start) + '\n\n' + tag + '\n\n' + text.substring(end);
+  textarea.focus();
+  showToast('Inserted visual animation tag! ✨');
+}
+
 function renderMarkdownBlocks(content) {
   if (!content) return '';
 
@@ -366,6 +382,32 @@ function renderMarkdownBlocks(content) {
 
   // 1. Normalize line endings
   html = html.replace(/\r\n/g, '\n');
+
+  // 1b. Interactive Manim Visual Tags @[visual:type]
+  html = html.replace(/@\[visual:([a-zA-Z0-9_\-]+)\]/g, (match, type) => {
+    return `<div class="manim-visual-mount" data-manim-visual="${escapeHtml(type.trim())}"></div>`;
+  });
+
+  // 1c. Manim Video Clips @[video:title](url) or @[manim:title](url)
+  html = html.replace(/@\[(?:video|manim):(.*?)\]\((.*?)\)/g, (match, title, url) => {
+    return `
+      <div class="manim-visual-card">
+        <div class="manim-card-header">
+          <div class="manim-header-title-row">
+            <span class="manim-tag">🎬 Manim Mathematical Animation</span>
+          </div>
+          <h3 class="manim-title">${escapeHtml(title || 'Mathematical Visualization')}</h3>
+        </div>
+        <div class="manim-canvas-container" style="background: #000;">
+          <video controls autoplay loop muted playsinline style="width: 100%; max-height: 420px; display: block;">
+            <source src="${url}" type="video/mp4">
+            <source src="${url}" type="video/webm">
+            Your browser does not support HTML5 video.
+          </video>
+        </div>
+      </div>
+    `;
+  });
 
   // 2. Code blocks & ASCII diagrams (matches closed or unclosed ``` or ''')
   html = html.replace(/(?:```|''')([a-zA-Z0-9_\-\+]+)?[ \t]*\n?([\s\S]*?)(?:```|'''|$)/g, (match, lang, code) => {
@@ -386,11 +428,84 @@ function renderMarkdownBlocks(content) {
     `;
   });
 
+  // Helper: Format common LaTeX expressions into clean Unicode math
+  function formatMathSymbols(text) {
+    if (!text) return '';
+    let s = text;
+    
+    // 1. Text & font wrappers
+    s = s.replace(/\\text\{([^}]+)\}/g, '$1')
+         .replace(/\\mathbf\{([^}]+)\}/g, '$1');
+
+    // 2. High-priority macros
+    s = s.replace(/\\implies/g, ' ⟹ ')
+         .replace(/\\iff/g, ' ⟺ ')
+         .replace(/\\rightarrow|\\to/g, ' → ')
+         .replace(/\\leftarrow/g, ' ← ')
+         .replace(/\\longleftrightarrow/g, ' ⟷ ')
+         .replace(/\\longrightarrow/g, ' ⟶ ')
+         .replace(/\\le|\\leq/g, ' ≤ ')
+         .replace(/\\ge|\\geq/g, ' ≥ ')
+         .replace(/\\approx/g, ' ≈ ')
+         .replace(/\\ne|\\neq/g, ' ≠ ')
+         .replace(/\\pm/g, ' ± ')
+         .replace(/\\cdot|\\times/g, ' · ')
+         .replace(/\\mid/g, ' | ')
+         .replace(/\\in/g, ' ∈ ')
+         .replace(/\\notin/g, ' ∉ ')
+         .replace(/\\forall/g, ' ∀ ')
+         .replace(/\\exists/g, ' ∃ ')
+         .replace(/\\arg\\min/g, 'arg min')
+         .replace(/\\arg\\max/g, 'arg max');
+
+    // 3. Summations, Products & Integrals
+    s = s.replace(/\\sum_\{([^}]+)\}\^\{?([a-zA-Z0-9]+)\}?/g, '∑ ($1 to $2)')
+         .replace(/\\sum_\{([^}]+)\}/g, '∑ ($1)')
+         .replace(/\\sum/g, '∑ ')
+         .replace(/\\prod_\{([^}]+)\}\^\{?([a-zA-Z0-9]+)\}?/g, '∏ ($1 to $2)')
+         .replace(/\\prod_\{([^}]+)\}/g, '∏ ($1)')
+         .replace(/\\prod/g, '∏ ')
+         .replace(/\\int_\{([^}]+)\}\^\{?([a-zA-Z0-9]+)\}?/g, '∫ ($1 to $2)')
+         .replace(/\\int/g, '∫ ');
+
+    // 4. Fractions & Radicals
+    s = s.replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, '($1 / $2)')
+         .replace(/\\sqrt\{([^}]+)\}/g, '√$1')
+         .replace(/\\sqrt\s*([0-9a-zA-Z]+)/g, '√$1');
+
+    // 5. Functions & Greek Letters
+    s = s.replace(/\\log_?2/g, 'log₂')
+         .replace(/\\log_\{([^}]+)\}/g, 'log_($1)')
+         .replace(/\\log/g, 'log')
+         .replace(/\\ln/g, 'ln')
+         .replace(/\\partial/g, '∂')
+         .replace(/\\Delta/g, 'Δ')
+         .replace(/\\nabla/g, '∇')
+         .replace(/\\xi/g, 'ξ')
+         .replace(/\\epsilon/g, 'ε')
+         .replace(/\\eta/g, 'η')
+         .replace(/\\sigma/g, 'σ')
+         .replace(/\\mu/g, 'μ')
+         .replace(/\\alpha/g, 'α')
+         .replace(/\\beta/g, 'β')
+         .replace(/\\theta/g, 'θ')
+         .replace(/\\infty/g, '∞');
+
+    // 6. Subscripts & Superscripts
+    const subs = { '0':'₀','1':'₁','2':'₂','3':'₃','4':'₄','5':'₅','6':'₆','7':'₇','8':'₈','9':'₉','a':'ₐ','e':'ₑ','i':'ᵢ','n':'ₙ','v':'ᵥ','x':'ₓ','y':'ᵧ','t':'ₜ','+':'₊','-':'₋' };
+    const sups = { '0':'⁰','1':'¹','2':'²','3':'³','4':'⁴','5':'⁵','6':'⁶','7':'⁷','8':'⁸','9':'⁹','+':'⁺','-':'⁻','*':'*','n':'ⁿ','t':'ᵗ','x':'ˣ','2':'²','3':'³' };
+
+    s = s.replace(/_\{?([0-9a-zA-Z\+\-]+)\}?/g, (m, sub) => sub.split('').map(c => subs[c] || c).join(''));
+    s = s.replace(/\^\{?([0-9a-zA-Z\+\-\*]+)\}?/g, (m, sup) => sup.split('').map(c => sups[c] || c).join(''));
+
+    return s;
+  }
+
   // 3. LaTeX / Math formulas
-  html = html.replace(/\$\$([\s\S]*?)\$\$/g, (m, math) => `<div class="math-display-block" style="background: var(--bg-surface-subtle); padding: 0.85rem 1.25rem; border-radius: 8px; font-family: var(--font-serif); font-size: 1.15rem; text-align: center; margin: 1.25rem 0; border: 1px solid var(--border-color); color: var(--text-main); font-style: italic;">${escapeHtml(math.trim())}</div>`);
-  html = html.replace(/\\\[([\s\S]*?)\\\]/g, (m, math) => `<div class="math-display-block" style="background: var(--bg-surface-subtle); padding: 0.85rem 1.25rem; border-radius: 8px; font-family: var(--font-serif); font-size: 1.15rem; text-align: center; margin: 1.25rem 0; border: 1px solid var(--border-color); color: var(--text-main); font-style: italic;">${escapeHtml(math.trim())}</div>`);
-  html = html.replace(/\$([^\$\n]+)\$/g, (m, math) => `<span class="math-inline" style="font-family: var(--font-serif); font-style: italic; background: var(--color-oat); padding: 0.1rem 0.35rem; border-radius: 4px; color: var(--color-coral); font-size: 1.02em;">${escapeHtml(math)}</span>`);
-  html = html.replace(/\\\(([^\)\n]+)\\\)/g, (m, math) => `<span class="math-inline" style="font-family: var(--font-serif); font-style: italic; background: var(--color-oat); padding: 0.1rem 0.35rem; border-radius: 4px; color: var(--color-coral); font-size: 1.02em;">${escapeHtml(math)}</span>`);
+  html = html.replace(/\$\$([\s\S]*?)\$\$/g, (m, math) => `<div class="math-display-block" style="background: var(--bg-surface-subtle); padding: 0.85rem 1.25rem; border-radius: 8px; font-family: var(--font-serif); font-size: 1.18rem; text-align: center; margin: 1.25rem 0; border: 1px solid var(--border-color); color: var(--text-main); font-style: italic;">${escapeHtml(formatMathSymbols(math.trim()))}</div>`);
+  html = html.replace(/\\\[([\s\S]*?)\\\]/g, (m, math) => `<div class="math-display-block" style="background: var(--bg-surface-subtle); padding: 0.85rem 1.25rem; border-radius: 8px; font-family: var(--font-serif); font-size: 1.18rem; text-align: center; margin: 1.25rem 0; border: 1px solid var(--border-color); color: var(--text-main); font-style: italic;">${escapeHtml(formatMathSymbols(math.trim()))}</div>`);
+  html = html.replace(/\$([^\$\n]+)\$/g, (m, math) => `<span class="math-inline" style="font-family: var(--font-serif); font-style: italic; color: var(--color-coral); font-size: 1.05em; font-weight: 500;">${escapeHtml(formatMathSymbols(math))}</span>`);
+  html = html.replace(/\\\(([^\)\n]+)\\\)/g, (m, math) => `<span class="math-inline" style="font-family: var(--font-serif); font-style: italic; color: var(--color-coral); font-size: 1.05em; font-weight: 500;">${escapeHtml(formatMathSymbols(math))}</span>`);
 
   // 4. Markdown Tables
   html = html.replace(/\|(.+)\|\n\|[-|\s:]+\|\n((?:\|.+\|\n?)+)/g, (match, header, rows) => {
@@ -409,8 +524,10 @@ function renderMarkdownBlocks(content) {
     return `<div class="notion-callout"><span class="notion-callout-icon">${icon || '💡'}</span><div>${text}</div></div>`;
   });
 
-  // 6. Headings
-  html = html.replace(/^### (.*$)/gim, '<h3 style="font-size: 1.15rem; font-weight: 600; margin: 1.25rem 0 0.4rem 0;">$1</h3>');
+  // 6. Headings (from h5 down to h1)
+  html = html.replace(/^##### (.*$)/gim, '<h5 style="font-size: 0.95rem; font-weight: 700; margin: 0.9rem 0 0.25rem 0; color: var(--text-main);">$1</h5>');
+  html = html.replace(/^#### (.*$)/gim, '<h4 style="font-size: 1.05rem; font-weight: 600; margin: 1.15rem 0 0.35rem 0; color: var(--text-main);">$1</h4>');
+  html = html.replace(/^### (.*$)/gim, '<h3 style="font-size: 1.2rem; font-weight: 600; margin: 1.25rem 0 0.4rem 0; color: var(--text-main);">$1</h3>');
   html = html.replace(/^## (.*$)/gim, '<h2 style="font-family: var(--font-serif); font-size: 1.45rem; font-weight: 600; margin: 1.5rem 0 0.5rem 0; color: var(--text-main);">$1</h2>');
   html = html.replace(/^# (.*$)/gim, '<h1 style="font-family: var(--font-serif); font-size: 1.85rem; font-weight: 600; margin: 1.5rem 0 0.75rem 0; color: var(--text-main);">$1</h1>');
 
@@ -1476,6 +1593,9 @@ function openZenReaderWithNote(noteId) {
   if (modal) {
     modal.style.display = 'flex';
     lockScroll(true);
+    if (window.ManimVisuals) {
+      setTimeout(() => window.ManimVisuals.mountAll(container), 40);
+    }
   }
 }
 

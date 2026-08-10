@@ -40,7 +40,7 @@
   <meta name="twitter:description" content="Panjab University BCA 3rd Semester Academic Hub & Syllabus Dashboard"/>
   <meta name="twitter:image" content="icon-512.png"/>
 
-  <link rel="stylesheet" href="styles.css"/>
+  <link rel="stylesheet" href="styles.css?v=3.0"/>
 </head>
 <body>
 
@@ -969,8 +969,20 @@
             </div>
 
             <div class="admin-form-group">
-              <label class="admin-form-label">Note Content (Markdown supported with code blocks) *</label>
-              <textarea id="adm-note-content" class="admin-form-textarea" placeholder="Write markdown notes here... Use ### for subheadings, ```cpp for code blocks, etc."></textarea>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+                <label class="admin-form-label" style="margin-bottom: 0;">Note Content (Markdown supported) *</label>
+                <div style="display: flex; gap: 0.4rem; align-items: center;">
+                  <span style="font-size: 0.75rem; color: var(--text-subtle);">✨ Add Visual:</span>
+                  <select id="adm-insert-visual-select" class="admin-form-select" style="font-size: 0.75rem; padding: 0.2rem 0.5rem; width: auto;" onchange="insertVisualTagToEditor(this.value); this.value='';">
+                    <option value="">-- Choose Manim Visual --</option>
+                    <option value="@[visual:numerical-bisection]">⚡ Bisection Root Finder</option>
+                    <option value="@[visual:ds-bst]">🌲 BST & Traversal Tree</option>
+                    <option value="@[visual:ml-gradient-descent]">📉 Gradient Descent Optimizer</option>
+                    <option value="@[visual:arch-cpu-pipeline]">💻 Von Neumann Bus Cycle</option>
+                  </select>
+                </div>
+              </div>
+              <textarea id="adm-note-content" class="admin-form-textarea" placeholder="Write markdown notes here... Use ### for subheadings, ```cpp for code blocks, or @[visual:type] for Manim interactive visualizers."></textarea>
             </div>
 
             <button class="admin-submit-btn" onclick="publishAdminNote()">
@@ -1153,8 +1165,9 @@
   </div>
 
   <!-- SCRIPTS -->
-  <script src="syllabus-data.js"></script>
+  <script src="syllabus-data.js?v=3.0"></script>
   <script src="firebase-config.js"></script>
-  <script src="app.js"></script>
+  <script src="visuals-engine.js?v=3.0"></script>
+  <script src="app.js?v=3.0"></script>
 </body>
 </html>
