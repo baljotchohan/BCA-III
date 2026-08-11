@@ -174,6 +174,24 @@ ul, ol {
 }
 .mono { font-family: var(--font-mono); }
 
+/* --- Accessibility Focus Rings & Touch Minimum Targets --- */
+:focus-visible {
+  outline: 2px solid var(--color-coral);
+  outline-offset: 2px;
+}
+button:focus-visible, a:focus-visible {
+  outline: 2px solid var(--color-coral);
+  outline-offset: 2px;
+  border-radius: var(--radius-xs);
+}
+
+@media (pointer: coarse) {
+  .header-icon-btn, .cal-nav-btn, .note-tool-btn, .todo-delete-btn, .header-admin-btn, .header-mcp-btn {
+    min-width: 44px;
+    min-height: 44px;
+  }
+}
+
 body.modal-open {
   overflow: hidden !important;
   touch-action: none;
@@ -372,7 +390,7 @@ body.modal-open {
   gap: 0.35rem;
   padding: 0.5rem 0.75rem;
   font-size: 0.9375rem;
-  font-weight: 450;
+  font-weight: 500;
   color: var(--text-main);
   border-radius: var(--radius-sm);
   transition: background-color 0.15s ease, color 0.15s ease;
@@ -814,6 +832,7 @@ body.modal-open {
   transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease, border-color 0.2s ease;
   position: relative;
   overflow: hidden;
+  will-change: transform;
 }
 
 .EducationSections-module-scss-module__dxNdua__section:hover {
@@ -899,6 +918,10 @@ body.modal-open {
   padding: 3px 9px;
   border-radius: var(--radius-xs);
   color: var(--text-main);
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 [data-theme="dark"] .topic-badge {
@@ -1115,6 +1138,22 @@ body.modal-open {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+}
+
+/* Empty State Placeholders */
+.lecture-timeline-list:empty::after,
+.todo-items-list:empty::after,
+.announcements-mini-feed:empty::after,
+.notes-topics-grid:empty::after {
+  content: 'No updates or records currently available.';
+  display: block;
+  font-size: 0.85rem;
+  color: var(--text-subtle);
+  padding: 1.25rem 1rem;
+  text-align: center;
+  background: var(--bg-surface-subtle);
+  border: 1px dashed var(--border-color);
+  border-radius: var(--radius-sm);
 }
 
 .announcement-card {
@@ -1540,7 +1579,7 @@ body.modal-open {
 .workspace-tab-btn.active::after {
   content: '';
   position: absolute;
-  bottom: -0.25rem;
+  bottom: -1px;
   left: 0;
   right: 0;
   height: 2px;
@@ -1889,6 +1928,8 @@ body.modal-open {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  flex: 1;
+  min-width: 0;
 }
 
 .note-reader-tools {
@@ -1910,7 +1951,7 @@ body.modal-open {
   background: var(--bg-surface-subtle);
   color: var(--text-muted);
   font-size: 0.78rem;
-  font-weight: 550;
+  font-weight: 500;
   white-space: nowrap !important;
   flex-shrink: 0;
   height: 34px;
@@ -2197,6 +2238,7 @@ body.modal-open {
 
 .cal-day-cell {
   aspect-ratio: 1;
+  min-height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2209,6 +2251,15 @@ body.modal-open {
   cursor: pointer;
   position: relative;
   transition: all 0.15s ease;
+}
+
+.calendar-section-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-subtle);
+  margin-bottom: 0.5rem;
 }
 
 .cal-day-cell.empty {
@@ -2411,13 +2462,20 @@ body.modal-open {
   flex: 1;
 }
 
+.admin-modal-tabs-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 0.5rem;
+}
+
 .admin-modal-tabs {
   display: flex;
   align-items: center;
   gap: 0.4rem;
-  margin-bottom: 1.25rem;
-  border-bottom: 1px solid var(--border-color);
-  padding-bottom: 0.5rem;
+  flex: 1;
   overflow-x: auto;
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
@@ -2427,6 +2485,24 @@ body.modal-open {
   display: none;
 }
 
+.admin-logout-btn {
+  padding: 0.4rem 0.85rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(229, 62, 62, 0.25);
+  background: rgba(229, 62, 62, 0.08);
+  color: #e53e3e;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+
+.admin-logout-btn:hover {
+  background: #e53e3e;
+  color: #ffffff;
+  border-color: #e53e3e;
 .admin-modal-tab-btn {
   display: inline-flex;
   align-items: center;
@@ -4118,6 +4194,8 @@ body.modal-open {
 .mcp-code-block pre {
   margin: 0;
   overflow-x: auto;
+  max-height: 200px;
+  overflow-y: auto;
   white-space: pre;
 }
 
@@ -5381,6 +5459,62 @@ body.modal-open {
 
 .discussion-send-btn:hover {
   opacity: 0.9;
+}
+
+/* --- Final UI/UX Audit Polish & Responsive Enhancements --- */
+.palette-backdrop {
+  transition: opacity 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.zen-reader-article {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.mobile-drawer-section-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-subtle);
+  margin-bottom: 0.75rem;
+  font-weight: 600;
+}
+
+.mobile-admin-badge {
+  font-size: 0.62rem;
+  background: rgba(204, 120, 92, 0.12);
+  border: 1px solid rgba(204, 120, 92, 0.3);
+  padding: 0.1rem 0.45rem;
+  border-radius: 4px;
+  color: var(--color-coral);
+  font-family: var(--font-mono);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+/* Guest Sign-in Nudge Safe Area Inset Support */
+#guest-signin-nudge {
+  bottom: calc(1.5rem + env(safe-area-inset-bottom, 0px)) !important;
+  right: calc(1.5rem + env(safe-area-inset-right, 0px)) !important;
+  max-width: min(320px, calc(100vw - 2rem)) !important;
+}
+
+/* Hide header button labels on tablet to avoid header crowding */
+@media (max-width: 900px) {
+  .admin-btn-label,
+  .mcp-btn-label,
+  .profile-btn-label {
+    display: none !important;
+  }
+  .header-admin-btn,
+  .header-mcp-btn {
+    padding: 0;
+    width: 36px;
+    justify-content: center;
+  }
+  .header-profile-btn {
+    padding: 0 0.35rem;
+  }
 }
 
 
