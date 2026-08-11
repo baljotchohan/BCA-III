@@ -192,247 +192,377 @@
             <!-- INTERACTIVE CATEGORY FILTER PILLS -->
             <div class="academy-filter-bar">
               <button class="filter-pill active" data-filter="all">All 7 Subjects</button>
-              <button class="filter-pill" data-filter="dsc">Major &amp; Minor (4)</button>
+              <button class="filter-pill" data-filter="dsc">DSC Major &amp; Minor (4)</button>
               <button class="filter-pill" data-filter="electives">AEC &amp; MDC (3)</button>
+              <button class="filter-pill" data-filter="agenda">Lecture Timeline</button>
+              <button class="filter-pill" data-filter="todos">Study Tasks</button>
             </div>
           </div>
         </div>
       </section>
 
-      <!-- 2. SUBJECTS OVERVIEW BANNER -->
+      <!-- 2. FEATURED COURSES / MAJOR TRACKS BANNER (BG-OAT) -->
       <section class="LandingPageSection-module-scss-module__ZSMdoa__root LandingPageSection-module-scss-module__ZSMdoa__flushBottom LandingPageSection-module-scss-module__ZSMdoa__flushTop" data-theme="ivory">
         <div class="page-wrapper" data-theme="color-light" data-style="serif">
-          <div class="PackageBanner-module-scss-module__FhS4PW__banner bg-oat" style="padding: 1.25rem 1.75rem;">
+          <div class="PackageBanner-module-scss-module__FhS4PW__banner bg-oat">
+            
             <div class="PackageBanner-module-scss-module__FhS4PW__announcement">
               <div class="PackageBanner-module-scss-module__FhS4PW__textWrapper">
-                <p class="headline-2 serif PackageBanner-module-scss-module__FhS4PW__title" style="margin-bottom: 0.25rem;">Curriculum &amp; Digital Notes</p>
-                <p class="body-2 serif" style="margin: 0;">
-                  Click any subject below to view its syllabus breakdown and read high-yield digital notes.
+                <p class="headline-2 serif PackageBanner-module-scss-module__FhS4PW__title">Dedicated Subject Workspaces</p>
+                <p class="body-2 serif">
+                  Select any subject below to explore its official Unit I–IV curriculum, read digital notes, review daily lecture logs, or track class dates.
                 </p>
               </div>
+              <div class="PackageBanner-module-scss-module__FhS4PW__metadata">
+                <a href="./Syllabus.pdf" target="_blank" class="Button-module-scss-module__f9ZZrG__button Button-module-scss-module__f9ZZrG__large Button-module-scss-module__f9ZZrG__secondary">
+                  <span class="body-3">Download Official PU Syllabus PDF</span>
+                </a>
+              </div>
+            </div>
+
+            <div class="PackageBanner-module-scss-module__FhS4PW__packages">
+              
+              <!-- FEATURED CARD 1: COMPUTER ARCHITECTURE -->
+              <a href="#/subject/comp-arch" class="PackageBanner-module-scss-module__FhS4PW__packageLink" onclick="navigateToSubject('comp-arch')">
+                <div class="PackageBanner-module-scss-module__FhS4PW__package">
+                  <div class="PackageBanner-module-scss-module__FhS4PW__packageText">
+                    <p class="body-2">BCA-DSC-3(Maj)-301 • 4 Credits</p>
+                    <p class="body-large-1 PackageBanner-module-scss-module__FhS4PW__summary">Computer Architecture</p>
+                  </div>
+                  <div class="PackageBanner-module-scss-module__FhS4PW__arrow">
+                    <svg class="Icon-module-scss-module__lqbdHG__icon" width="22" height="22" viewBox="0 0 21 21">
+                      <path d="M4.14585 9.87492L14.4584 9.87492L9.60419 5.04158L10.5 4.14575L16.8542 10.4999L10.5 16.8541L9.60419 15.9583L14.4584 11.1249L4.14585 11.1249L4.14585 9.87492Z" fill="currentColor"></path>
+                    </svg>
+                  </div>
+                </div>
+              </a>
+
+              <!-- FEATURED CARD 2: DATA STRUCTURES -->
+              <a href="#/subject/data-structures" class="PackageBanner-module-scss-module__FhS4PW__packageLink" onclick="navigateToSubject('data-structures')">
+                <div class="PackageBanner-module-scss-module__FhS4PW__package">
+                  <div class="PackageBanner-module-scss-module__FhS4PW__packageText">
+                    <p class="body-2">BCA-DSC-3(Min)-302 • 4 Credits</p>
+                    <p class="body-large-1 PackageBanner-module-scss-module__FhS4PW__summary">Data Structures &amp; Algorithms</p>
+                  </div>
+                  <div class="PackageBanner-module-scss-module__FhS4PW__arrow">
+                    <svg class="Icon-module-scss-module__lqbdHG__icon" width="22" height="22" viewBox="0 0 21 21">
+                      <path d="M4.14585 9.87492L14.4584 9.87492L9.60419 5.04158L10.5 4.14575L16.8542 10.4999L10.5 16.8541L9.60419 15.9583L14.4584 11.1249L4.14585 11.1249L4.14585 9.87492Z" fill="currentColor"></path>
+                    </svg>
+                  </div>
+                </div>
+              </a>
+
             </div>
           </div>
         </div>
       </section>
 
-      <!-- 3. ALL 7 SUBJECT CARDS -->
-      <div id="education-sections-container">
+      <!-- 3. ALL 7 SUBJECTS WITH ANTHROPIC TONES -->
+      <div class="page-wrapper EducationSections-module-scss-module__dxNdua__sectionWrapper" id="subjects-container">
         
-        <!-- SUBJECT 1: COMPUTER ARCHITECTURE -->
-        <div class="EducationSections-module-scss-module__dxNdua__section bg-cactus" data-category="dsc" id="card-comp-arch">
+        <!-- 1. COMPUTER ARCHITECTURE -->
+        <div class="EducationSections-module-scss-module__dxNdua__section bg-cactus subject-card-item" data-type="dsc" data-theme="ivory" id="card-comp-arch">
           <div class="EducationSections-module-scss-module__dxNdua__sectionInner">
             <div class="EducationSections-module-scss-module__dxNdua__contentCtaWrapper">
               <div class="EducationSections-module-scss-module__dxNdua__contentWrapper">
-                <div class="subject-meta-pill-group" style="margin-bottom: 0.4rem;">
-                  <span class="subject-code-badge">BCA-DSC-3(Maj)-301</span>
-                  <span class="subject-credit-tag">4 Credits</span>
-                </div>
-                <h2 class="display-3 serif EducationSections-module-scss-module__dxNdua__title">Computer Architecture &amp; Organization</h2>
-                <p class="body-2 serif EducationSections-module-scss-module__dxNdua__summary">
-                  Digital logic, register transfer language (RTL), bus architecture, ALSU design, and 8086 microprocessor.
+                <span class="subject-code-tag">BCA-DSC-3(Maj)-301 • 4 Credits • 60 Theory Hrs</span>
+                <h2 class="headline-4 serif">Computer Architecture</h2>
+                <p class="body-1 serif">
+                  Computer organization, digital logic circuits, ALU design, memory hierarchy, 8086 microprocessor architecture, and I/O organization.
                 </p>
                 <div class="topic-tags-row">
-                  <span class="topic-badge">Unit I: RTL &amp; ALSU</span>
-                  <span class="topic-badge">Unit II: Hardwired CU</span>
-                  <span class="topic-badge">Unit III: 8086 CPU</span>
-                  <span class="topic-badge">Unit IV: Memory &amp; I/O</span>
+                  <span class="topic-badge">Register Transfer Language</span>
+                  <span class="topic-badge">8086 Microprocessor</span>
+                  <span class="topic-badge">Memory Hierarchy &amp; Cache</span>
+                  <span class="topic-badge">DMA Controller</span>
                 </div>
               </div>
               <button class="Button-module-scss-module__f9ZZrG__button Button-module-scss-module__f9ZZrG__large Button-module-scss-module__f9ZZrG__secondary" onclick="navigateToSubject('comp-arch')">
                 <span class="body-3">Open Subject Workspace →</span>
               </button>
             </div>
+            <div class="EducationSections-module-scss-module__dxNdua__illustrationWrapper">
+              <svg class="vector-art-svg" viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="28" y="28" width="104" height="104" rx="16" fill="#141413" fill-opacity="0.06"/>
+                <rect x="48" y="48" width="64" height="64" rx="8" fill="#141413" fill-opacity="0.9"/>
+                <path d="M48 64H32M48 80H32M48 96H32M112 64H128M112 80H128M112 96H128M64 48V32M80 48V32M96 48V32M64 112V128M80 112V128M96 112V128" stroke="#141413" stroke-width="3" stroke-linecap="round"/>
+                <circle cx="80" cy="80" r="12" fill="#faf9f5"/>
+              </svg>
+            </div>
           </div>
         </div>
 
-        <!-- SUBJECT 2: DATA STRUCTURES -->
-        <div class="EducationSections-module-scss-module__dxNdua__section bg-lavender" data-category="dsc" id="card-data-structures">
+        <!-- 2. DATA STRUCTURES -->
+        <div class="EducationSections-module-scss-module__dxNdua__section bg-heather subject-card-item" data-type="dsc" data-theme="ivory" id="card-data-structures">
           <div class="EducationSections-module-scss-module__dxNdua__sectionInner">
             <div class="EducationSections-module-scss-module__dxNdua__contentCtaWrapper">
               <div class="EducationSections-module-scss-module__dxNdua__contentWrapper">
-                <div class="subject-meta-pill-group" style="margin-bottom: 0.4rem;">
-                  <span class="subject-code-badge">BCA-DSC-3(Maj)-302</span>
-                  <span class="subject-credit-tag">4 Credits</span>
-                </div>
-                <h2 class="display-3 serif EducationSections-module-scss-module__dxNdua__title">Data Structures &amp; Algorithms</h2>
-                <p class="body-2 serif EducationSections-module-scss-module__dxNdua__summary">
-                  Arrays, linked lists, stacks, queues, binary search trees (BST), AVL trees, sorting, and graph traversals.
+                <span class="subject-code-tag">BCA-DSC-3(Min)-302 • 4 Credits • 60 Theory Hrs</span>
+                <h2 class="headline-4 serif">Data Structures &amp; Algorithms</h2>
+                <p class="body-1 serif">
+                  Arrays, stacks, queues, singly/doubly linked lists, binary search trees, graph traversals, and searching/sorting algorithms with C/C++ implementations.
                 </p>
                 <div class="topic-tags-row">
-                  <span class="topic-badge">Unit I: Stacks &amp; Queues</span>
-                  <span class="topic-badge">Unit II: Linked Lists</span>
-                  <span class="topic-badge">Unit III: Trees &amp; BST</span>
-                  <span class="topic-badge">Unit IV: Graphs &amp; Sorting</span>
+                  <span class="topic-badge">Linked Lists &amp; Queues</span>
+                  <span class="topic-badge">Binary Search Trees</span>
+                  <span class="topic-badge">DFS &amp; BFS</span>
+                  <span class="topic-badge">Sorting Analysis</span>
                 </div>
               </div>
               <button class="Button-module-scss-module__f9ZZrG__button Button-module-scss-module__f9ZZrG__large Button-module-scss-module__f9ZZrG__secondary" onclick="navigateToSubject('data-structures')">
                 <span class="body-3">Open Subject Workspace →</span>
               </button>
             </div>
+            <div class="EducationSections-module-scss-module__dxNdua__illustrationWrapper">
+              <svg class="vector-art-svg" viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="80" cy="40" r="16" fill="#141413"/>
+                <circle cx="48" cy="95" r="14" fill="#141413" fill-opacity="0.8"/>
+                <circle cx="112" cy="95" r="14" fill="#141413" fill-opacity="0.8"/>
+                <circle cx="32" cy="135" r="10" fill="#141413" fill-opacity="0.6"/>
+                <circle cx="64" cy="135" r="10" fill="#141413" fill-opacity="0.6"/>
+                <circle cx="128" cy="135" r="10" fill="#141413" fill-opacity="0.6"/>
+                <line x1="72" y1="52" x2="52" y2="83" stroke="#141413" stroke-width="2.5"/>
+                <line x1="88" y1="52" x2="108" y2="83" stroke="#141413" stroke-width="2.5"/>
+                <line x1="44" y1="108" x2="34" y2="126" stroke="#141413" stroke-width="2"/>
+                <line x1="52" y1="108" x2="62" y2="126" stroke="#141413" stroke-width="2"/>
+                <line x1="116" y1="108" x2="126" y2="126" stroke="#141413" stroke-width="2"/>
+              </svg>
+            </div>
           </div>
         </div>
 
-        <!-- SUBJECT 3: NUMERICAL METHODS -->
-        <div class="EducationSections-module-scss-module__dxNdua__section bg-terracotta" data-category="dsc" id="card-numerical-methods">
+        <!-- 3. NUMERICAL METHODS -->
+        <div class="EducationSections-module-scss-module__dxNdua__section bg-sky subject-card-item" data-type="dsc" data-theme="ivory" id="card-numerical-methods">
           <div class="EducationSections-module-scss-module__dxNdua__sectionInner">
             <div class="EducationSections-module-scss-module__dxNdua__contentCtaWrapper">
               <div class="EducationSections-module-scss-module__dxNdua__contentWrapper">
-                <div class="subject-meta-pill-group" style="margin-bottom: 0.4rem;">
-                  <span class="subject-code-badge">BCA-DSC-3(Min)-303</span>
-                  <span class="subject-credit-tag">4 Credits</span>
-                </div>
-                <h2 class="display-3 serif EducationSections-module-scss-module__dxNdua__title">Numerical Methods &amp; Computing</h2>
-                <p class="body-2 serif EducationSections-module-scss-module__dxNdua__summary">
-                  Floating-point arithmetic, Bisection, Newton-Raphson, Gauss Elimination, interpolation, and numerical integration.
+                <span class="subject-code-tag">BCA-DSC-3(Min)-303 • 4 Credits • 60 Theory Hrs</span>
+                <h2 class="headline-4 serif">Numerical Methods &amp; Computing</h2>
+                <p class="body-1 serif">
+                  Error analysis, root finding for non-linear equations, simultaneous linear systems, interpolation, numerical integration, and ODEs.
                 </p>
                 <div class="topic-tags-row">
-                  <span class="topic-badge">Unit I: Non-Linear Roots</span>
-                  <span class="topic-badge">Unit II: Linear Systems</span>
-                  <span class="topic-badge">Unit III: Interpolation</span>
-                  <span class="topic-badge">Unit IV: Integration &amp; ODE</span>
+                  <span class="topic-badge">Newton-Raphson</span>
+                  <span class="topic-badge">Gauss-Seidel</span>
+                  <span class="topic-badge">Simpson's 1/3rd</span>
+                  <span class="topic-badge">Runge-Kutta 4th</span>
                 </div>
               </div>
               <button class="Button-module-scss-module__f9ZZrG__button Button-module-scss-module__f9ZZrG__large Button-module-scss-module__f9ZZrG__secondary" onclick="navigateToSubject('numerical-methods')">
                 <span class="body-3">Open Subject Workspace →</span>
               </button>
             </div>
+            <div class="EducationSections-module-scss-module__dxNdua__illustrationWrapper">
+              <svg class="vector-art-svg" viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <line x1="25" y1="135" x2="140" y2="135" stroke="#141413" stroke-width="3"/>
+                <line x1="25" y1="25" x2="25" y2="135" stroke="#141413" stroke-width="3"/>
+                <path d="M30 110 C 60 100, 75 40, 135 30" stroke="#141413" stroke-width="3.5" fill="none"/>
+                <line x1="45" y1="135" x2="45" y2="105" stroke="#cc785c" stroke-width="2" stroke-dasharray="3 3"/>
+                <line x1="85" y1="135" x2="85" y2="55" stroke="#cc785c" stroke-width="2" stroke-dasharray="3 3"/>
+                <line x1="125" y1="135" x2="125" y2="32" stroke="#cc785c" stroke-width="2" stroke-dasharray="3 3"/>
+              </svg>
+            </div>
           </div>
         </div>
 
-        <!-- SUBJECT 4: MACHINE LEARNING -->
-        <div class="EducationSections-module-scss-module__dxNdua__section bg-sage" data-category="dsc" id="card-machine-learning">
+        <!-- 4. MACHINE LEARNING -->
+        <div class="EducationSections-module-scss-module__dxNdua__section bg-cactus subject-card-item" data-type="dsc" data-theme="ivory" id="card-machine-learning">
           <div class="EducationSections-module-scss-module__dxNdua__sectionInner">
             <div class="EducationSections-module-scss-module__dxNdua__contentCtaWrapper">
               <div class="EducationSections-module-scss-module__dxNdua__contentWrapper">
-                <div class="subject-meta-pill-group" style="margin-bottom: 0.4rem;">
-                  <span class="subject-code-badge">BCA-DSC-3(Min)-304</span>
-                  <span class="subject-credit-tag">4 Credits</span>
-                </div>
-                <h2 class="display-3 serif EducationSections-module-scss-module__dxNdua__title">Foundations of Machine Learning</h2>
-                <p class="body-2 serif EducationSections-module-scss-module__dxNdua__summary">
-                  Supervised learning, gradient descent, linear &amp; logistic regression, decision trees, k-means clustering, and evaluation metrics.
+                <span class="subject-code-tag">BCA-DSC-3(Maj)-304 • 4 Credits • 60 Theory Hrs</span>
+                <h2 class="headline-4 serif">Introduction to Machine Learning</h2>
+                <p class="body-1 serif">
+                  Machine learning foundations, data preprocessing, supervised classification, unsupervised clustering, and neural network architectures.
                 </p>
                 <div class="topic-tags-row">
-                  <span class="topic-badge">Unit I: ML Foundations</span>
-                  <span class="topic-badge">Unit II: Regression Models</span>
-                  <span class="topic-badge">Unit III: Tree Classifiers</span>
-                  <span class="topic-badge">Unit IV: Clustering &amp; Metrics</span>
+                  <span class="topic-badge">Supervised Learning</span>
+                  <span class="topic-badge">Decision Trees &amp; SVM</span>
+                  <span class="topic-badge">K-Means Clustering</span>
+                  <span class="topic-badge">Neural Networks</span>
                 </div>
               </div>
               <button class="Button-module-scss-module__f9ZZrG__button Button-module-scss-module__f9ZZrG__large Button-module-scss-module__f9ZZrG__secondary" onclick="navigateToSubject('machine-learning')">
                 <span class="body-3">Open Subject Workspace →</span>
               </button>
             </div>
+            <div class="EducationSections-module-scss-module__dxNdua__illustrationWrapper">
+              <svg class="vector-art-svg" viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="40" cy="50" r="10" fill="#141413"/>
+                <circle cx="40" cy="110" r="10" fill="#141413"/>
+                <circle cx="80" cy="40" r="10" fill="#141413"/>
+                <circle cx="80" cy="80" r="10" fill="#141413"/>
+                <circle cx="80" cy="120" r="10" fill="#141413"/>
+                <circle cx="120" cy="80" r="12" fill="#141413"/>
+                <line x1="40" y1="50" x2="80" y2="40" stroke="#141413" stroke-width="1.5" stroke-opacity="0.5"/>
+                <line x1="40" y1="50" x2="80" y2="80" stroke="#141413" stroke-width="1.5" stroke-opacity="0.5"/>
+                <line x1="40" y1="110" x2="80" y2="80" stroke="#141413" stroke-width="1.5" stroke-opacity="0.5"/>
+                <line x1="40" y1="110" x2="80" y2="120" stroke="#141413" stroke-width="1.5" stroke-opacity="0.5"/>
+                <line x1="80" y1="40" x2="120" y2="80" stroke="#141413" stroke-width="1.5" stroke-opacity="0.5"/>
+                <line x1="80" y1="80" x2="120" y2="80" stroke="#141413" stroke-width="2"/>
+                <line x1="80" y1="120" x2="120" y2="80" stroke="#141413" stroke-width="1.5" stroke-opacity="0.5"/>
+              </svg>
+            </div>
           </div>
         </div>
 
-        <!-- SUBJECT 5: ENGLISH-3 -->
-        <div class="EducationSections-module-scss-module__dxNdua__section bg-ivory-dark" data-category="electives" id="card-english-3">
+        <!-- 5. ENGLISH-3 -->
+        <div class="EducationSections-module-scss-module__dxNdua__section bg-heather subject-card-item" data-type="electives" data-theme="ivory" id="card-english-3">
           <div class="EducationSections-module-scss-module__dxNdua__sectionInner">
             <div class="EducationSections-module-scss-module__dxNdua__contentCtaWrapper">
               <div class="EducationSections-module-scss-module__dxNdua__contentWrapper">
-                <div class="subject-meta-pill-group" style="margin-bottom: 0.4rem;">
-                  <span class="subject-code-badge">BCA-AEC-301</span>
-                  <span class="subject-credit-tag">2 Credits</span>
-                </div>
-                <h2 class="display-3 serif EducationSections-module-scss-module__dxNdua__title">Professional English Communication</h2>
-                <p class="body-2 serif EducationSections-module-scss-module__dxNdua__summary">
-                  Technical writing, formal correspondence, business proposals, executive summaries, and presentation skills.
+                <span class="subject-code-tag">AEC-3-301 • Ability Enhancement • 2 Credits</span>
+                <h2 class="headline-4 serif">English-3 (Professional Writing)</h2>
+                <p class="body-1 serif">
+                  Technical reading comprehension, professional report drafting, precision grammar mastery, and viva presentation skills.
                 </p>
                 <div class="topic-tags-row">
-                  <span class="topic-badge">Unit I: Business Writing</span>
-                  <span class="topic-badge">Unit II: Technical Reports</span>
-                  <span class="topic-badge">Unit III: Public Speaking</span>
+                  <span class="topic-badge">Technical Reports</span>
+                  <span class="topic-badge">Business Memos</span>
+                  <span class="topic-badge">Grammar Precision</span>
                 </div>
               </div>
               <button class="Button-module-scss-module__f9ZZrG__button Button-module-scss-module__f9ZZrG__large Button-module-scss-module__f9ZZrG__secondary" onclick="navigateToSubject('english-3')">
                 <span class="body-3">Open Subject Workspace →</span>
               </button>
             </div>
+            <div class="EducationSections-module-scss-module__dxNdua__illustrationWrapper">
+              <svg class="vector-art-svg" viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="35" y="30" width="90" height="105" rx="8" fill="#141413" fill-opacity="0.08" stroke="#141413" stroke-width="2.5"/>
+                <line x1="50" y1="50" x2="110" y2="50" stroke="#141413" stroke-width="3" stroke-linecap="round"/>
+                <line x1="50" y1="68" x2="110" y2="68" stroke="#141413" stroke-width="2" stroke-linecap="round" stroke-opacity="0.7"/>
+                <line x1="50" y1="84" x2="95" y2="84" stroke="#141413" stroke-width="2" stroke-linecap="round" stroke-opacity="0.7"/>
+                <line x1="50" y1="100" x2="105" y2="100" stroke="#141413" stroke-width="2" stroke-linecap="round" stroke-opacity="0.7"/>
+              </svg>
+            </div>
           </div>
         </div>
 
-        <!-- SUBJECT 6: WEB DEVELOPMENT -->
-        <div class="EducationSections-module-scss-module__dxNdua__section bg-cactus" data-category="electives" id="card-web-dev">
+        <!-- 6. WEB DEVELOPMENT -->
+        <div class="EducationSections-module-scss-module__dxNdua__section bg-cactus subject-card-item" data-type="electives" data-theme="ivory" id="card-web-dev">
           <div class="EducationSections-module-scss-module__dxNdua__sectionInner">
             <div class="EducationSections-module-scss-module__dxNdua__contentCtaWrapper">
               <div class="EducationSections-module-scss-module__dxNdua__contentWrapper">
-                <div class="subject-meta-pill-group" style="margin-bottom: 0.4rem;">
-                  <span class="subject-code-badge">BCA-MDC-301</span>
-                  <span class="subject-credit-tag">3 Credits</span>
-                </div>
-                <h2 class="display-3 serif EducationSections-module-scss-module__dxNdua__title">Modern Web Development</h2>
-                <p class="body-2 serif EducationSections-module-scss-module__dxNdua__summary">
-                  Semantic HTML5, CSS Grid &amp; Flexbox, modern JavaScript ES6+, asynchronous Fetch APIs, and responsive design.
+                <span class="subject-code-tag">CSA-MDC-103/203/303 • Multi-Disciplinary • 3 Credits</span>
+                <h2 class="headline-4 serif">Web Development / Designing</h2>
+                <p class="body-1 serif">
+                  HTML5 semantic structure, CSS3 Flexbox &amp; Grid modern layouts, JavaScript DOM manipulation, and responsive web design.
                 </p>
                 <div class="topic-tags-row">
-                  <span class="topic-badge">Unit I: Semantic Web</span>
-                  <span class="topic-badge">Unit II: CSS Layouts</span>
-                  <span class="topic-badge">Unit III: DOM &amp; ES6+</span>
+                  <span class="topic-badge">Semantic HTML5</span>
+                  <span class="topic-badge">CSS Grid &amp; Flexbox</span>
+                  <span class="topic-badge">DOM Scripting</span>
                 </div>
               </div>
               <button class="Button-module-scss-module__f9ZZrG__button Button-module-scss-module__f9ZZrG__large Button-module-scss-module__f9ZZrG__secondary" onclick="navigateToSubject('web-dev')">
                 <span class="body-3">Open Subject Workspace →</span>
               </button>
             </div>
+            <div class="EducationSections-module-scss-module__dxNdua__illustrationWrapper">
+              <svg class="vector-art-svg" viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="25" y="35" width="110" height="90" rx="8" fill="#141413" fill-opacity="0.08" stroke="#141413" stroke-width="2.5"/>
+                <line x1="25" y1="58" x2="135" y2="58" stroke="#141413" stroke-width="2"/>
+                <circle cx="40" cy="46" r="3.5" fill="#cc785c"/>
+                <circle cx="52" cy="46" r="3.5" fill="#141413" fill-opacity="0.4"/>
+                <circle cx="64" cy="46" r="3.5" fill="#141413" fill-opacity="0.4"/>
+                <rect x="38" y="70" width="35" height="42" rx="4" fill="#141413" fill-opacity="0.2"/>
+                <rect x="82" y="70" width="42" height="18" rx="4" fill="#141413" fill-opacity="0.4"/>
+                <rect x="82" y="94" width="42" height="18" rx="4" fill="#141413" fill-opacity="0.2"/>
+              </svg>
+            </div>
           </div>
         </div>
 
-        <!-- SUBJECT 7: BACKEND DEV -->
-        <div class="EducationSections-module-scss-module__dxNdua__section bg-lavender" data-category="electives" id="card-backend-dev">
+        <!-- 7. BACKEND WEB DEV -->
+        <div class="EducationSections-module-scss-module__dxNdua__section bg-sky subject-card-item" data-type="electives" data-theme="ivory" id="card-backend-dev">
           <div class="EducationSections-module-scss-module__dxNdua__sectionInner">
             <div class="EducationSections-module-scss-module__dxNdua__contentCtaWrapper">
               <div class="EducationSections-module-scss-module__dxNdua__contentWrapper">
-                <div class="subject-meta-pill-group" style="margin-bottom: 0.4rem;">
-                  <span class="subject-code-badge">BCA-SEC-301</span>
-                  <span class="subject-credit-tag">3 Credits</span>
-                </div>
-                <h2 class="display-3 serif EducationSections-module-scss-module__dxNdua__title">Backend Web Development</h2>
-                <p class="body-2 serif EducationSections-module-scss-module__dxNdua__summary">
-                  Node.js runtime, Express RESTful APIs, middleware architecture, database queries, and token authentication.
+                <span class="subject-code-tag">CSA-SEC-103/203/303 • Skill Enhancement • 3 Credits</span>
+                <h2 class="headline-4 serif">Backend Web Development</h2>
+                <p class="body-1 serif">
+                  Client-server architecture, REST API design, database connectivity, middleware routing, and session authentication.
                 </p>
                 <div class="topic-tags-row">
-                  <span class="topic-badge">Unit I: Node.js &amp; Express</span>
-                  <span class="topic-badge">Unit II: REST APIs</span>
-                  <span class="topic-badge">Unit III: Auth &amp; DB</span>
+                  <span class="topic-badge">Node.js / Express</span>
+                  <span class="topic-badge">RESTful APIs</span>
+                  <span class="topic-badge">SQL Connectivity</span>
+                  <span class="topic-badge">JWT Auth</span>
                 </div>
               </div>
               <button class="Button-module-scss-module__f9ZZrG__button Button-module-scss-module__f9ZZrG__large Button-module-scss-module__f9ZZrG__secondary" onclick="navigateToSubject('backend-dev')">
                 <span class="body-3">Open Subject Workspace →</span>
               </button>
             </div>
+            <div class="EducationSections-module-scss-module__dxNdua__illustrationWrapper">
+              <svg class="vector-art-svg" viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="35" y="32" width="90" height="26" rx="6" fill="#141413" fill-opacity="0.1" stroke="#141413" stroke-width="2.5"/>
+                <circle cx="110" cy="45" r="3.5" fill="#cc785c"/>
+                <rect x="35" y="67" width="90" height="26" rx="6" fill="#141413" fill-opacity="0.1" stroke="#141413" stroke-width="2.5"/>
+                <circle cx="110" cy="80" r="3.5" fill="#cc785c"/>
+                <rect x="35" y="102" width="90" height="26" rx="6" fill="#141413" fill-opacity="0.1" stroke="#141413" stroke-width="2.5"/>
+                <circle cx="110" cy="115" r="3.5" fill="#cc785c"/>
+                <line x1="80" y1="58" x2="80" y2="67" stroke="#141413" stroke-width="2"/>
+                <line x1="80" y1="93" x2="80" y2="102" stroke="#141413" stroke-width="2"/>
+              </svg>
+            </div>
           </div>
         </div>
 
       </div>
 
-      <!-- 4. RECENT LECTURE TIMELINE & NOTES FEED -->
-      <section class="study-widgets-section" id="study-widgets" style="padding-top: 1.5rem;">
+      <!-- 4. ACADEMIC WIDGETS SECTION (TIMELINE & TO-DO) -->
+      <section class="study-widgets-section" id="study-widgets">
         <div class="page-wrapper">
-          <div class="widget-card" style="max-width: 920px; margin: 0 auto;">
-            <div class="widget-header">
-              <h3 class="widget-title serif">Recent Lecture Timeline &amp; Notes</h3>
-              <span class="widget-badge" id="lecture-count-badge">Live Synced</span>
+          <div class="study-widgets-grid">
+            
+            <!-- LIVE LECTURE TIMELINE -->
+            <div class="widget-card">
+              <div class="widget-header">
+                <h3 class="widget-title serif">Recent Lecture Timeline</h3>
+                <span class="widget-badge" id="lecture-count-badge">Live Synced</span>
+              </div>
+              <p class="body-3" style="color: var(--text-muted); margin-bottom: 1rem;">
+                Daily course lectures, faculty explanations, and attached reference materials.
+              </p>
+              <div class="lecture-timeline-list" id="dashboard-lectures-list">
+                <!-- Populated dynamically by app.js -->
+              </div>
             </div>
-            <p class="body-3" style="color: var(--text-muted); margin-bottom: 1rem;">
-              Daily lecture topics and published digital study guides across all courses.
-            </p>
-            <div class="lecture-timeline-list" id="dashboard-lectures-list">
-              <!-- Populated dynamically by app.js -->
+
+            <!-- STUDY TO-DO TRACKER -->
+            <div class="widget-card">
+              <div class="widget-header">
+                <h3 class="widget-title serif">Semester Study Tasks</h3>
+                <span class="widget-badge" id="todo-progress-badge">4 Tasks</span>
+              </div>
+              <p class="body-3" style="color: var(--text-muted); margin-bottom: 1rem;">
+                Track your syllabus milestones, algorithm revisions, and core topic reviews.
+              </p>
+              
+              <div class="todo-add-box">
+                <input type="text" id="new-todo-input" placeholder="Add study target (e.g. Revise 8086 Assembly)..."/>
+                <button onclick="addNewTodo()">Add</button>
+              </div>
+
+              <div class="todo-items-list" id="dashboard-todos-list">
+                <!-- Populated dynamically by app.js -->
+              </div>
             </div>
+
           </div>
         </div>
       </section>
 
-      <!-- 5. ANNOUNCEMENTS SECTION -->
-      <section class="LandingPageSection-module-scss-module__ZSMdoa__root" data-theme="ivory" style="padding-top: 1rem;">
+      <!-- 5. NEWSLETTER / ANNOUNCEMENTS -->
+      <section class="LandingPageSection-module-scss-module__ZSMdoa__root" data-theme="ivory">
         <div class="page-wrapper" data-theme="color-light" data-style="serif">
           <div class="NewsletterSubscribe-module-scss-module__MOPAja__wrapper">
             <div class="NewsletterSubscribe-module-scss-module__MOPAja__content--inline">
               <div class="NewsletterSubscribe-module-scss-module__MOPAja__textWrapper">
-                <h3 class="NewsletterSubscribe-module-scss-module__MOPAja__title serif">Class Notices &amp; Exam Updates</h3>
+                <h3 class="NewsletterSubscribe-module-scss-module__MOPAja__title serif">Class Announcements &amp; Exam Updates</h3>
                 <p class="body-2 serif NewsletterSubscribe-module-scss-module__MOPAja__summary">
-                  Official notices posted by <strong>Baljot Chohan</strong> &amp; <strong>Mehakpreet Kaur</strong>.
+                  Official notices, assignment deadlines, and exam schedules posted directly by <strong>Baljot Chohan</strong> &amp; <strong>Mehakpreet Kaur</strong>.
                 </p>
               </div>
               <div class="announcements-mini-feed" id="dashboard-announcements-list">

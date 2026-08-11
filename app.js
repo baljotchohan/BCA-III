@@ -324,7 +324,7 @@ async function renderSubjectNotes(subject) {
     const noteKey = note.fbKey || note.id;
     const isCloud = Boolean(note.fbKey);
     const authorName = note.author || 'Baljot Chohan';
-    const excerpt = getPlainExcerpt(note.content, 140);
+    const excerpt = getPlainExcerpt(note.content, 150, note.title);
 
     return `
       <div class="note-topic-card" onclick="openNoteReaderView('${noteKey}')">
@@ -489,17 +489,21 @@ function copyCurrentOpenNote() {
   }
 }
 
-function getPlainExcerpt(content, maxLen = 140) {
+function getPlainExcerpt(content, maxLen = 150, title = '') {
   if (!content) return '';
-  const clean = content
-    .replace(/@\[.*?\]\(.*?\)/g, '')
-    .replace(/@\[.*?\]/g, '')
-    .replace(/```[\s\S]*?```/g, '')
-    .replace(/#+\s*/g, '')
-    .replace(/[*_`>]/g, '')
-    .replace(/\s+/g, ' ')
-    .trim();
-  return clean.length > maxLen ? clean.substring(0, maxLen) + '...' : clean;
+  const lines = content.split('\n');
+  let cleanLines = [];
+  for (let line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+    if (trimmed.startsWith('@[') || trimmed.startsWith('```') || trimmed.startsWith('---') || trimmed.startsWith('===')) continue;
+    let plain = trimmed.replace(/^#+\s*/, '').replace(/[*_`>]/g, '').trim();
+    if (title && plain.toLowerCase() === title.toLowerCase()) continue;
+    if (/^(unit\s+[ivx\d]+|chapter\s+\d+|computer architecture|data structures|numerical methods)/i.test(plain) && plain.length < 50) continue;
+    if (plain) cleanLines.push(plain);
+  }
+  const text = cleanLines.join(' ').replace(/\s+/g, ' ').trim();
+  return text.length > maxLen ? text.substring(0, maxLen).trim() + '...' : text;
 }
 
 function filterNotesByUnit(unit, btn) {
