@@ -1151,14 +1151,20 @@ body.modal-open {
    VIEW 2: DEDICATED FULL SUBJECT WORKSPACE
    ========================================================================== */
 
+#subject-workspace-view {
+  padding-top: calc(var(--header-height) + env(safe-area-inset-top, 0px) + 0.5rem);
+  padding-bottom: 4rem;
+  scroll-margin-top: calc(var(--header-height) + env(safe-area-inset-top, 0px));
+}
+
 /* Breadcrumbs Bar */
 .subject-breadcrumb-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  margin-top: 1.5rem;
-  margin-bottom: 1.5rem;
+  margin-top: 0.5rem;
+  margin-bottom: 1.25rem;
   flex-wrap: wrap;
 }
 
@@ -1841,23 +1847,24 @@ body.modal-open {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
-  padding: 0.75rem 1rem;
+  gap: 0.75rem;
+  padding: 0.55rem 0.85rem;
   background-color: var(--bg-surface);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
   margin-bottom: 1.5rem;
   position: sticky;
-  top: calc(var(--header-height) + 8px);
+  top: calc(var(--header-height) + env(safe-area-inset-top, 0px) + 8px);
   z-index: 40;
-  backdrop-filter: blur(12px);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
 }
 
 .note-reader-back-btn {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  padding: 0.4rem 0.85rem;
+  padding: 0.35rem 0.85rem;
   border-radius: var(--radius-full);
   border: 1px solid var(--border-color);
   background: var(--bg-surface-subtle);
@@ -1865,6 +1872,9 @@ body.modal-open {
   font-size: 0.8125rem;
   font-weight: 600;
   cursor: pointer;
+  white-space: nowrap !important;
+  flex-shrink: 0;
+  height: 36px;
   transition: all 0.15s ease;
 }
 
@@ -1884,7 +1894,39 @@ body.modal-open {
 .note-reader-tools {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: 0.35rem;
+  flex-shrink: 0;
+}
+
+.note-tool-btn {
+  display: inline-flex;
+  align-items: center;
+  flex-direction: row;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-color);
+  background: var(--bg-surface-subtle);
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  font-weight: 550;
+  white-space: nowrap !important;
+  flex-shrink: 0;
+  height: 34px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.note-tool-btn svg {
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.note-tool-btn:hover {
+  background: var(--color-oat);
+  color: var(--text-main);
+  border-color: var(--border-strong);
 }
 
 .note-article-wrapper {
@@ -4180,6 +4222,10 @@ body.modal-open {
    ADVANCED MOBILE UI/UX ALIGNMENTS & TOUCH-FIRST RESPONSIVE ENGINE
    ========================================================================== */
 
+/* ==========================================================================
+   ADVANCED MOBILE UI/UX ALIGNMENTS & TOUCH-FIRST RESPONSIVE ENGINE
+   ========================================================================== */
+
 /* Universal Mobile Base & Form Zoom Prevention */
 @media (max-width: 768px) {
   html, body {
@@ -4189,8 +4235,8 @@ body.modal-open {
     -webkit-tap-highlight-color: transparent;
   }
 
-  /* Prevent iOS Safari 16px auto-zoom on input focus */
-  input, select, textarea, button {
+  /* Prevent iOS Safari 16px auto-zoom on input focus without breaking button sizes */
+  input, select, textarea {
     font-size: 16px !important;
   }
 
@@ -4325,7 +4371,7 @@ body.modal-open {
   }
 
   .EducationSections-module-scss-module__dxNdua__illustrationWrapper {
-    display: none !important; /* Conceal heavy decorative SVG on mobile for instant focus */
+    display: none !important;
   }
 
   .EducationSections-module-scss-module__dxNdua__contentCtaWrapper {
@@ -4403,22 +4449,32 @@ body.modal-open {
   }
 
   /* Subject Workspace Responsive Overrides */
+  #subject-workspace-view {
+    padding-top: calc(var(--header-height) + env(safe-area-inset-top, 0px) + 0.75rem) !important;
+  }
+
   .subject-breadcrumb-bar {
-    flex-direction: column !important;
-    align-items: flex-start !important;
-    gap: 0.65rem !important;
-    margin-bottom: 1rem !important;
+    flex-direction: row !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+    margin-top: 0.25rem !important;
+    margin-bottom: 0.85rem !important;
   }
 
   .subject-breadcrumbs {
-    font-size: 0.8rem !important;
-    flex-wrap: wrap !important;
+    font-size: 0.78rem !important;
+    flex-wrap: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
   }
 
   .back-to-dashboard-btn {
-    width: 100% !important;
-    height: 40px !important;
-    justify-content: center !important;
+    height: 34px !important;
+    padding: 0 0.75rem !important;
+    font-size: 0.76rem !important;
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
   }
 
   .subject-hero-card {
@@ -4439,6 +4495,7 @@ body.modal-open {
     margin-bottom: 0.85rem !important;
   }
 
+  /* Sleek 2-column + full width primary pill for hero actions */
   .subject-hero-actions {
     display: grid !important;
     grid-template-columns: 1fr 1fr !important;
@@ -4448,13 +4505,17 @@ body.modal-open {
 
   .subject-hero-actions .primary {
     grid-column: 1 / -1 !important;
-    height: 44px !important;
+    height: 42px !important;
+    font-weight: 600 !important;
   }
 
   .subject-hero-btn {
-    height: 40px !important;
+    height: 38px !important;
     justify-content: center !important;
-    font-size: 0.78rem !important;
+    font-size: 0.8rem !important;
+    padding: 0 0.75rem !important;
+    white-space: nowrap !important;
+    border-radius: var(--radius-full) !important;
   }
 
   .workspace-tabs-nav {
@@ -4563,16 +4624,38 @@ body.modal-open {
 
   /* Full-Page Article Reader View on Mobile */
   .note-reader-nav-bar {
-    padding: 0.65rem 0.85rem !important;
-    top: var(--total-header-height) !important;
+    padding: 0.5rem 0.75rem !important;
+    top: calc(var(--header-height) + env(safe-area-inset-top, 0px) + 6px) !important;
     margin-bottom: 1rem !important;
     border-radius: var(--radius-sm) !important;
+    gap: 0.45rem !important;
+  }
+
+  .note-reader-crumbs {
+    display: none !important; /* Hide crumbs on small screens so buttons breathe */
   }
 
   .note-reader-back-btn {
-    height: 38px !important;
+    height: 36px !important;
     padding: 0 0.85rem !important;
-    font-size: 0.82rem !important;
+    font-size: 0.78rem !important;
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
+  }
+
+  .note-reader-tools {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.35rem !important;
+    flex-shrink: 0 !important;
+  }
+
+  .note-tool-btn {
+    height: 34px !important;
+    padding: 0 0.65rem !important;
+    font-size: 0.75rem !important;
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
   }
 
   .note-article-wrapper {
@@ -4665,11 +4748,11 @@ body.modal-open {
   }
 
   .subject-hero-actions {
-    grid-template-columns: 1fr !important;
+    grid-template-columns: 1fr 1fr !important;
   }
 
   .subject-hero-actions .primary {
-    grid-column: auto !important;
+    grid-column: 1 / -1 !important;
   }
 
   .todo-add-box {
@@ -4680,5 +4763,108 @@ body.modal-open {
     width: 100% !important;
   }
 }
+
+/* ==========================================================================
+   MASTER FOCUS DOCUMENT & PRINT FORMATTING (BCA 2ND SEM STYLE)
+   ========================================================================== */
+
+.bilingual-note-card {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  margin-top: 1rem;
+  margin-bottom: 2rem;
+  box-shadow: var(--shadow-sm);
+}
+
+@media (max-width: 768px) {
+  .bilingual-note-card {
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+    padding: 1.15rem;
+  }
+}
+
+.bilingual-col-english {
+  border-right: 1px solid var(--border-subtle);
+  padding-right: 1.25rem;
+}
+
+@media (max-width: 768px) {
+  .bilingual-col-english {
+    border-right: none;
+    border-bottom: 1px solid var(--border-subtle);
+    padding-right: 0;
+    padding-bottom: 1.15rem;
+  }
+}
+
+.bilingual-col-punjabi {
+  padding-left: 0.25rem;
+}
+
+.bilingual-section-head {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding-bottom: 0.4rem;
+  margin-bottom: 0.85rem;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.bilingual-section-head.en { color: #4f46e5; }
+.bilingual-section-head.pa { color: #2563eb; }
+
+/* Topic Number Badge */
+.topic-num-badge {
+  width: 36px;
+  height: 36px;
+  background-color: var(--text-main);
+  color: var(--text-inverse);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+/* Master Print Styles for Clean Handouts */
+@media print {
+  .SiteHeader-module-scss-module__zKj4Ca__header,
+  .note-reader-nav-bar,
+  .subject-breadcrumb-bar,
+  .header-utility-btns,
+  .mobile-drawer,
+  .notes-repository-header,
+  .workspace-tabs-nav,
+  .note-reader-footer-nav,
+  .back-to-dashboard-btn {
+    display: none !important;
+  }
+
+  body, main, #subject-workspace-view, .note-article-wrapper {
+    background: #ffffff !important;
+    color: #000000 !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .bilingual-note-card, .note-article-wrapper {
+    page-break-inside: avoid;
+    break-inside: avoid;
+    border: 1px solid #cbd5e1 !important;
+  }
+}
+
 
 

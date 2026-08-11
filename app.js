@@ -1758,7 +1758,70 @@ function openZenReader() {
     return;
   }
 
-  openZenReaderWithNote(allNotes[0].fbKey || allNotes[0].id);
+  const modal = document.getElementById('zen-reader-modal');
+  const container = document.getElementById('zen-article-content');
+  const badge = document.getElementById('zen-badge');
+
+  if (badge) badge.innerText = `${subject.title} • Master Study Guide`;
+  if (container) {
+    container.innerHTML = `
+      <div class="note-document-header" style="text-align: center; margin-bottom: 2.25rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--border-color);">
+        <div style="display: inline-block; background: rgba(79, 70, 229, 0.1); color: #4f46e5; font-size: 0.72rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.15em; padding: 0.35rem 1rem; border-radius: var(--radius-full); margin-bottom: 0.85rem;">
+          ANTIGRAVITY • BILINGUAL STUDY EDITION
+        </div>
+        <h1 class="serif" style="font-size: clamp(2rem, 4vw, 2.75rem); font-weight: 800; line-height: 1.15; margin-bottom: 0.5rem; color: var(--text-main);">
+          ${escapeHtml(subject.title)}
+        </h1>
+        <p style="color: var(--color-coral); font-style: italic; font-size: 1.1rem; font-weight: 500; margin-bottom: 1rem;">
+          Complete Master Notes &amp; Exam Focus Guide
+        </p>
+        <div style="font-size: 0.76rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-subtle); display: flex; gap: 0.75rem; justify-content: center; align-items: center; flex-wrap: wrap;">
+          <span>Code: ${escapeHtml(subject.code)}</span>
+          <span>•</span>
+          <span>${allNotes.length} Topics Covered</span>
+          <span>•</span>
+          <span>Panjab University 2026-27</span>
+        </div>
+      </div>
+
+      <div class="space-y-8">
+        ${allNotes.map((note, idx) => `
+          <div class="focus-topic-block" style="margin-bottom: 3rem; padding-bottom: 2rem; border-bottom: 1px dashed var(--border-subtle);">
+            <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.15rem;">
+              <div class="topic-num-badge">${idx + 1}</div>
+              <div>
+                <span style="font-size: 0.72rem; font-weight: 700; color: var(--color-coral); text-transform: uppercase; letter-spacing: 0.05em;">${escapeHtml(note.unit || 'Unit I')} • ${escapeHtml(note.readTime || '6 min read')}</span>
+                <h2 class="serif" style="font-size: 1.55rem; font-weight: 700; margin: 0; color: var(--text-main);">${escapeHtml(note.title)}</h2>
+              </div>
+            </div>
+
+            <div class="bilingual-note-card">
+              <div class="bilingual-col-english">
+                <div class="bilingual-section-head en">Easy English Study Notes</div>
+                <div class="markdown-rendered-content" style="font-size: 0.95rem; line-height: 1.7;">
+                  ${renderMarkdownBlocks(note.content)}
+                </div>
+              </div>
+              <div class="bilingual-col-punjabi">
+                <div class="bilingual-section-head pa">ਆਸਾਨ ਪੰਜਾਬੀ ਅਨੁਵਾਦ / Key Summary</div>
+                <div class="markdown-rendered-content" style="font-size: 0.95rem; line-height: 1.7; color: var(--text-main);">
+                  ${renderMarkdownBlocks(note.punjabiSummary || note.content)}
+                </div>
+              </div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }
+
+  if (modal) {
+    modal.style.display = 'flex';
+    lockScroll(true);
+    if (window.ManimVisuals) {
+      setTimeout(() => window.ManimVisuals.mountAll(container), 40);
+    }
+  }
 }
 
 function openZenReaderWithNote(noteId) {
@@ -1778,12 +1841,30 @@ function openZenReaderWithNote(noteId) {
   if (badge) badge.innerText = `${subject ? subject.title : 'BCA III'} • ${note.unit || 'General'}`;
   if (container) {
     container.innerHTML = `
-      <h1 class="serif" style="font-size: 2.25rem; margin-bottom: 0.5rem;">${escapeHtml(note.title)}</h1>
-      <p style="color: var(--text-subtle); margin-bottom: 1.75rem; font-size: 0.9rem;">
-        ${subject ? subject.code : 'BCA 3'} · ${escapeHtml(note.unit || 'General')} · ${escapeHtml(note.readTime || '6 min read')} · Panjab University
-      </p>
-      <div style="font-size: 1.1rem; line-height: 1.8; color: var(--text-main);">
-        ${renderMarkdownBlocks(note.content)}
+      <div class="note-document-header" style="text-align: center; margin-bottom: 2rem; padding-bottom: 1.25rem; border-bottom: 1px solid var(--border-color);">
+        <div style="display: inline-block; background: rgba(79, 70, 229, 0.1); color: #4f46e5; font-size: 0.72rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.15em; padding: 0.35rem 1rem; border-radius: var(--radius-full); margin-bottom: 0.75rem;">
+          ANTIGRAVITY • BILINGUAL STUDY EDITION
+        </div>
+        <h1 class="serif" style="font-size: clamp(2rem, 3.5vw, 2.5rem); font-weight: 800; margin-bottom: 0.4rem; color: var(--text-main);">${escapeHtml(note.title)}</h1>
+        <p style="color: var(--color-coral); font-style: italic; font-size: 1.05rem; margin-bottom: 0.75rem;">${escapeHtml(subject ? subject.title : 'BCA III')} Focus Notes</p>
+        <div style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-subtle);">
+          ${subject ? subject.code : 'BCA III'} · ${escapeHtml(note.unit || 'General')} · ${escapeHtml(note.readTime || '6 min read')} · Panjab University
+        </div>
+      </div>
+
+      <div class="bilingual-note-card">
+        <div class="bilingual-col-english">
+          <div class="bilingual-section-head en">Easy English Study Notes</div>
+          <div class="markdown-rendered-content" style="font-size: 0.95rem; line-height: 1.7; color: var(--text-main);">
+            ${renderMarkdownBlocks(note.content)}
+          </div>
+        </div>
+        <div class="bilingual-col-punjabi">
+          <div class="bilingual-section-head pa">ਆਸਾਨ ਪੰਜਾਬੀ ਅਨੁਵਾਦ / Key Summary</div>
+          <div class="markdown-rendered-content" style="font-size: 0.95rem; line-height: 1.7; color: var(--text-main);">
+            ${renderMarkdownBlocks(note.punjabiSummary || note.content)}
+          </div>
+        </div>
       </div>
     `;
   }
