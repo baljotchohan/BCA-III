@@ -652,15 +652,18 @@ const ADMIN_TOOLS = [
     inputSchema: {
       type: "object",
       properties: {
-        passkey: { type: "string", description: "Admin authorization passkey" },
+        passkey: { type: "string", description: "Admin authorization passkey (optional if sent in Authorization header)" },
         title: { type: "string", description: "Announcement headline" },
-        desc: { type: "string", description: "Detailed announcement body" },
+        desc: { type: "string", description: "Detailed announcement body (or message)" },
+        message: { type: "string", description: "Detailed message body" },
         badge: { type: "string", description: "Category badge ('NOTICE', 'EXAM', 'ALERT', 'HOLIDAY')", default: "NOTICE" },
+        author: { type: "string", description: "Author name (defaults to 'Baljot Chohan')", default: DEFAULT_AUTHOR },
         link: { type: "string", description: "Optional URL link", default: "#" }
       },
-      required: ["title", "desc"]
+      required: ["title"]
     }
   },
+
   {
     name: "delete_hub_record",
     description: "[ADMIN ONLY] Delete any record (note, lecture, announcement, todo) from the database.",
@@ -847,20 +850,23 @@ async function handleMcpRpc(payload, authHeader = '', authorHeader = '') {
           version: "2.0.0"
         },
         instructions: isAdmin
-          ? "ADMIN MODE ACTIVE: Full permissions to create/publish notes attributed to Baljot Chohan or Mehakpreet Kaur, record lectures, broadcast notices, and manage data."
-          : "BCA III Hub MCP Server provides real-time access to official Panjab University BCA 3rd Sem syllabi, notes, lectures, and tasks."
+          ? "ADMIN MODE ACTIVE: You are authenticated as Baljot Chohan (Administrator). You have full authority to create and publish official study notes, log classroom lectures, broadcast university announcements, and manage data on the live BCA III Hub."
+          : "STUDENT READ-ONLY MODE: You have read-only access to official Panjab University BCA 3rd Sem syllabi, notes, lectures, and tasks. You CANNOT publish or modify notes or announcements (Admin passkey required)."
       }
     };
   }
 
   if (method === "tools/list") {
-    return { jsonrpc: "2.0", id: reqId, result: { tools: [...PUBLIC_TOOLS, ...ADMIN_TOOLS] } };
+    // Only reveal admin authoring tools if client is authenticated as Admin
+    const availableTools = isAdmin ? [...PUBLIC_TOOLS, ...ADMIN_TOOLS] : PUBLIC_TOOLS;
+    return { jsonrpc: "2.0", id: reqId, result: { tools: availableTools } };
   }
 
   if (method === "tools/call") {
     const name = params.name;
     const args = params.arguments || {};
     const hasAdminAccess = isAdmin || verifyAdmin(authHeader, args.passkey);
+
 
     if (name === "get_syllabus") {
       const subId = args.subject_id ? normalizeSubjectId(args.subject_id) : "all";
@@ -1093,22 +1099,21 @@ async function handleMcpRpc(payload, authHeader = '', authorHeader = '') {
 
     if (name === "create_and_publish_note" || name === "publish_digital_note") {
       const isAuthPasskey = verifyAdmin(authHeader, args.passkey);
-      const isKnownAuthor = (!args.author) || 
-        (args.author && (args.author.toLowerCase().includes('baljot') || args.author.toLowerCase().includes('mehak')));
 
-      if (!hasAdminAccess && !isAuthPasskey && !isKnownAuthor) {
+      if (!hasAdminAccess && !isAuthPasskey) {
         return {
           jsonrpc: "2.0",
           id: reqId,
           result: {
             content: [{
               type: "text",
-              text: "❌ Unauthorized: Admin passkey or recognized author identity (Baljot Chohan / Mehakpreet Kaur) required."
+              text: "🔒 Access Denied: Admin passkey required. Only Baljot Chohan can create and publish official digital study notes."
             }],
             isError: true
           }
         };
       }
+
 
       const subjectId = normalizeSubjectId(args.subject || args.subject_id || "comp-arch");
       const unit = args.unit || "Unit I";
@@ -1317,16 +1322,19 @@ async function handleMcpRpc(payload, authHeader = '', authorHeader = '') {
         return {
           jsonrpc: "2.0",
           id: reqId,
-          result: { content: [{ type: "text", text: "❌ Unauthorized: Invalid passkey." }], isError: true }
+          result: { content: [{ type: "text", text: "🔒 Access Denied: Admin authorization required. Only Baljot Chohan can broadcast announcements." }], isError: true }
         };
       }
+      const author = args.author || authorHeader || DEFAULT_AUTHOR;
+      const messageBody = args.message || args.desc || "";
       const payload = {
         id: `custom-ann-${Date.now()}`,
         title: args.title,
-        message: args.desc,
-        desc: args.desc,
-        category: args.badge || "NOTICE",
-        badge: args.badge || "NOTICE",
+        message: messageBody,
+        desc: messageBody,
+        category: (args.badge || args.category || "NOTICE").toLowerCase(),
+        badge: args.badge || args.category || "NOTICE",
+        author: author,
         link: args.link || "#",
         date: new Date().toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }),
         timestamp: Date.now()
@@ -1336,11 +1344,12 @@ async function handleMcpRpc(payload, authHeader = '', authorHeader = '') {
         jsonrpc: "2.0",
         id: reqId,
         result: {
-          content: [{ type: "text", text: `📢 Announcement published! Headline: "${args.title}" (ID: ${key})` }],
+          content: [{ type: "text", text: `📢 Announcement published live by ${author}!\nHeadline: "${args.title}"\nRecord ID: ${key}` }],
           isError: false
         }
       };
     }
+
 
     if (name === "get_announcements") {
       const announcements = await fetchFirebaseData('announcements');

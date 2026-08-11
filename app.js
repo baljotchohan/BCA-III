@@ -1180,14 +1180,18 @@ async function renderDashboardAnnouncements() {
   container.innerHTML = announcements.slice(0, 5).map(a => `
     <div class="announcement-card" style="margin-bottom: 0.75rem;">
       <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.35rem;">
-        <span class="admin-item-badge ${a.category === 'urgent' ? 'urgent' : 'coral'}">${catIcons[a.category] || '📌'} ${escapeHtml(a.category || 'Notice')}</span>
-        <span style="font-size: 0.75rem; color: var(--text-subtle);">${escapeHtml(a.date || 'Aug 2026')}</span>
+        <span class="admin-item-badge ${a.category === 'urgent' ? 'urgent' : 'coral'}">${catIcons[a.category] || '📌'} ${escapeHtml(a.category || a.badge || 'Notice')}</span>
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+          <span style="font-size: 0.74rem; color: var(--color-coral); font-weight: 600;">✍️ ${escapeHtml(a.author || 'Baljot Chohan')}</span>
+          <span style="font-size: 0.75rem; color: var(--text-subtle);">${escapeHtml(a.date || 'Aug 2026')}</span>
+        </div>
       </div>
       <div style="font-weight: 600; font-size: 0.95rem; margin-bottom: 0.25rem;">${escapeHtml(a.title)}</div>
-      <p style="font-size: 0.85rem; line-height: 1.5; color: var(--text-muted);">${escapeHtml(a.message)}</p>
-      ${a.link ? `<a href="${escapeHtml(a.link)}" target="_blank" rel="noopener" style="font-size: 0.75rem; color: var(--color-coral); text-decoration: none; display: inline-block; margin-top: 0.35rem;">↗ View Resource</a>` : ''}
+      <p style="font-size: 0.85rem; line-height: 1.5; color: var(--text-muted);">${escapeHtml(a.message || a.desc || '')}</p>
+      ${a.link && a.link !== '#' ? `<a href="${escapeHtml(a.link)}" target="_blank" rel="noopener" style="font-size: 0.75rem; color: var(--color-coral); text-decoration: none; display: inline-block; margin-top: 0.35rem;">↗ View Resource</a>` : ''}
     </div>
   `).join('');
+
 }
 
 /* ==========================================================================

@@ -872,9 +872,10 @@ async function handleMcpRpc(payload, authHeader = '') {
 
   // 3. Tools List
   if (method === "tools/list") {
-    const allTools = [...PUBLIC_TOOLS, ...ADMIN_TOOLS];
+    const allTools = isAdmin ? [...PUBLIC_TOOLS, ...ADMIN_TOOLS] : PUBLIC_TOOLS;
     return { jsonrpc: "2.0", id: reqId, result: { tools: allTools } };
   }
+
 
   // 4. Tools Call
   if (method === "tools/call") {
@@ -1342,16 +1343,19 @@ async function handleMcpRpc(payload, authHeader = '') {
         return {
           jsonrpc: "2.0",
           id: reqId,
-          result: { content: [{ type: "text", text: "❌ Unauthorized: Invalid passkey." }], isError: true }
+          result: { content: [{ type: "text", text: "🔒 Access Denied: Admin authorization required. Only Baljot Chohan can broadcast announcements." }], isError: true }
         };
       }
+      const author = args.author || DEFAULT_AUTHOR;
+      const messageBody = args.desc || args.message || "";
       const payload = {
         id: `custom-ann-${Date.now()}`,
         title: args.title,
-        message: args.desc,
-        desc: args.desc,
-        category: args.badge || "NOTICE",
-        badge: args.badge || "NOTICE",
+        message: messageBody,
+        desc: messageBody,
+        category: (args.badge || args.category || "NOTICE").toLowerCase(),
+        badge: args.badge || args.category || "NOTICE",
+        author: author,
         link: args.link || "#",
         date: new Date().toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }),
         timestamp: Date.now()
@@ -1361,11 +1365,12 @@ async function handleMcpRpc(payload, authHeader = '') {
         jsonrpc: "2.0",
         id: reqId,
         result: {
-          content: [{ type: "text", text: `📢 Announcement published! Headline: "${args.title}" (ID: ${key})` }],
+          content: [{ type: "text", text: `📢 Announcement published live by ${author}!\nHeadline: "${args.title}"\nRecord ID: ${key}` }],
           isError: false
         }
       };
     }
+
 
     // --- TOOL: get_announcements ---
     if (name === "get_announcements") {
