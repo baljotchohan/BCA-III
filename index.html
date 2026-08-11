@@ -1092,23 +1092,34 @@
       <!-- Modal Body -->
       <div class="admin-modal-body">
         
-        <!-- 1. PASSKEY AUTHENTICATION SCREEN -->
+        <!-- 1. GOOGLE ADMIN AUTHENTICATION GATE -->
         <div id="admin-auth-screen">
-          <div style="text-align: center; padding: 1.5rem 0.5rem;">
-            <div style="width: 52px; height: 52px; border-radius: 50%; background: var(--bg-surface-subtle); display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem auto; font-size: 1.5rem;">
-              🔐
+          <div style="text-align: center; padding: 2rem 1rem;">
+            <!-- Google G Logo -->
+            <div style="width: 64px; height: 64px; border-radius: 50%; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border: 2px solid var(--border-subtle); display: flex; align-items: center; justify-content: center; margin: 0 auto 1.25rem auto;">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+              </svg>
             </div>
-            <h3 class="serif" style="font-size: 1.25rem; margin-bottom: 0.35rem;">Administrator Authentication</h3>
-            <p class="body-3" style="color: var(--text-muted); max-width: 360px; margin: 0 auto 1.25rem auto;">
-              Enter your master passkey to publish digital notes, record daily lectures, and post announcements.
+            <h3 class="serif" style="font-size: 1.2rem; margin-bottom: 0.4rem;">Admin-Only Feature</h3>
+            <p class="body-3" style="color: var(--text-muted); max-width: 320px; margin: 0 auto 0.6rem auto; font-size: 0.88rem;">
+              This portal is exclusively for <strong>Baljot Chohan</strong> and <strong>Mehakpreet Kaur</strong>. Access is granted automatically when you sign in with your registered Google account.
             </p>
-            
-            <div style="max-width: 320px; margin: 0 auto;">
-              <input type="password" id="admin-passkey-input" class="admin-form-input" placeholder="Enter Admin Passkey..." style="text-align: center; font-size: 1rem; letter-spacing: 0.1em; margin-bottom: 0.75rem;" onkeydown="if(event.key==='Enter') handleInAppAdminLogin()"/>
-              <button class="admin-submit-btn" onclick="handleInAppAdminLogin()">
-                <span>Unlock Academic Portal</span>
-              </button>
-            </div>
+            <p class="body-3" style="color: var(--text-subtle); max-width: 300px; margin: 0 auto 1.5rem auto; font-size: 0.8rem;">
+              No passkey needed — your Google account is your admin key.
+            </p>
+            <button class="google-auth-btn" onclick="handleInAppAdminLogin()" style="display: inline-flex; align-items: center; gap: 0.6rem; margin: 0 auto;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+              </svg>
+              <span id="admin-gate-google-btn-text">Continue with Google</span>
+            </button>
           </div>
         </div>
 
@@ -1754,6 +1765,138 @@
       </div>
     </div>
   </div>
+
+  <!-- ========================================================================
+       30-SECOND GUEST SIGN-IN NUDGE (shown to unsigned visitors)
+       ======================================================================== -->
+  <div id="guest-signin-nudge" role="dialog" aria-label="Sign in prompt">
+    <button class="nudge-close" onclick="dismissGuestNudge()" title="Dismiss">✕</button>
+    <div class="nudge-icon">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+      </svg>
+    </div>
+    <div class="nudge-body">
+      <p class="nudge-title">Sync Your Study Progress 🎓</p>
+      <p class="nudge-desc">Sign in with Google to save bookmarks, track notes, and unlock your personalised scholar hub.</p>
+      <div class="nudge-actions">
+        <button class="nudge-signin-btn" onclick="nudgeSignIn()">
+          Sign In with Google
+        </button>
+        <button class="nudge-later-btn" onclick="dismissGuestNudge()">Maybe Later</button>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    /* ── 30-Second Guest Sign-In Nudge ─────────────────────────────── */
+    #guest-signin-nudge {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      z-index: 9999;
+      display: flex;
+      align-items: flex-start;
+      gap: 0.85rem;
+      background: var(--bg-surface, #1c1c28);
+      border: 1px solid var(--border-subtle, rgba(255,255,255,0.1));
+      border-radius: 16px;
+      padding: 1.1rem 1.3rem;
+      max-width: 320px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.45), 0 0 0 1px rgba(255,255,255,0.04);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      transform: translateY(120%) scale(0.95);
+      opacity: 0;
+      transition: transform 0.45s cubic-bezier(0.34,1.56,0.64,1), opacity 0.35s ease;
+      pointer-events: none;
+    }
+    #guest-signin-nudge.visible {
+      transform: translateY(0) scale(1);
+      opacity: 1;
+      pointer-events: all;
+    }
+    .nudge-close {
+      position: absolute;
+      top: 0.55rem;
+      right: 0.65rem;
+      background: none;
+      border: none;
+      color: var(--text-subtle, #888);
+      font-size: 0.8rem;
+      cursor: pointer;
+      line-height: 1;
+      padding: 0.2rem 0.3rem;
+      border-radius: 4px;
+      transition: color 0.15s, background 0.15s;
+    }
+    .nudge-close:hover { color: var(--text-main, #fff); background: rgba(255,255,255,0.06); }
+    .nudge-icon {
+      flex-shrink: 0;
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #1a1a3e, #0f0f2a);
+      border: 1px solid var(--border-subtle, rgba(255,255,255,0.1));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 0.1rem;
+    }
+    .nudge-body { flex: 1; min-width: 0; }
+    .nudge-title {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--text-main, #f0f0f0);
+      margin: 0 0 0.25rem 0;
+      line-height: 1.3;
+    }
+    .nudge-desc {
+      font-size: 0.78rem;
+      color: var(--text-muted, #999);
+      margin: 0 0 0.85rem 0;
+      line-height: 1.5;
+    }
+    .nudge-actions { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+    .nudge-signin-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.45rem 0.9rem;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      background: #4285F4;
+      color: #fff;
+      border: none;
+      transition: background 0.18s, transform 0.15s;
+    }
+    .nudge-signin-btn:hover { background: #3367d6; transform: translateY(-1px); }
+    .nudge-later-btn {
+      background: none;
+      border: none;
+      font-size: 0.78rem;
+      color: var(--text-subtle, #888);
+      cursor: pointer;
+      padding: 0.45rem 0.5rem;
+      border-radius: 6px;
+      transition: color 0.15s;
+    }
+    .nudge-later-btn:hover { color: var(--text-muted, #aaa); }
+
+    @media (max-width: 480px) {
+      #guest-signin-nudge {
+        right: 0.75rem;
+        left: 0.75rem;
+        max-width: none;
+        bottom: 1rem;
+      }
+    }
+  </style>
 
   <!-- SCRIPTS -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>

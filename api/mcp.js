@@ -10,8 +10,17 @@
 
 const https = require('https');
 
-const ADMIN_PASSKEY = process.env.ADMIN_PASSKEY || "Defenderbhabhiontop";
+// Admin access is now purely email-based (no passkeys)
+const ADMIN_EMAILS = [
+  'baljotchohan23@gmail.com',
+  'mehakpreetkaur@gmail.com'
+];
+// ADMIN_SECRET is a fallback for AI tool connections (Claude Desktop, Cursor, ChatGPT)
+// Set this in Vercel env vars as ADMIN_SECRET (long random string, not the old passkey)
+const ADMIN_SECRET = process.env.ADMIN_SECRET || '';
+const FIREBASE_PROJECT_ID = 'bca2nd-5c622';
 const DEFAULT_AUTHOR = "Baljot Chohan";
+
 
 // Complete Panjab University BCA 3rd Sem Syllabus Data (2026-27 NEP-2020 Framework)
 const SYLLABUS_INDEX = {
@@ -814,20 +823,75 @@ function deleteFirebaseData(endpoint, id) {
   });
 }
 
-// Helper: Verify Admin Access
-function verifyAdmin(authHeader, passkeyArg) {
-  if (passkeyArg && passkeyArg.trim() === ADMIN_PASSKEY) return true;
-  if (!authHeader) return false;
-  const token = authHeader.replace(/^Bearer\s+/i, '').trim();
-  return token === ADMIN_PASSKEY;
+// Helper: Verify a Firebase ID Token via Google's token introspection API
+async function verifyFirebaseToken(idToken) {
+  if (!idToken) return null;
+  return new Promise((resolve) => {
+    const url = `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=AIzaSyAM8tcsYAnJoLzY6ZUxp6M5h2z-M6AJzDI`;
+    const body = JSON.stringify({ idToken });
+    const req = https.request(
+      url,
+      { method: 'POST', headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) } },
+      (res) => {
+        let data = '';
+        res.on('data', d => { data += d; });
+        res.on('end', () => {
+          try {
+            const parsed = JSON.parse(data);
+            const user = parsed.users && parsed.users[0];
+            resolve(user ? { uid: user.localId, email: user.email, name: user.displayName } : null);
+          } catch { resolve(null); }
+        });
+      }
+    );
+    req.on('error', () => resolve(null));
+    req.write(body);
+    req.end();
+  });
 }
+
+// Helper: Verify admin access (Google ID Token email OR ADMIN_SECRET env fallback for AI tools)
+async function verifyAdmin(authHeader) {
+  if (!authHeader) return { ok: false, user: null };
+  const token = authHeader.replace(/^Bearer\s+/i, '').trim();
+  // Env-secret fallback (for Cursor / Claude Desktop / ChatGPT integrations)
+  if (ADMIN_SECRET && token === ADMIN_SECRET) {
+    return { ok: true, user: { uid: 'ai-tool', email: ADMIN_EMAILS[0], name: DEFAULT_AUTHOR } };
+  }
+  // Firebase ID Token path
+  const user = await verifyFirebaseToken(token);
+  if (user && ADMIN_EMAILS.includes(user.email)) {
+    return { ok: true, user };
+  }
+  return { ok: false, user: user || null };
+}
+
+// Helper: Verify any signed-in user (not necessarily admin)
+async function verifySignedIn(authHeader) {
+  if (!authHeader) return { ok: false, user: null };
+  const token = authHeader.replace(/^Bearer\s+/i, '').trim();
+  if (ADMIN_SECRET && token === ADMIN_SECRET) {
+    return { ok: true, user: { uid: 'ai-tool', email: ADMIN_EMAILS[0], name: DEFAULT_AUTHOR } };
+  }
+  const user = await verifyFirebaseToken(token);
+  return user ? { ok: true, user } : { ok: false, user: null };
+}
+
 
 // Main MCP Dispatcher
 async function handleMcpRpc(payload, authHeader = '', authorHeader = '') {
   const method = payload.method;
   const reqId = payload.id;
   const params = payload.params || {};
-  const isAdmin = verifyAdmin(authHeader, params.arguments?.passkey);
+
+  // Resolve admin and signed-in status once upfront
+  const adminResult = await verifyAdmin(authHeader);
+  const isAdmin = adminResult.ok;
+  const adminUser = adminResult.user;
+
+  // For non-admin tool calls, also check if user is signed in
+  const signedInResult = isAdmin ? adminResult : await verifySignedIn(authHeader);
+  const isSignedIn = signedInResult.ok;
 
   if (method === "ping") {
     return { jsonrpc: "2.0", id: reqId, result: {} };
@@ -846,26 +910,53 @@ async function handleMcpRpc(payload, authHeader = '', authorHeader = '') {
           logging: {}
         },
         serverInfo: {
-          name: isAdmin ? "BCA III Hub MCP Server [ADMIN MODE]" : "BCA III Academic Hub MCP Server",
+          name: isAdmin
+            ? "BCA III Hub MCP Server [ADMIN MODE]"
+            : isSignedIn
+              ? "BCA III Academic Hub MCP Server [STUDENT MODE]"
+              : "BCA III Academic Hub MCP Server [UNSIGNED]",
           version: "2.0.0"
         },
         instructions: isAdmin
-          ? "ADMIN MODE ACTIVE: You are authenticated as Baljot Chohan (Administrator). You have full authority to create and publish official study notes, log classroom lectures, broadcast university announcements, and manage data on the live BCA III Hub."
-          : "STUDENT READ-ONLY MODE: You have read-only access to official Panjab University BCA 3rd Sem syllabi, notes, lectures, and tasks. You CANNOT publish or modify notes or announcements (Admin passkey required)."
+          ? `ADMIN MODE ACTIVE: Authenticated as ${adminUser?.name || 'Administrator'} (${adminUser?.email}). Full authority to create/publish notes, log lectures, broadcast announcements, and manage all data on BCA III Hub.`
+          : isSignedIn
+            ? "STUDENT MODE: Authenticated Google user. Read-only access to official Panjab University BCA 3rd Sem syllabi, notes, lectures, and tasks. Admin tools require admin email registration."
+            : "UNSIGNED MODE: Sign in with Google at https://bca-iii.vercel.app to use any tools. Include your Firebase ID Token as Authorization: Bearer <token>."
       }
     };
   }
 
   if (method === "tools/list") {
-    // Return all public and admin tools (admin tools require passkey or Bearer header on call)
-    return { jsonrpc: "2.0", id: reqId, result: { tools: [...PUBLIC_TOOLS, ...ADMIN_TOOLS] } };
+    // List all tools — signed-in users see full tool set, unsigned get only public info
+    return {
+      jsonrpc: "2.0", id: reqId,
+      result: {
+        tools: isSignedIn
+          ? [...PUBLIC_TOOLS, ...ADMIN_TOOLS]
+          : PUBLIC_TOOLS.map(t => ({ ...t, description: t.description + ' [Sign in required to use]' }))
+      }
+    };
   }
 
 
   if (method === "tools/call") {
     const name = params.name;
     const args = params.arguments || {};
-    const hasAdminAccess = isAdmin || verifyAdmin(authHeader, args.passkey);
+
+    // Gate: ALL tool calls require a signed-in Google user
+    if (!isSignedIn) {
+      return {
+        jsonrpc: "2.0",
+        id: reqId,
+        result: {
+          content: [{
+            type: "text",
+            text: "🔐 Authentication Required\n\nThis BCA III Hub MCP endpoint requires a signed-in Google account.\n\nTo use these tools:\n1. Visit https://bca-iii.vercel.app and sign in with Google.\n2. Get your Firebase ID Token from the browser's dev console.\n3. Include it as: Authorization: Bearer <your_id_token>\n\nAdmin write operations additionally require the admin-registered email."
+          }],
+          isError: true
+        }
+      };
+    }
 
 
     if (name === "get_syllabus") {
@@ -1098,16 +1189,14 @@ async function handleMcpRpc(payload, authHeader = '', authorHeader = '') {
     }
 
     if (name === "create_and_publish_note" || name === "publish_digital_note") {
-      const isAuthPasskey = verifyAdmin(authHeader, args.passkey);
-
-      if (!hasAdminAccess && !isAuthPasskey) {
+      if (!isAdmin) {
         return {
           jsonrpc: "2.0",
           id: reqId,
           result: {
             content: [{
               type: "text",
-              text: "🔒 Access Denied: Admin passkey required. Only Baljot Chohan can create and publish official digital study notes."
+              text: "🔒 Admin Access Required\n\nPublishing notes requires an admin Google account (baljotchohan23@gmail.com or mehakpreetkaur@gmail.com).\n\nSign in with your registered Google account at https://bca-iii.vercel.app and use your Firebase ID Token as the Authorization: Bearer header."
             }],
             isError: true
           }
@@ -1181,11 +1270,11 @@ async function handleMcpRpc(payload, authHeader = '', authorHeader = '') {
     }
 
     if (name === "update_digital_note") {
-      if (!hasAdminAccess) {
+      if (!isAdmin) {
         return {
           jsonrpc: "2.0",
           id: reqId,
-          result: { content: [{ type: "text", text: "❌ Unauthorized: Invalid passkey." }], isError: true }
+          result: { content: [{ type: "text", text: "🔒 Admin Access Required: Only registered admin accounts can update notes." }], isError: true }
         };
       }
 
@@ -1219,11 +1308,11 @@ async function handleMcpRpc(payload, authHeader = '', authorHeader = '') {
     }
 
     if (name === "delete_digital_note" || name === "delete_hub_record") {
-      if (!hasAdminAccess) {
+      if (!isAdmin) {
         return {
           jsonrpc: "2.0",
           id: reqId,
-          result: { content: [{ type: "text", text: "❌ Unauthorized: Invalid passkey." }], isError: true }
+          result: { content: [{ type: "text", text: "🔒 Admin Access Required: Only registered admin accounts can delete records." }], isError: true }
         };
       }
       const collection = args.collection || "notes";
@@ -1239,11 +1328,11 @@ async function handleMcpRpc(payload, authHeader = '', authorHeader = '') {
     }
 
     if (name === "publish_lecture_log") {
-      if (!hasAdminAccess) {
+      if (!isAdmin) {
         return {
           jsonrpc: "2.0",
           id: reqId,
-          result: { content: [{ type: "text", text: "❌ Unauthorized: Invalid passkey." }], isError: true }
+          result: { content: [{ type: "text", text: "🔒 Admin Access Required: Only registered admin accounts can publish lecture logs." }], isError: true }
         };
       }
       const subjectId = normalizeSubjectId(args.subject);
@@ -1318,11 +1407,11 @@ async function handleMcpRpc(payload, authHeader = '', authorHeader = '') {
     }
 
     if (name === "publish_announcement") {
-      if (!hasAdminAccess) {
+      if (!isAdmin) {
         return {
           jsonrpc: "2.0",
           id: reqId,
-          result: { content: [{ type: "text", text: "🔒 Access Denied: Admin authorization required. Only Baljot Chohan can broadcast announcements." }], isError: true }
+          result: { content: [{ type: "text", text: "🔒 Admin Access Required: Only registered admin accounts (baljotchohan23@gmail.com or mehakpreetkaur@gmail.com) can broadcast announcements." }], isError: true }
         };
       }
       const author = args.author || authorHeader || DEFAULT_AUTHOR;

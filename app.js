@@ -12,12 +12,11 @@ let _editingItem = null; // { type: 'note'|'lecture'|'announcement', fbKey, coll
 let _currentSubjectNotes = []; // Cached active notes array for focus reader & export
 let _globalCloudData = { notes: [], lectures: [], announcements: [] }; // Global cache for search indexing
 
-const ADMIN_PASSKEY = 'Defenderbhabhiontop';
-const ADMIN_SESSION_KEY = 'bca_hub_admin_session';
 const FIREBASE_DB = 'https://bca2nd-5c622-default-rtdb.firebaseio.com/bca3';
 
+// Admin check is now purely email-based (Google OAuth) — no passkeys
 function isAdminAuthenticated() {
-  return sessionStorage.getItem(ADMIN_SESSION_KEY) === 'authenticated' || sessionStorage.getItem('bca_admin_session') === 'authenticated';
+  return !!(currentUserProfile && currentUserProfile.isAdmin === true);
 }
 
 function lockScroll(lock) {
@@ -40,6 +39,12 @@ document.addEventListener('DOMContentLoaded', () => {
   updateAdminHeaderUI();
   initFirebaseAuth();
   syncFirebaseData();
+  // 30-second sign-in nudge for unsigned visitors
+  setTimeout(() => {
+    if (!currentUserProfile) {
+      showGuestSignInNudge();
+    }
+  }, 30000);
 });
 
 /* ==========================================================================
@@ -1211,33 +1216,36 @@ function openAdminModal() {
   const badge = document.getElementById('admin-status-badge');
 
   // Restore author selection from localStorage
-  const savedAuthor = localStorage.getItem('bca3_admin_author') || 'Baljot Chohan';
+  const savedAuthor = currentUserProfile ? currentUserProfile.name : (localStorage.getItem('bca3_admin_author') || 'Baljot Chohan');
   ['adm-note-author', 'adm-lec-author', 'adm-ann-author'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.value = savedAuthor;
   });
 
   if (isAuth) {
+    // Google-verified admin — show portal directly, no passkey
     if (authScreen) authScreen.style.display = 'none';
     if (controlsScreen) controlsScreen.style.display = 'block';
     if (badge) {
-      badge.innerText = '🛡️ Admin Verified';
+      badge.innerText = `🛡️ ${currentUserProfile ? currentUserProfile.name.split(' ')[0] : 'Admin'} — Verified`;
       badge.style.backgroundColor = 'var(--color-cactus)';
       badge.style.color = 'var(--text-main)';
     }
+    // Update admin modal heading
+    const heading = document.getElementById('admin-modal-heading');
+    if (heading) heading.innerText = 'Academic Management Portal';
     switchAdminTab('note');
   } else {
+    // Not admin — show Google Sign-In prompt instead of passkey screen
     if (authScreen) authScreen.style.display = 'block';
     if (controlsScreen) controlsScreen.style.display = 'none';
     if (badge) {
-      badge.innerText = '🔒 Admin Restricted';
+      badge.innerText = '🔒 Admin Only';
       badge.style.backgroundColor = 'var(--color-oat)';
       badge.style.color = 'var(--color-coral)';
     }
-    setTimeout(() => {
-      const passInput = document.getElementById('admin-passkey-input') || document.getElementById('inapp-passkey');
-      if (passInput) passInput.focus();
-    }, 100);
+    const heading = document.getElementById('admin-modal-heading');
+    if (heading) heading.innerText = 'Administrator Access Required';
   }
 }
 
@@ -1249,39 +1257,21 @@ function closeAdminModal() {
 
 function handleInAppAdminLogin(e) {
   if (e && e.preventDefault) e.preventDefault();
-  const passInput = document.getElementById('admin-passkey-input') || document.getElementById('inapp-passkey');
-  const passkey = passInput ? passInput.value.trim() : '';
-  const errEl = document.getElementById('inapp-login-error');
-
-  if (passkey === ADMIN_PASSKEY) {
-    sessionStorage.setItem(ADMIN_SESSION_KEY, 'authenticated');
-    if (errEl) errEl.style.display = 'none';
-    showToast('🛡️ Admin verification successful! Portal unlocked.');
-    updateAdminHeaderUI();
-    openAdminModal();
-    
-    // Refresh active views to show admin actions
-    const subject = BCA_3RD_SEM_DATA.subjects.find(s => s.id === activeSubjectId);
-    if (subject) renderSubjectNotes(subject);
-    renderDashboardLectures();
-  } else {
-    if (errEl) errEl.style.display = 'block';
-    showToast('❌ Incorrect passkey.');
-    if (passInput) {
-      passInput.value = '';
-      passInput.focus();
-    }
-  }
+  // Passkey removed — admin access via Google Sign-In only
+  closeAdminModal();
+  handleAuthAction();
 }
 
 function handleInAppAdminLogout() {
-  sessionStorage.removeItem(ADMIN_SESSION_KEY);
-  sessionStorage.removeItem('bca_admin_session');
+  if (typeof firebase !== 'undefined' && firebase.auth) {
+    firebase.auth().signOut().catch(() => {});
+  }
+  localStorage.removeItem('studiq_user_profile');
+  currentUserProfile = null;
   showToast('🔒 Admin signed out. Returned to Student view.');
   updateAdminHeaderUI();
+  updateProfileUI();
   closeAdminModal();
-
-  // Refresh active views to remove admin buttons
   const subject = BCA_3RD_SEM_DATA.subjects.find(s => s.id === activeSubjectId);
   if (subject) renderSubjectNotes(subject);
   renderDashboardLectures();
@@ -1292,9 +1282,10 @@ function updateAdminHeaderUI() {
   if (!container) return;
   const isAuth = isAdminAuthenticated();
   if (isAuth) {
+    container.style.display = '';
     container.innerHTML = `
       <div style="display: flex; align-items: center; gap: 0.35rem;">
-        <button class="header-admin-btn active" onclick="openAdminModal()" title="Admin Mode Active (Click to open portal)" style="background: var(--color-cactus); border-color: var(--color-cactus-border); color: var(--text-main);">
+        <button class="header-admin-btn active" onclick="openAdminModal()" title="Admin Mode Active — Click to open portal" style="background: var(--color-cactus); border-color: var(--color-cactus-border); color: var(--text-main);">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
           </svg>
@@ -1306,15 +1297,8 @@ function updateAdminHeaderUI() {
       </div>
     `;
   } else {
-    container.innerHTML = `
-      <button class="header-admin-btn" onclick="openAdminModal()" title="Open Admin Portal (Create &amp; Publish Notes)">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-          <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-        </svg>
-        <span>Admin</span>
-      </button>
-    `;
+    container.innerHTML = '';
+    container.style.display = 'none';
   }
 }
 
@@ -2414,14 +2398,11 @@ let currentUserProfile = null;
 let _userBookmarks = JSON.parse(localStorage.getItem('bca_user_bookmarks') || '[]');
 
 function initFirebaseAuth() {
+  // Try restoring from localStorage (for page refresh)
   const savedLocal = localStorage.getItem('studiq_user_profile');
   if (savedLocal) {
     try {
       currentUserProfile = JSON.parse(savedLocal);
-      if (currentUserProfile.isAdmin) {
-        sessionStorage.setItem('bca_hub_admin_session', 'authenticated');
-        sessionStorage.setItem('bca_admin_session', 'authenticated');
-      }
     } catch (e) {}
   }
 
@@ -2435,18 +2416,49 @@ function initFirebaseAuth() {
           photo: user.photoURL || '',
           isAdmin: (FIREBASE.adminEmails || []).includes(user.email)
         };
-        if (currentUserProfile.isAdmin) {
-          sessionStorage.setItem('bca_hub_admin_session', 'authenticated');
-          sessionStorage.setItem('bca_admin_session', 'authenticated');
+        localStorage.setItem('studiq_user_profile', JSON.stringify(currentUserProfile));
+        // Dismiss any sign-in nudge since user just signed in
+        dismissGuestNudge();
+      } else {
+        // Signed out — clear any locally cached profile
+        if (currentUserProfile && currentUserProfile.uid && !currentUserProfile.uid.startsWith('user_')) {
+          currentUserProfile = null;
+          localStorage.removeItem('studiq_user_profile');
         }
       }
       updateProfileUI();
       updateAdminHeaderUI();
+      // Refresh views to show/hide admin controls
+      const subject = BCA_3RD_SEM_DATA.subjects.find(s => s.id === activeSubjectId);
+      if (subject) renderSubjectNotes(subject);
     });
   } else {
-    // Local dev / guest fallback state
+    // Local dev / no Firebase — just update UI from localStorage
     updateProfileUI();
   }
+}
+
+// ─── 30-Second Guest Sign-In Nudge ───────────────────────────────────────────
+
+function showGuestSignInNudge() {
+  // Don't show if user already signed in after the timeout was set
+  if (currentUserProfile) return;
+  const nudge = document.getElementById('guest-signin-nudge');
+  if (nudge) {
+    nudge.classList.add('visible');
+  }
+}
+
+function dismissGuestNudge() {
+  const nudge = document.getElementById('guest-signin-nudge');
+  if (nudge) {
+    nudge.classList.remove('visible');
+  }
+}
+
+function nudgeSignIn() {
+  dismissGuestNudge();
+  handleAuthAction();
 }
 
 function updateProfileUI() {
