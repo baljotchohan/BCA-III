@@ -4,7 +4,7 @@
  * Section: /bca3  (all BCA III data lives here — existing data untouched)
  */
 const FIREBASE_CONFIG = {
-  apiKey: "", // Optional: Populated when Web App apiKey is added, fallback demo mode enabled automatically
+  apiKey: "AIzaSyAM8tcsYAnJoLzY6ZUxp6M5h2z-M6AJzDI",
   authDomain: "bca2nd-5c622.firebaseapp.com",
   databaseURL: "https://bca2nd-5c622-default-rtdb.firebaseio.com",
   projectId: "bca2nd-5c622",

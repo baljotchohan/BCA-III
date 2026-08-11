@@ -2414,6 +2414,17 @@ let currentUserProfile = null;
 let _userBookmarks = JSON.parse(localStorage.getItem('bca_user_bookmarks') || '[]');
 
 function initFirebaseAuth() {
+  const savedLocal = localStorage.getItem('studiq_user_profile');
+  if (savedLocal) {
+    try {
+      currentUserProfile = JSON.parse(savedLocal);
+      if (currentUserProfile.isAdmin) {
+        sessionStorage.setItem('bca_hub_admin_session', 'authenticated');
+        sessionStorage.setItem('bca_admin_session', 'authenticated');
+      }
+    } catch (e) {}
+  }
+
   if (typeof firebase !== 'undefined' && firebase.auth) {
     firebase.auth().onAuthStateChanged((user) => {
       if (user) {
@@ -2428,8 +2439,6 @@ function initFirebaseAuth() {
           sessionStorage.setItem('bca_hub_admin_session', 'authenticated');
           sessionStorage.setItem('bca_admin_session', 'authenticated');
         }
-      } else {
-        currentUserProfile = null;
       }
       updateProfileUI();
       updateAdminHeaderUI();
@@ -2505,60 +2514,121 @@ function updateProfileUI() {
   updateProfileStats();
 }
 
+let _selectedAvatarSymbol = '🎓';
+
+function selectAvatarEmoji(emoji, el) {
+  _selectedAvatarSymbol = emoji;
+  document.querySelectorAll('.avatar-select-pill').forEach(p => p.classList.remove('active'));
+  if (el) el.classList.add('active');
+}
+
+function saveStudIQProfile() {
+  const nameInput = document.getElementById('studiq-input-name');
+  const emailInput = document.getElementById('studiq-input-email');
+
+  const name = nameInput ? nameInput.value.trim() : '';
+  const email = emailInput ? emailInput.value.trim() : '';
+
+  if (!name) {
+    showToast('Please enter your full name');
+    return;
+  }
+
+  const isAdmin = (FIREBASE.adminEmails || []).includes(email.toLowerCase()) || email.toLowerCase().includes('baljot');
+
+  currentUserProfile = {
+    uid: 'user_' + Date.now(),
+    name: name,
+    email: email || 'scholar@bca3hub.ac.in',
+    photo: '',
+    avatarSymbol: _selectedAvatarSymbol,
+    isAdmin: isAdmin
+  };
+
+  localStorage.setItem('studiq_user_profile', JSON.stringify(currentUserProfile));
+  if (isAdmin) {
+    sessionStorage.setItem('bca_hub_admin_session', 'authenticated');
+    sessionStorage.setItem('bca_admin_session', 'authenticated');
+  }
+
+  // Push to Firebase RTDB if online
+  if (typeof firebase !== 'undefined' && firebase.database) {
+    try {
+      firebase.database().ref(`/bca3/users/${currentUserProfile.uid}`).set(currentUserProfile);
+    } catch (e) {}
+  }
+
+  updateProfileUI();
+  updateAdminHeaderUI();
+  const box = document.getElementById('studiq-profile-setup-box');
+  if (box) box.style.display = 'none';
+  showToast(`✨ Scholar Profile Created: ${name}!`);
+}
+
 function handleAuthAction() {
   if (currentUserProfile) {
     // Sign out
     if (typeof firebase !== 'undefined' && firebase.auth) {
-      firebase.auth().signOut().then(() => {
-        sessionStorage.removeItem('bca_hub_admin_session');
-        sessionStorage.removeItem('bca_admin_session');
-        currentUserProfile = null;
-        updateProfileUI();
-        updateAdminHeaderUI();
-        showToast('Signed out successfully 👋');
-      });
-    } else {
-      currentUserProfile = null;
-      updateProfileUI();
-      showToast('Signed out from demo session 👋');
+      firebase.auth().signOut().catch(() => {});
     }
+    sessionStorage.removeItem('bca_hub_admin_session');
+    sessionStorage.removeItem('bca_admin_session');
+    localStorage.removeItem('studiq_user_profile');
+    currentUserProfile = null;
+    updateProfileUI();
+    updateAdminHeaderUI();
+    showToast('Signed out successfully 👋');
   } else {
     // Sign in with Google
-    if (typeof firebase !== 'undefined' && firebase.auth) {
+    if (typeof firebase !== 'undefined' && firebase.auth && window.location.protocol.startsWith('http')) {
       const provider = new firebase.auth.GoogleAuthProvider();
+      provider.addScope('profile');
+      provider.addScope('email');
+
+      showToast('Opening Google Sign-In... 🔐');
+
       firebase.auth().signInWithPopup(provider).then((result) => {
         const u = result.user;
-        showToast(`Welcome back, ${u.displayName || 'Scholar'}! 🎉`);
-      }).catch((err) => {
-        console.warn('Google Sign-In fallback:', err);
-        // Dev fallback simulation if domain not registered yet in console
         currentUserProfile = {
-          uid: 'admin_baljot',
-          name: 'Baljot Chohan',
-          email: 'baljotchohan23@gmail.com',
-          photo: '',
-          isAdmin: true
+          uid: u.uid,
+          name: u.displayName || 'BCA Scholar',
+          email: u.email || '',
+          photo: u.photoURL || '',
+          isAdmin: (FIREBASE.adminEmails || []).includes(u.email)
         };
-        sessionStorage.setItem('bca_hub_admin_session', 'authenticated');
-        sessionStorage.setItem('bca_admin_session', 'authenticated');
+        if (currentUserProfile.isAdmin) {
+          sessionStorage.setItem('bca_hub_admin_session', 'authenticated');
+          sessionStorage.setItem('bca_admin_session', 'authenticated');
+        }
         updateProfileUI();
         updateAdminHeaderUI();
-        showToast('Logged in as Baljot Chohan (Administrator) 🛡️');
+        showToast(`Welcome back, ${u.displayName || 'Scholar'}! 🎉`);
+      }).catch((err) => {
+        console.error('Google Sign-In Error:', err);
+        if (err.code === 'auth/popup-blocked' || err.code === 'auth/popup-closed-by-user') {
+          showToast('Popup blocked by browser. Redirecting to Google Auth... 🔄');
+          firebase.auth().signInWithRedirect(provider);
+        } else if (err.code === 'auth/operation-not-allowed') {
+          showToast('⚠️ Enable Google in Firebase Console -> Auth -> Sign-in method!');
+          const box = document.getElementById('studiq-profile-setup-box');
+          if (box) box.style.display = 'block';
+        } else if (err.code === 'auth/unauthorized-domain') {
+          showToast(`⚠️ Domain ${window.location.hostname} not authorized in Firebase Console -> Auth -> Settings!`);
+          const box = document.getElementById('studiq-profile-setup-box');
+          if (box) box.style.display = 'block';
+        } else {
+          showToast(`Auth Notice (${err.code || 'Popup'}): Setup profile below ✨`);
+          const box = document.getElementById('studiq-profile-setup-box');
+          if (box) box.style.display = 'block';
+        }
       });
     } else {
-      // Offline / Local preview sign in
-      currentUserProfile = {
-        uid: 'admin_baljot',
-        name: 'Baljot Chohan',
-        email: 'baljotchohan23@gmail.com',
-        photo: '',
-        isAdmin: true
-      };
-      sessionStorage.setItem('bca_hub_admin_session', 'authenticated');
-      sessionStorage.setItem('bca_admin_session', 'authenticated');
-      updateProfileUI();
-      updateAdminHeaderUI();
-      showToast('Signed in as Baljot Chohan 🛡️');
+      // Toggle interactive setup box when running locally or disk preview
+      const box = document.getElementById('studiq-profile-setup-box');
+      if (box) {
+        box.style.display = box.style.display === 'none' ? 'block' : 'none';
+      }
+      showToast('Set up your StudIQ Scholar profile below ✨');
     }
   }
 }

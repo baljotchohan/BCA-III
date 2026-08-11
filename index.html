@@ -952,6 +952,34 @@
           </div>
         </div>
 
+        <!-- STUDIQ PROFILE CREATION & EDIT CARD (EXPANDABLE) -->
+        <div id="studiq-profile-setup-box" class="studiq-profile-box" style="display: none; background: var(--bg-surface-subtle); padding: 1.1rem 1.25rem; border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
+          <h4 style="font-family: var(--font-serif); font-size: 1.05rem; margin: 0 0 0.5rem 0; color: var(--text-main);">✨ Create / Customize StudIQ Scholar Profile</h4>
+          <p style="font-size: 0.825rem; color: var(--text-muted); margin-bottom: 0.85rem;">Set up your avatar, student name, and academic badges.</p>
+          
+          <div style="display: flex; gap: 0.5rem; margin-bottom: 0.85rem;">
+            <span class="avatar-select-pill active" onclick="selectAvatarEmoji('🎓', this)">🎓</span>
+            <span class="avatar-select-pill" onclick="selectAvatarEmoji('💻', this)">💻</span>
+            <span class="avatar-select-pill" onclick="selectAvatarEmoji('⚡', this)">⚡</span>
+            <span class="avatar-select-pill" onclick="selectAvatarEmoji('🚀', this)">🚀</span>
+            <span class="avatar-select-pill" onclick="selectAvatarEmoji('🦁', this)">🦁</span>
+            <span class="avatar-select-pill" onclick="selectAvatarEmoji('🧠', this)">🧠</span>
+            <span class="avatar-select-pill" onclick="selectAvatarEmoji('🦉', this)">🦉</span>
+          </div>
+
+          <div class="admin-form-row-2">
+            <div class="admin-form-group">
+              <label class="admin-form-label">Full Name</label>
+              <input type="text" id="studiq-input-name" class="admin-form-input" placeholder="e.g. Baljot Chohan"/>
+            </div>
+            <div class="admin-form-group">
+              <label class="admin-form-label">Google Email</label>
+              <input type="email" id="studiq-input-email" class="admin-form-input" placeholder="baljotchohan23@gmail.com"/>
+            </div>
+          </div>
+          <button class="admin-submit-btn" style="margin-top: 0.4rem;" onclick="saveStudIQProfile()">Save Scholar Profile ✨</button>
+        </div>
+
         <!-- STATS HIGHLIGHT COUNTERS -->
         <div class="profile-stats-grid">
           <div class="profile-stat-box">
