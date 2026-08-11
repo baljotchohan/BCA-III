@@ -75,6 +75,29 @@ function navigateToDashboard(e) {
   window.location.hash = '#/';
   showDashboardView();
   window.scrollTo({ top: 0, behavior: 'smooth' });
+  updateMobileBottomNav('mob-nav-home');
+}
+
+function scrollToSection(elementId) {
+  showDashboardView();
+  setTimeout(() => {
+    const el = document.getElementById(elementId);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, 50);
+  if (elementId === 'subjects-container') updateMobileBottomNav('mob-nav-subjects');
+  if (elementId === 'study-widgets') updateMobileBottomNav('mob-nav-calendar');
+}
+
+function updateMobileBottomNav(activeId) {
+  document.querySelectorAll('.mobile-bottom-nav-item').forEach(item => {
+    item.classList.remove('active');
+  });
+  const activeItem = document.getElementById(activeId);
+  if (activeItem) {
+    activeItem.classList.add('active');
+  }
 }
 
 function navigateToSubject(subjectId) {
