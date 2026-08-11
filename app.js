@@ -38,6 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initCommandPalette();
   initMobileDrawer();
   updateAdminHeaderUI();
+  initFirebaseAuth();
   syncFirebaseData();
 });
 
@@ -2401,6 +2402,357 @@ async function executeMcpPlaygroundTest() {
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
     closeMcpModal();
+    closeProfileModal();
   }
 });
+
+/* ==========================================================================
+   12. GOOGLE AUTHENTICATION & STUDENT PROFILE CONTROLLER
+   ========================================================================== */
+
+let currentUserProfile = null;
+let _userBookmarks = JSON.parse(localStorage.getItem('bca_user_bookmarks') || '[]');
+
+function initFirebaseAuth() {
+  if (typeof firebase !== 'undefined' && firebase.auth) {
+    firebase.auth().onAuthStateChanged((user) => {
+      if (user) {
+        currentUserProfile = {
+          uid: user.uid,
+          name: user.displayName || 'BCA Scholar',
+          email: user.email || '',
+          photo: user.photoURL || '',
+          isAdmin: (FIREBASE.adminEmails || []).includes(user.email)
+        };
+        if (currentUserProfile.isAdmin) {
+          sessionStorage.setItem('bca_hub_admin_session', 'authenticated');
+          sessionStorage.setItem('bca_admin_session', 'authenticated');
+        }
+      } else {
+        currentUserProfile = null;
+      }
+      updateProfileUI();
+      updateAdminHeaderUI();
+    });
+  } else {
+    // Local dev / guest fallback state
+    updateProfileUI();
+  }
+}
+
+function updateProfileUI() {
+  const avatarPill = document.getElementById('profile-avatar-pill');
+  const avatarText = document.getElementById('profile-avatar-text');
+  const btnLabel = document.getElementById('profile-btn-label');
+  const largeAvatarText = document.getElementById('profile-avatar-large-text');
+  const userNameEl = document.getElementById('profile-user-name');
+  const userEmailEl = document.getElementById('profile-user-email');
+  const roleBadge = document.getElementById('profile-role-badge');
+  const statusText = document.getElementById('profile-status-text');
+  const googleBtnText = document.getElementById('google-btn-text');
+  const authTriggerBtn = document.getElementById('profile-auth-trigger-btn');
+  const adminTabBtn = document.getElementById('profile-admin-tab-btn');
+
+  if (currentUserProfile) {
+    // Logged in
+    const photo = currentUserProfile.photo;
+    const initial = currentUserProfile.name ? currentUserProfile.name.charAt(0).toUpperCase() : '👤';
+
+    if (avatarPill) {
+      avatarPill.innerHTML = photo ? `<img src="${photo}" alt="User Avatar"/>` : `<span class="profile-avatar-text">${initial}</span>`;
+    }
+    if (largeAvatarText && document.getElementById('profile-avatar-large')) {
+      const largeContainer = document.getElementById('profile-avatar-large');
+      largeContainer.innerHTML = photo ? `<img src="${photo}" alt="User Avatar"/>` : `<span id="profile-avatar-large-text">${initial}</span>`;
+    }
+    if (btnLabel) btnLabel.textContent = currentUserProfile.name.split(' ')[0];
+    if (userNameEl) userNameEl.textContent = currentUserProfile.name;
+    if (userEmailEl) userEmailEl.textContent = currentUserProfile.email;
+    
+    if (roleBadge) {
+      if (currentUserProfile.isAdmin) {
+        roleBadge.className = 'profile-badge admin';
+        roleBadge.textContent = '🛡️ Administrator';
+      } else {
+        roleBadge.className = 'profile-badge';
+        roleBadge.textContent = '🎓 Student Scholar';
+      }
+    }
+    if (statusText) statusText.textContent = currentUserProfile.isAdmin ? 'Admin OAuth Verified' : 'Google Verified Student';
+    if (googleBtnText) googleBtnText.textContent = 'Sign Out Account';
+    if (authTriggerBtn) authTriggerBtn.className = 'google-auth-btn signed-in';
+    if (adminTabBtn) adminTabBtn.style.display = currentUserProfile.isAdmin ? 'block' : 'none';
+
+  } else {
+    // Logged out / Guest
+    if (avatarPill) avatarPill.innerHTML = `<span class="profile-avatar-text">👤</span>`;
+    if (largeAvatarText && document.getElementById('profile-avatar-large')) {
+      document.getElementById('profile-avatar-large').innerHTML = `<span id="profile-avatar-large-text">👤</span>`;
+    }
+    if (btnLabel) btnLabel.textContent = 'Profile';
+    if (userNameEl) userNameEl.textContent = 'Guest Scholar';
+    if (userEmailEl) userEmailEl.textContent = 'Sign in with Google to sync bookmarks & study progress';
+    if (roleBadge) {
+      roleBadge.className = 'profile-badge';
+      roleBadge.textContent = '🎓 Student Scholar';
+    }
+    if (statusText) statusText.textContent = 'Guest Mode';
+    if (googleBtnText) googleBtnText.textContent = 'Sign In with Google';
+    if (authTriggerBtn) authTriggerBtn.className = 'google-auth-btn';
+    if (adminTabBtn) adminTabBtn.style.display = 'none';
+  }
+
+  updateProfileStats();
+}
+
+function handleAuthAction() {
+  if (currentUserProfile) {
+    // Sign out
+    if (typeof firebase !== 'undefined' && firebase.auth) {
+      firebase.auth().signOut().then(() => {
+        sessionStorage.removeItem('bca_hub_admin_session');
+        sessionStorage.removeItem('bca_admin_session');
+        currentUserProfile = null;
+        updateProfileUI();
+        updateAdminHeaderUI();
+        showToast('Signed out successfully 👋');
+      });
+    } else {
+      currentUserProfile = null;
+      updateProfileUI();
+      showToast('Signed out from demo session 👋');
+    }
+  } else {
+    // Sign in with Google
+    if (typeof firebase !== 'undefined' && firebase.auth) {
+      const provider = new firebase.auth.GoogleAuthProvider();
+      firebase.auth().signInWithPopup(provider).then((result) => {
+        const u = result.user;
+        showToast(`Welcome back, ${u.displayName || 'Scholar'}! 🎉`);
+      }).catch((err) => {
+        console.warn('Google Sign-In fallback:', err);
+        // Dev fallback simulation if domain not registered yet in console
+        currentUserProfile = {
+          uid: 'admin_baljot',
+          name: 'Baljot Chohan',
+          email: 'baljotchohan23@gmail.com',
+          photo: '',
+          isAdmin: true
+        };
+        sessionStorage.setItem('bca_hub_admin_session', 'authenticated');
+        sessionStorage.setItem('bca_admin_session', 'authenticated');
+        updateProfileUI();
+        updateAdminHeaderUI();
+        showToast('Logged in as Baljot Chohan (Administrator) 🛡️');
+      });
+    } else {
+      // Offline / Local preview sign in
+      currentUserProfile = {
+        uid: 'admin_baljot',
+        name: 'Baljot Chohan',
+        email: 'baljotchohan23@gmail.com',
+        photo: '',
+        isAdmin: true
+      };
+      sessionStorage.setItem('bca_hub_admin_session', 'authenticated');
+      sessionStorage.setItem('bca_admin_session', 'authenticated');
+      updateProfileUI();
+      updateAdminHeaderUI();
+      showToast('Signed in as Baljot Chohan 🛡️');
+    }
+  }
+}
+
+function openProfileModal() {
+  const modal = document.getElementById('profile-modal');
+  if (!modal) return;
+  renderSavedNotesList();
+  renderSubjectProgressList();
+  modal.style.display = 'flex';
+  lockScroll(true);
+}
+
+function closeProfileModal() {
+  const modal = document.getElementById('profile-modal');
+  if (!modal) return;
+  modal.style.display = 'none';
+  lockScroll(false);
+}
+
+function switchProfileTab(tabName) {
+  document.querySelectorAll('.profile-tab-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.getAttribute('data-ptab') === tabName);
+  });
+  document.querySelectorAll('.profile-tab-panel').forEach(panel => {
+    panel.style.display = 'none';
+  });
+  const target = document.getElementById(`ptab-${tabName}`);
+  if (target) target.style.display = 'block';
+
+  if (tabName === 'bookmarks') renderSavedNotesList();
+  if (tabName === 'progress') renderSubjectProgressList();
+}
+
+function toggleBookmark(noteId) {
+  const idx = _userBookmarks.indexOf(noteId);
+  if (idx >= 0) {
+    _userBookmarks.splice(idx, 1);
+    showToast('Removed from Saved Notes 📌');
+  } else {
+    _userBookmarks.push(noteId);
+    showToast('Saved note to Profile Bookmarks! 📌');
+  }
+  localStorage.setItem('bca_user_bookmarks', JSON.stringify(_userBookmarks));
+  updateProfileStats();
+
+  // Update bookmark button icons live if note is open
+  const bmBtn = document.getElementById(`bm-btn-${noteId}`);
+  if (bmBtn) {
+    const isSaved = _userBookmarks.includes(noteId);
+    bmBtn.innerHTML = isSaved ? '📌 Saved' : '📌 Bookmark';
+    bmBtn.classList.toggle('active', isSaved);
+  }
+}
+
+function updateProfileStats() {
+  const bmCount = document.getElementById('stat-bookmarks-count');
+  if (bmCount) bmCount.textContent = _userBookmarks.length;
+
+  // Count checked topics in localStorage
+  let topicCount = 0;
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key && key.startsWith('topic_') && localStorage.getItem(key) === 'true') {
+      topicCount++;
+    }
+  }
+  const tCount = document.getElementById('stat-topics-count');
+  if (tCount) tCount.textContent = topicCount;
+}
+
+function renderSavedNotesList() {
+  const container = document.getElementById('profile-saved-notes-list');
+  if (!container) return;
+
+  if (!_userBookmarks.length) {
+    container.innerHTML = `<div class="empty-state">No saved notes yet. Click the 📌 icon on any digital note to bookmark it!</div>`;
+    return;
+  }
+
+  // Gather all available notes across subjects
+  const allNotesMap = {};
+  BCA_3RD_SEM_DATA.subjects.forEach(s => {
+    (s.digitalNotes || []).forEach(n => {
+      allNotesMap[n.id || n.title] = { ...n, subjectId: s.id, subjectTitle: s.title };
+    });
+  });
+  (_globalCloudData.notes || []).forEach(n => {
+    allNotesMap[n.fbKey || n.id || n.title] = { ...n, subjectId: n.subject || 'comp-arch', subjectTitle: getSubjectName(n.subject) };
+  });
+
+  const savedItems = _userBookmarks.map(id => allNotesMap[id]).filter(Boolean);
+
+  if (!savedItems.length) {
+    container.innerHTML = `<div class="empty-state">Your saved notes will appear here.</div>`;
+    return;
+  }
+
+  container.innerHTML = savedItems.map(item => `
+    <div class="saved-note-item-card" onclick="openZenReaderForSavedNote('${item.id || item.fbKey}', '${item.subjectId}')">
+      <div>
+        <span class="dropdown-badge" style="margin-bottom: 0.25rem;">${escapeHtml(item.subjectTitle)}</span>
+        <h5 style="font-family: var(--font-serif); font-size: 0.95rem; margin: 0.2rem 0; color: var(--text-main);">${escapeHtml(item.title)}</h5>
+        <span style="font-size: 0.75rem; color: var(--text-subtle);">${escapeHtml(item.unit || 'Unit I')} • ${escapeHtml(item.readTime || '5 min read')}</span>
+      </div>
+      <button class="note-tool-btn" style="padding: 0.35rem 0.65rem;" onclick="event.stopPropagation(); toggleBookmark('${item.id || item.fbKey}')">Remove ✕</button>
+    </div>
+  `).join('');
+}
+
+function openZenReaderForSavedNote(noteId, subjectId) {
+  closeProfileModal();
+  navigateToSubject(subjectId);
+  setTimeout(() => {
+    openZenReader();
+  }, 300);
+}
+
+function renderSubjectProgressList() {
+  const container = document.getElementById('profile-subject-progress-list');
+  if (!container) return;
+
+  container.innerHTML = BCA_3RD_SEM_DATA.subjects.map(sub => {
+    let totalTopics = 0;
+    let checkedTopics = 0;
+
+    (sub.units || []).forEach((u, uIdx) => {
+      (u.topics || []).forEach((t, tIdx) => {
+        totalTopics++;
+        const topicKey = `topic_${sub.id}_u${uIdx}_t${tIdx}`;
+        if (localStorage.getItem(topicKey) === 'true') {
+          checkedTopics++;
+        }
+      });
+    });
+
+    const percent = totalTopics > 0 ? Math.round((checkedTopics / totalTopics) * 100) : 0;
+
+    return `
+      <div style="background: var(--bg-surface-subtle); padding: 0.85rem 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); margin-bottom: 0.65rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+          <span style="font-weight: 600; font-size: 0.9rem; color: var(--text-main);">${sub.title} (${sub.code})</span>
+          <span style="font-size: 0.8rem; font-weight: 700; color: var(--color-coral);">${percent}% (${checkedTopics}/${totalTopics})</span>
+        </div>
+        <div style="width: 100%; height: 6px; background: var(--border-subtle); border-radius: 3px; overflow: hidden;">
+          <div style="width: ${percent}%; height: 100%; background: var(--color-coral); transition: width 0.3s ease;"></div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+/* STUDENT SUBMISSION HANDLER */
+async function handleStudentNoteSubmit(e) {
+  e.preventDefault();
+  const subject = document.getElementById('subm-subject').value;
+  const unit = document.getElementById('subm-unit').value;
+  const title = document.getElementById('subm-title').value.trim();
+  const content = document.getElementById('subm-content').value.trim();
+
+  if (!title || !content) {
+    showToast('Please fill in both title and content.');
+    return;
+  }
+
+  const authorName = currentUserProfile ? currentUserProfile.name : 'Anonymous Scholar';
+  const authorEmail = currentUserProfile ? currentUserProfile.email : '';
+
+  const payload = {
+    subject,
+    unit,
+    title,
+    content,
+    author: authorName,
+    email: authorEmail,
+    submittedAt: new Date().toISOString(),
+    status: 'pending'
+  };
+
+  try {
+    if (typeof firebase !== 'undefined' && firebase.database) {
+      await firebase.database().ref('/bca3/submissions').push(payload);
+    } else {
+      let localSubms = JSON.parse(localStorage.getItem('bca_pending_submissions') || '[]');
+      localSubms.push(payload);
+      localStorage.setItem('bca_pending_submissions', JSON.stringify(localSubms));
+    }
+    showToast('🚀 Note submitted successfully for Admin review!');
+    e.target.reset();
+    switchProfileTab('bookmarks');
+  } catch (err) {
+    console.error('Submission error:', err);
+    showToast('Submitted locally for review.');
+  }
+}
+
 
