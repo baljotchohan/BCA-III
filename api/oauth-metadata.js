@@ -17,6 +17,7 @@ module.exports = (req, res) => {
     issuer: base,
     authorization_endpoint: `${base}/api/authorize`,
     token_endpoint: `${base}/api/token`,
+    registration_endpoint: `${base}/api/register`,
     response_types_supported: ['code'],
     grant_types_supported: ['authorization_code', 'client_credentials', 'urn:bca3:firebase_token'],
     code_challenge_methods_supported: ['S256', 'plain'],
