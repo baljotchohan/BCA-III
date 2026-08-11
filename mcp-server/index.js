@@ -1120,24 +1120,34 @@ async function handleMcpRpc(payload, authHeader = '') {
     // --- TOOL: create_and_publish_note / publish_digital_note ---
     if (name === "create_and_publish_note" || name === "publish_digital_note") {
       const isAuthPasskey = verifyAdmin(authHeader, args.passkey);
-      const isBaljot = (!args.author) || (args.author && args.author.toLowerCase().includes('baljot'));
+      const isKnownAuthor = (!args.author) || 
+        (args.author && (args.author.toLowerCase().includes('baljot') || args.author.toLowerCase().includes('mehak')));
 
-      if (!hasAdminAccess && !isAuthPasskey && !isBaljot) {
+      if (!hasAdminAccess && !isAuthPasskey && !isKnownAuthor) {
         return {
           jsonrpc: "2.0",
           id: reqId,
-          result: { content: [{ type: "text", text: "❌ Unauthorized: Invalid admin passkey. Provide passkey: 'Defenderbhabhiontop' or author: 'Baljot Chohan'." }], isError: true }
+          result: { content: [{ type: "text", text: "❌ Unauthorized: Admin passkey or recognized author identity (Baljot Chohan / Mehakpreet Kaur) required." }], isError: true }
         };
       }
 
-      const subjectId = normalizeSubjectId(args.subject);
+      const subjectId = normalizeSubjectId(args.subject || args.subject_id || "comp-arch");
       const subInfo = SYLLABUS_INDEX[subjectId];
       const today = new Date().toISOString().split("T")[0];
-      const author = args.author ? args.author.trim() : DEFAULT_AUTHOR;
+      let author = args.author ? args.author.trim() : DEFAULT_AUTHOR;
+      if (author.toLowerCase().includes('mehak')) {
+        author = "Mehakpreet Kaur";
+      } else if (author.toLowerCase().includes('baljot')) {
+        author = "Baljot Chohan";
+      }
+
       const unit = args.unit || "Unit I";
       const topic = args.topic || args.title || "Curriculum Study Note";
       
       let finalContent = args.content || "";
+      if (subInfo && subInfo.visualTag && !finalContent.includes(subInfo.visualTag)) {
+        finalContent = `${subInfo.visualTag}\n\n${finalContent}`;
+      }
       if (args.visual_type && args.visual_type !== "none") {
         const visualTag = `[visual:${args.visual_type}]`;
         if (!finalContent.includes(visualTag)) {

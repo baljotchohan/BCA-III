@@ -820,7 +820,7 @@ function verifyAdmin(authHeader, passkeyArg) {
 }
 
 // Main MCP Dispatcher
-async function handleMcpRpc(payload, authHeader = '') {
+async function handleMcpRpc(payload, authHeader = '', authorHeader = '') {
   const method = payload.method;
   const reqId = payload.id;
   const params = payload.params || {};
@@ -847,7 +847,7 @@ async function handleMcpRpc(payload, authHeader = '') {
           version: "2.0.0"
         },
         instructions: isAdmin
-          ? "ADMIN MODE ACTIVE: Full permissions to create/publish notes under Baljot Chohan's name, log lectures, broadcast announcements, and manage data."
+          ? "ADMIN MODE ACTIVE: Full permissions to create/publish notes attributed to Baljot Chohan or Mehakpreet Kaur, record lectures, broadcast notices, and manage data."
           : "BCA III Hub MCP Server provides real-time access to official Panjab University BCA 3rd Sem syllabi, notes, lectures, and tasks."
       }
     };
@@ -860,7 +860,7 @@ async function handleMcpRpc(payload, authHeader = '') {
   if (method === "tools/call") {
     const name = params.name;
     const args = params.arguments || {};
-    const hasAdminAccess = verifyAdmin(authHeader, args.passkey);
+    const hasAdminAccess = isAdmin || verifyAdmin(authHeader, args.passkey);
 
     if (name === "get_syllabus") {
       const subId = args.subject_id ? normalizeSubjectId(args.subject_id) : "all";
@@ -1093,24 +1093,41 @@ async function handleMcpRpc(payload, authHeader = '') {
 
     if (name === "create_and_publish_note" || name === "publish_digital_note") {
       const isAuthPasskey = verifyAdmin(authHeader, args.passkey);
-      const isBaljot = (!args.author) || (args.author && args.author.toLowerCase().includes('baljot'));
+      const isKnownAuthor = (!args.author) || 
+        (args.author && (args.author.toLowerCase().includes('baljot') || args.author.toLowerCase().includes('mehak')));
 
-      if (!hasAdminAccess && !isAuthPasskey && !isBaljot) {
+      if (!hasAdminAccess && !isAuthPasskey && !isKnownAuthor) {
         return {
           jsonrpc: "2.0",
           id: reqId,
-          result: { content: [{ type: "text", text: "❌ Unauthorized: Invalid admin passkey. Provide passkey: 'Defenderbhabhiontop' or author: 'Baljot Chohan'." }], isError: true }
+          result: {
+            content: [{
+              type: "text",
+              text: "❌ Unauthorized: Admin passkey or recognized author identity (Baljot Chohan / Mehakpreet Kaur) required."
+            }],
+            isError: true
+          }
         };
       }
 
-      const subjectId = normalizeSubjectId(args.subject);
+      const subjectId = normalizeSubjectId(args.subject || args.subject_id || "comp-arch");
+      const unit = args.unit || "Unit I";
+      const topic = args.topic || args.title || "Digital Note";
+      let author = args.author || authorHeader || DEFAULT_AUTHOR;
+      if (author.toLowerCase().includes('mehak')) {
+        author = "Mehakpreet Kaur";
+      } else if (author.toLowerCase().includes('baljot')) {
+        author = "Baljot Chohan";
+      }
+
       const subInfo = SYLLABUS_INDEX[subjectId];
       const today = new Date().toISOString().split("T")[0];
-      const author = args.author ? args.author.trim() : DEFAULT_AUTHOR;
-      const unit = args.unit || "Unit I";
-      const topic = args.topic || args.title || "Curriculum Study Note";
-      
+
       let finalContent = args.content || "";
+      if (subInfo && subInfo.visualTag && !finalContent.includes(subInfo.visualTag)) {
+        finalContent = `${subInfo.visualTag}\n\n${finalContent}`;
+      }
+      
       if (args.visual_type && args.visual_type !== "none") {
         const visualTag = `[visual:${args.visual_type}]`;
         if (!finalContent.includes(visualTag)) {
@@ -1545,7 +1562,7 @@ async function handleMcpRpc(payload, authHeader = '') {
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Admin-Passkey');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Admin-Passkey, X-Author-Name');
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
@@ -1555,7 +1572,7 @@ module.exports = async (req, res) => {
     return res.status(200).json({
       status: "online",
       name: "BCA III Academic Hub Serverless MCP Endpoint",
-      author: DEFAULT_AUTHOR,
+      authors: ["Baljot Chohan", "Mehakpreet Kaur"],
       university: "Panjab University, Chandigarh",
       semester: "BCA 3rd Semester (2026-27)",
       protocolVersion: PROTOCOL_VERSION,
@@ -1567,8 +1584,9 @@ module.exports = async (req, res) => {
   if (req.method === 'POST') {
     try {
       const authHeader = req.headers['authorization'] || req.headers['x-admin-passkey'] || '';
+      const authorHeader = req.headers['x-author-name'] || '';
       const payload = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
-      const response = await handleMcpRpc(payload, authHeader);
+      const response = await handleMcpRpc(payload, authHeader, authorHeader);
       return res.status(200).json(response);
     } catch (err) {
       return res.status(400).json({

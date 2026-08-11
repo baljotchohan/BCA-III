@@ -130,26 +130,19 @@
                   </div>
                 </div>
               </div>
-            </li>
-
             <li class="body-3 SiteHeader-module-scss-module__zKj4Ca__navItem">
-              <a href="#study-widgets" class="SiteHeader-module-scss-module__zKj4Ca__navText">Lecture Log</a>
-            </li>
-
-            <li class="body-3 SiteHeader-module-scss-module__zKj4Ca__navItem">
-              <a href="#study-widgets" class="SiteHeader-module-scss-module__zKj4Ca__navText">To-Do Tracker</a>
+              <a href="#dashboard-lectures-list" class="SiteHeader-module-scss-module__zKj4Ca__navText">Lecture Timeline</a>
             </li>
           </ul>
         </nav>
 
-        <!-- UTILITY TOOLS: CONNECT AI, COMMAND PALETTE, THEME, & ADMIN -->
+        <!-- UTILITY TOOLS -->
         <div class="header-utility-btns">
-          <button class="header-mcp-btn" onclick="openMcpModal()" title="Connect AI Models (Claude, ChatGPT, Gemini, Cursor) to BCA III Hub via MCP">
-            <svg class="mcp-sparkle-svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 2L14.4 8.6L21 11L14.4 13.4L12 20L9.6 13.4L3 11L9.6 8.6L12 2Z"/>
+          <button class="header-mcp-btn" onclick="openMcpModal()" title="Connect AI Models (Claude, ChatGPT, Gemini, Cursor)">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
             </svg>
             <span class="mcp-btn-label">Connect AI</span>
-            <span class="mcp-live-pill">MCP</span>
           </button>
 
           <button class="header-icon-btn" onclick="openCommandPalette()" title="Search Syllabus, Notes &amp; Lectures (⌘K)">
@@ -164,29 +157,6 @@
               <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
             </svg>
           </button>
-
-          <!-- ADMIN PORTAL ACCESS BUTTON -->
-          <div id="header-admin-wrap" style="display: inline-flex; align-items: center;">
-            <button class="header-admin-btn" onclick="openAdminModal()" title="Open Admin Portal (Create &amp; Publish Notes)">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-              </svg>
-              <span>Admin</span>
-            </button>
-          </div>
-        </div>
-
-        <!-- DOWNLOAD SYLLABUS PDF CTA -->
-        <div class="SiteHeader-module-scss-module__zKj4Ca__claudeCtaWrapper" style="display: flex; gap: 0.5rem; align-items: center;">
-          <a href="./Syllabus.pdf" target="_blank" class="SiteHeader-module-scss-module__zKj4Ca__claudeCtaButton body-3" title="Download Official PU Syllabus PDF">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-              <polyline points="7 10 12 15 17 10"></polyline>
-              <line x1="12" y1="15" x2="12" y2="3"></line>
-            </svg>
-            <span>PU Syllabus PDF</span>
-          </a>
         </div>
 
         <!-- MOBILE HAMBURGER -->
@@ -212,436 +182,257 @@
         <div class="page-wrapper" data-theme="light" data-style="serif">
           <div class="Hero-module-scss-module__sp7muW__textButtonWrapper">
             <div class="Hero-module-scss-module__sp7muW__textWrapper">
-              <span class="greeting-pill" id="live-greeting">Good Evening, BCA III Scholar 👋</span>
-              <h1 class="display-2 serif Hero-module-scss-module__sp7muW__title">BCA 3rd Semester Academic Hub</h1>
+              <span class="greeting-pill" id="live-greeting">Panjab University • 2026-27 Session</span>
+              <h1 class="display-2 serif Hero-module-scss-module__sp7muW__title">BCA 3rd Semester Hub</h1>
               <p class="body-large-2 serif tight Hero-module-scss-module__sp7muW__summary">
-                Official Panjab University (2026-27 batch) academic repository. Dedicated full-page workspaces for every subject, structured digital study guides, daily lecture logs, and interactive calendar tracking.
+                Official curriculum, chapter study notes, and lecture timeline curated by <strong>Baljot Chohan</strong> &amp; <strong>Mehakpreet Kaur</strong>.
               </p>
             </div>
 
             <!-- INTERACTIVE CATEGORY FILTER PILLS -->
             <div class="academy-filter-bar">
               <button class="filter-pill active" data-filter="all">All 7 Subjects</button>
-              <button class="filter-pill" data-filter="dsc">DSC Major &amp; Minor (4)</button>
-              <button class="filter-pill" data-filter="electives">AEC &amp; MDC</button>
-              <button class="filter-pill" data-filter="agenda">Today's Agenda</button>
-              <button class="filter-pill" data-filter="todos">Study Tasks</button>
+              <button class="filter-pill" data-filter="dsc">Major &amp; Minor (4)</button>
+              <button class="filter-pill" data-filter="electives">AEC &amp; MDC (3)</button>
             </div>
           </div>
         </div>
       </section>
 
-      <!-- 2. FEATURED COURSES / MAJOR TRACKS BANNER (BG-OAT) -->
+      <!-- 2. SUBJECTS OVERVIEW BANNER -->
       <section class="LandingPageSection-module-scss-module__ZSMdoa__root LandingPageSection-module-scss-module__ZSMdoa__flushBottom LandingPageSection-module-scss-module__ZSMdoa__flushTop" data-theme="ivory">
         <div class="page-wrapper" data-theme="color-light" data-style="serif">
-          <div class="PackageBanner-module-scss-module__FhS4PW__banner bg-oat">
-            
+          <div class="PackageBanner-module-scss-module__FhS4PW__banner bg-oat" style="padding: 1.25rem 1.75rem;">
             <div class="PackageBanner-module-scss-module__FhS4PW__announcement">
               <div class="PackageBanner-module-scss-module__FhS4PW__textWrapper">
-                <p class="headline-2 serif PackageBanner-module-scss-module__FhS4PW__title">Dedicated Subject Workspaces</p>
-                <p class="body-2 serif">
-                  Select any subject below to explore its official Unit I–IV curriculum, read digital notes, review daily lecture logs, or track class dates.
+                <p class="headline-2 serif PackageBanner-module-scss-module__FhS4PW__title" style="margin-bottom: 0.25rem;">Curriculum &amp; Digital Notes</p>
+                <p class="body-2 serif" style="margin: 0;">
+                  Click any subject below to view its syllabus breakdown and read high-yield digital notes.
                 </p>
               </div>
-              <div class="PackageBanner-module-scss-module__FhS4PW__metadata">
-                <a href="./Syllabus.pdf" target="_blank" class="Button-module-scss-module__f9ZZrG__button Button-module-scss-module__f9ZZrG__large Button-module-scss-module__f9ZZrG__secondary">
-                  <span class="body-3">Download Official PU Syllabus PDF</span>
-                </a>
-              </div>
-            </div>
-
-            <div class="PackageBanner-module-scss-module__FhS4PW__packages">
-              
-              <!-- FEATURED CARD 1: COMPUTER ARCHITECTURE -->
-              <a href="#/subject/comp-arch" class="PackageBanner-module-scss-module__FhS4PW__packageLink" onclick="navigateToSubject('comp-arch')">
-                <div class="PackageBanner-module-scss-module__FhS4PW__package">
-                  <div class="PackageBanner-module-scss-module__FhS4PW__packageText">
-                    <p class="body-2">BCA-DSC-3(Maj)-301 • 4 Credits</p>
-                    <p class="body-large-1 PackageBanner-module-scss-module__FhS4PW__summary">Computer Architecture</p>
-                  </div>
-                  <div class="PackageBanner-module-scss-module__FhS4PW__arrow">
-                    <svg class="Icon-module-scss-module__lqbdHG__icon" width="22" height="22" viewBox="0 0 21 21">
-                      <path d="M4.14585 9.87492L14.4584 9.87492L9.60419 5.04158L10.5 4.14575L16.8542 10.4999L10.5 16.8541L9.60419 15.9583L14.4584 11.1249L4.14585 11.1249L4.14585 9.87492Z" fill="currentColor"></path>
-                    </svg>
-                  </div>
-                </div>
-              </a>
-
-              <!-- FEATURED CARD 2: DATA STRUCTURES -->
-              <a href="#/subject/data-structures" class="PackageBanner-module-scss-module__FhS4PW__packageLink" onclick="navigateToSubject('data-structures')">
-                <div class="PackageBanner-module-scss-module__FhS4PW__package">
-                  <div class="PackageBanner-module-scss-module__FhS4PW__packageText">
-                    <p class="body-2">BCA-DSC-3(Min)-302 • 4 Credits</p>
-                    <p class="body-large-1 PackageBanner-module-scss-module__FhS4PW__summary">Data Structures &amp; Algorithms</p>
-                  </div>
-                  <div class="PackageBanner-module-scss-module__FhS4PW__arrow">
-                    <svg class="Icon-module-scss-module__lqbdHG__icon" width="22" height="22" viewBox="0 0 21 21">
-                      <path d="M4.14585 9.87492L14.4584 9.87492L9.60419 5.04158L10.5 4.14575L16.8542 10.4999L10.5 16.8541L9.60419 15.9583L14.4584 11.1249L4.14585 11.1249L4.14585 9.87492Z" fill="currentColor"></path>
-                    </svg>
-                  </div>
-                </div>
-              </a>
-
             </div>
           </div>
         </div>
       </section>
 
-      <!-- 3. ALL 7 SUBJECTS WITH ANTHROPIC TONES -->
-      <div class="page-wrapper EducationSections-module-scss-module__dxNdua__sectionWrapper" id="subjects-container">
+      <!-- 3. ALL 7 SUBJECT CARDS -->
+      <div id="education-sections-container">
         
-        <!-- 1. COMPUTER ARCHITECTURE -->
-        <div class="EducationSections-module-scss-module__dxNdua__section bg-cactus subject-card-item" data-type="dsc" data-theme="ivory">
+        <!-- SUBJECT 1: COMPUTER ARCHITECTURE -->
+        <div class="EducationSections-module-scss-module__dxNdua__section bg-cactus" data-category="dsc" id="card-comp-arch">
           <div class="EducationSections-module-scss-module__dxNdua__sectionInner">
             <div class="EducationSections-module-scss-module__dxNdua__contentCtaWrapper">
               <div class="EducationSections-module-scss-module__dxNdua__contentWrapper">
-                <span class="subject-code-tag">BCA-DSC-3(Maj)-301 • 4 Credits • 60 Theory Hrs</span>
-                <h2 class="headline-4 serif">Computer Architecture</h2>
-                <p class="body-1 serif">
-                  Computer organization, digital logic circuits, ALU design, memory hierarchy, 8086 microprocessor architecture, and I/O organization.
+                <div class="subject-meta-pill-group" style="margin-bottom: 0.4rem;">
+                  <span class="subject-code-badge">BCA-DSC-3(Maj)-301</span>
+                  <span class="subject-credit-tag">4 Credits</span>
+                </div>
+                <h2 class="display-3 serif EducationSections-module-scss-module__dxNdua__title">Computer Architecture &amp; Organization</h2>
+                <p class="body-2 serif EducationSections-module-scss-module__dxNdua__summary">
+                  Digital logic, register transfer language (RTL), bus architecture, ALSU design, and 8086 microprocessor.
                 </p>
                 <div class="topic-tags-row">
-                  <span class="topic-badge">Register Transfer Language</span>
-                  <span class="topic-badge">8086 Microprocessor</span>
-                  <span class="topic-badge">Memory Hierarchy &amp; Cache</span>
-                  <span class="topic-badge">DMA Controller</span>
+                  <span class="topic-badge">Unit I: RTL &amp; ALSU</span>
+                  <span class="topic-badge">Unit II: Hardwired CU</span>
+                  <span class="topic-badge">Unit III: 8086 CPU</span>
+                  <span class="topic-badge">Unit IV: Memory &amp; I/O</span>
                 </div>
               </div>
               <button class="Button-module-scss-module__f9ZZrG__button Button-module-scss-module__f9ZZrG__large Button-module-scss-module__f9ZZrG__secondary" onclick="navigateToSubject('comp-arch')">
                 <span class="body-3">Open Subject Workspace →</span>
               </button>
             </div>
-            <div class="EducationSections-module-scss-module__dxNdua__illustrationWrapper">
-              <svg class="vector-art-svg" viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect x="28" y="28" width="104" height="104" rx="16" fill="#141413" fill-opacity="0.06"/>
-                <rect x="48" y="48" width="64" height="64" rx="8" fill="#141413" fill-opacity="0.9"/>
-                <path d="M48 64H32M48 80H32M48 96H32M112 64H128M112 80H128M112 96H128M64 48V32M80 48V32M96 48V32M64 112V128M80 112V128M96 112V128" stroke="#141413" stroke-width="3" stroke-linecap="round"/>
-                <circle cx="80" cy="80" r="12" fill="#faf9f5"/>
-              </svg>
-            </div>
           </div>
         </div>
 
-        <!-- 2. DATA STRUCTURES -->
-        <div class="EducationSections-module-scss-module__dxNdua__section bg-heather subject-card-item" data-type="dsc" data-theme="ivory">
+        <!-- SUBJECT 2: DATA STRUCTURES -->
+        <div class="EducationSections-module-scss-module__dxNdua__section bg-lavender" data-category="dsc" id="card-data-structures">
           <div class="EducationSections-module-scss-module__dxNdua__sectionInner">
             <div class="EducationSections-module-scss-module__dxNdua__contentCtaWrapper">
               <div class="EducationSections-module-scss-module__dxNdua__contentWrapper">
-                <span class="subject-code-tag">BCA-DSC-3(Min)-302 • 4 Credits • 60 Theory Hrs</span>
-                <h2 class="headline-4 serif">Data Structures</h2>
-                <p class="body-1 serif">
-                  Arrays, stacks, queues, singly/doubly linked lists, binary search trees, graph traversals, and searching/sorting algorithms with C/C++ implementations.
+                <div class="subject-meta-pill-group" style="margin-bottom: 0.4rem;">
+                  <span class="subject-code-badge">BCA-DSC-3(Maj)-302</span>
+                  <span class="subject-credit-tag">4 Credits</span>
+                </div>
+                <h2 class="display-3 serif EducationSections-module-scss-module__dxNdua__title">Data Structures &amp; Algorithms</h2>
+                <p class="body-2 serif EducationSections-module-scss-module__dxNdua__summary">
+                  Arrays, linked lists, stacks, queues, binary search trees (BST), AVL trees, sorting, and graph traversals.
                 </p>
                 <div class="topic-tags-row">
-                  <span class="topic-badge">Linked Lists &amp; Queues</span>
-                  <span class="topic-badge">Binary Search Trees</span>
-                  <span class="topic-badge">DFS &amp; BFS</span>
-                  <span class="topic-badge">Sorting Analysis</span>
+                  <span class="topic-badge">Unit I: Stacks &amp; Queues</span>
+                  <span class="topic-badge">Unit II: Linked Lists</span>
+                  <span class="topic-badge">Unit III: Trees &amp; BST</span>
+                  <span class="topic-badge">Unit IV: Graphs &amp; Sorting</span>
                 </div>
               </div>
               <button class="Button-module-scss-module__f9ZZrG__button Button-module-scss-module__f9ZZrG__large Button-module-scss-module__f9ZZrG__secondary" onclick="navigateToSubject('data-structures')">
                 <span class="body-3">Open Subject Workspace →</span>
               </button>
             </div>
-            <div class="EducationSections-module-scss-module__dxNdua__illustrationWrapper">
-              <svg class="vector-art-svg" viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="80" cy="40" r="16" fill="#141413"/>
-                <circle cx="48" cy="95" r="14" fill="#141413" fill-opacity="0.8"/>
-                <circle cx="112" cy="95" r="14" fill="#141413" fill-opacity="0.8"/>
-                <circle cx="32" cy="135" r="10" fill="#141413" fill-opacity="0.6"/>
-                <circle cx="64" cy="135" r="10" fill="#141413" fill-opacity="0.6"/>
-                <circle cx="128" cy="135" r="10" fill="#141413" fill-opacity="0.6"/>
-                <line x1="72" y1="52" x2="52" y2="83" stroke="#141413" stroke-width="2.5"/>
-                <line x1="88" y1="52" x2="108" y2="83" stroke="#141413" stroke-width="2.5"/>
-                <line x1="44" y1="108" x2="34" y2="126" stroke="#141413" stroke-width="2"/>
-                <line x1="52" y1="108" x2="62" y2="126" stroke="#141413" stroke-width="2"/>
-                <line x1="116" y1="108" x2="126" y2="126" stroke="#141413" stroke-width="2"/>
-              </svg>
-            </div>
           </div>
         </div>
 
-        <!-- 3. NUMERICAL METHODS -->
-        <div class="EducationSections-module-scss-module__dxNdua__section bg-sky subject-card-item" data-type="dsc" data-theme="ivory">
+        <!-- SUBJECT 3: NUMERICAL METHODS -->
+        <div class="EducationSections-module-scss-module__dxNdua__section bg-terracotta" data-category="dsc" id="card-numerical-methods">
           <div class="EducationSections-module-scss-module__dxNdua__sectionInner">
             <div class="EducationSections-module-scss-module__dxNdua__contentCtaWrapper">
               <div class="EducationSections-module-scss-module__dxNdua__contentWrapper">
-                <span class="subject-code-tag">BCA-DSC-3(Min)-303 • 4 Credits • 60 Theory Hrs</span>
-                <h2 class="headline-4 serif">Numerical Methods</h2>
-                <p class="body-1 serif">
-                  Error analysis, root finding for non-linear equations, simultaneous linear systems, interpolation, numerical integration, and ODEs.
+                <div class="subject-meta-pill-group" style="margin-bottom: 0.4rem;">
+                  <span class="subject-code-badge">BCA-DSC-3(Min)-303</span>
+                  <span class="subject-credit-tag">4 Credits</span>
+                </div>
+                <h2 class="display-3 serif EducationSections-module-scss-module__dxNdua__title">Numerical Methods &amp; Computing</h2>
+                <p class="body-2 serif EducationSections-module-scss-module__dxNdua__summary">
+                  Floating-point arithmetic, Bisection, Newton-Raphson, Gauss Elimination, interpolation, and numerical integration.
                 </p>
                 <div class="topic-tags-row">
-                  <span class="topic-badge">Newton-Raphson</span>
-                  <span class="topic-badge">Gauss-Seidel</span>
-                  <span class="topic-badge">Simpson's 1/3rd</span>
-                  <span class="topic-badge">Runge-Kutta 4th</span>
+                  <span class="topic-badge">Unit I: Non-Linear Roots</span>
+                  <span class="topic-badge">Unit II: Linear Systems</span>
+                  <span class="topic-badge">Unit III: Interpolation</span>
+                  <span class="topic-badge">Unit IV: Integration &amp; ODE</span>
                 </div>
               </div>
               <button class="Button-module-scss-module__f9ZZrG__button Button-module-scss-module__f9ZZrG__large Button-module-scss-module__f9ZZrG__secondary" onclick="navigateToSubject('numerical-methods')">
                 <span class="body-3">Open Subject Workspace →</span>
               </button>
             </div>
-            <div class="EducationSections-module-scss-module__dxNdua__illustrationWrapper">
-              <svg class="vector-art-svg" viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <line x1="25" y1="135" x2="140" y2="135" stroke="#141413" stroke-width="3"/>
-                <line x1="25" y1="25" x2="25" y2="135" stroke="#141413" stroke-width="3"/>
-                <path d="M30 110 C 60 100, 75 40, 135 30" stroke="#141413" stroke-width="3.5" fill="none"/>
-                <line x1="45" y1="135" x2="45" y2="105" stroke="#cc785c" stroke-width="2" stroke-dasharray="3 3"/>
-                <line x1="85" y1="135" x2="85" y2="55" stroke="#cc785c" stroke-width="2" stroke-dasharray="3 3"/>
-                <line x1="125" y1="135" x2="125" y2="32" stroke="#cc785c" stroke-width="2" stroke-dasharray="3 3"/>
-              </svg>
-            </div>
           </div>
         </div>
 
-        <!-- 4. MACHINE LEARNING -->
-        <div class="EducationSections-module-scss-module__dxNdua__section bg-cactus subject-card-item" data-type="dsc" data-theme="ivory">
+        <!-- SUBJECT 4: MACHINE LEARNING -->
+        <div class="EducationSections-module-scss-module__dxNdua__section bg-sage" data-category="dsc" id="card-machine-learning">
           <div class="EducationSections-module-scss-module__dxNdua__sectionInner">
             <div class="EducationSections-module-scss-module__dxNdua__contentCtaWrapper">
               <div class="EducationSections-module-scss-module__dxNdua__contentWrapper">
-                <span class="subject-code-tag">BCA-DSC-3(Maj)-304 • 4 Credits • 60 Theory Hrs</span>
-                <h2 class="headline-4 serif">Introduction to Machine Learning</h2>
-                <p class="body-1 serif">
-                  Machine learning foundations, data preprocessing, supervised classification, unsupervised clustering, and neural network architectures.
+                <div class="subject-meta-pill-group" style="margin-bottom: 0.4rem;">
+                  <span class="subject-code-badge">BCA-DSC-3(Min)-304</span>
+                  <span class="subject-credit-tag">4 Credits</span>
+                </div>
+                <h2 class="display-3 serif EducationSections-module-scss-module__dxNdua__title">Foundations of Machine Learning</h2>
+                <p class="body-2 serif EducationSections-module-scss-module__dxNdua__summary">
+                  Supervised learning, gradient descent, linear &amp; logistic regression, decision trees, k-means clustering, and evaluation metrics.
                 </p>
                 <div class="topic-tags-row">
-                  <span class="topic-badge">Supervised Learning</span>
-                  <span class="topic-badge">Decision Trees &amp; SVM</span>
-                  <span class="topic-badge">K-Means Clustering</span>
-                  <span class="topic-badge">Neural Networks</span>
+                  <span class="topic-badge">Unit I: ML Foundations</span>
+                  <span class="topic-badge">Unit II: Regression Models</span>
+                  <span class="topic-badge">Unit III: Tree Classifiers</span>
+                  <span class="topic-badge">Unit IV: Clustering &amp; Metrics</span>
                 </div>
               </div>
               <button class="Button-module-scss-module__f9ZZrG__button Button-module-scss-module__f9ZZrG__large Button-module-scss-module__f9ZZrG__secondary" onclick="navigateToSubject('machine-learning')">
                 <span class="body-3">Open Subject Workspace →</span>
               </button>
             </div>
-            <div class="EducationSections-module-scss-module__dxNdua__illustrationWrapper">
-              <svg class="vector-art-svg" viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="40" cy="50" r="10" fill="#141413"/>
-                <circle cx="40" cy="110" r="10" fill="#141413"/>
-                <circle cx="80" cy="40" r="10" fill="#141413"/>
-                <circle cx="80" cy="80" r="10" fill="#141413"/>
-                <circle cx="80" cy="120" r="10" fill="#141413"/>
-                <circle cx="120" cy="80" r="12" fill="#141413"/>
-                <line x1="40" y1="50" x2="80" y2="40" stroke="#141413" stroke-width="1.5" stroke-opacity="0.5"/>
-                <line x1="40" y1="50" x2="80" y2="80" stroke="#141413" stroke-width="1.5" stroke-opacity="0.5"/>
-                <line x1="40" y1="110" x2="80" y2="80" stroke="#141413" stroke-width="1.5" stroke-opacity="0.5"/>
-                <line x1="40" y1="110" x2="80" y2="120" stroke="#141413" stroke-width="1.5" stroke-opacity="0.5"/>
-                <line x1="80" y1="40" x2="120" y2="80" stroke="#141413" stroke-width="1.5" stroke-opacity="0.5"/>
-                <line x1="80" y1="80" x2="120" y2="80" stroke="#141413" stroke-width="2"/>
-                <line x1="80" y1="120" x2="120" y2="80" stroke="#141413" stroke-width="1.5" stroke-opacity="0.5"/>
-              </svg>
-            </div>
           </div>
         </div>
 
-        <!-- 5. ENGLISH-3 -->
-        <div class="EducationSections-module-scss-module__dxNdua__section bg-heather subject-card-item" data-type="electives" data-theme="ivory">
+        <!-- SUBJECT 5: ENGLISH-3 -->
+        <div class="EducationSections-module-scss-module__dxNdua__section bg-ivory-dark" data-category="electives" id="card-english-3">
           <div class="EducationSections-module-scss-module__dxNdua__sectionInner">
             <div class="EducationSections-module-scss-module__dxNdua__contentCtaWrapper">
               <div class="EducationSections-module-scss-module__dxNdua__contentWrapper">
-                <span class="subject-code-tag">AEC-3-301 • Ability Enhancement • 2 Credits</span>
-                <h2 class="headline-4 serif">English-3 (Professional Writing)</h2>
-                <p class="body-1 serif">
-                  Technical reading comprehension, professional report drafting, precision grammar mastery, and viva presentation skills.
+                <div class="subject-meta-pill-group" style="margin-bottom: 0.4rem;">
+                  <span class="subject-code-badge">BCA-AEC-301</span>
+                  <span class="subject-credit-tag">2 Credits</span>
+                </div>
+                <h2 class="display-3 serif EducationSections-module-scss-module__dxNdua__title">Professional English Communication</h2>
+                <p class="body-2 serif EducationSections-module-scss-module__dxNdua__summary">
+                  Technical writing, formal correspondence, business proposals, executive summaries, and presentation skills.
                 </p>
                 <div class="topic-tags-row">
-                  <span class="topic-badge">Technical Reports</span>
-                  <span class="topic-badge">Business Memos</span>
-                  <span class="topic-badge">Grammar Precision</span>
+                  <span class="topic-badge">Unit I: Business Writing</span>
+                  <span class="topic-badge">Unit II: Technical Reports</span>
+                  <span class="topic-badge">Unit III: Public Speaking</span>
                 </div>
               </div>
               <button class="Button-module-scss-module__f9ZZrG__button Button-module-scss-module__f9ZZrG__large Button-module-scss-module__f9ZZrG__secondary" onclick="navigateToSubject('english-3')">
                 <span class="body-3">Open Subject Workspace →</span>
               </button>
             </div>
-            <div class="EducationSections-module-scss-module__dxNdua__illustrationWrapper">
-              <svg class="vector-art-svg" viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect x="35" y="30" width="90" height="105" rx="8" fill="#141413" fill-opacity="0.08" stroke="#141413" stroke-width="2.5"/>
-                <line x1="50" y1="50" x2="110" y2="50" stroke="#141413" stroke-width="3" stroke-linecap="round"/>
-                <line x1="50" y1="68" x2="110" y2="68" stroke="#141413" stroke-width="2" stroke-linecap="round" stroke-opacity="0.7"/>
-                <line x1="50" y1="84" x2="95" y2="84" stroke="#141413" stroke-width="2" stroke-linecap="round" stroke-opacity="0.7"/>
-                <line x1="50" y1="100" x2="105" y2="100" stroke="#141413" stroke-width="2" stroke-linecap="round" stroke-opacity="0.7"/>
-              </svg>
-            </div>
           </div>
         </div>
 
-        <!-- 6. WEB DEVELOPMENT -->
-        <div class="EducationSections-module-scss-module__dxNdua__section bg-cactus subject-card-item" data-type="electives" data-theme="ivory">
+        <!-- SUBJECT 6: WEB DEVELOPMENT -->
+        <div class="EducationSections-module-scss-module__dxNdua__section bg-cactus" data-category="electives" id="card-web-dev">
           <div class="EducationSections-module-scss-module__dxNdua__sectionInner">
             <div class="EducationSections-module-scss-module__dxNdua__contentCtaWrapper">
               <div class="EducationSections-module-scss-module__dxNdua__contentWrapper">
-                <span class="subject-code-tag">CSA-MDC-103/203/303 • Multi-Disciplinary • 3 Credits</span>
-                <h2 class="headline-4 serif">Web Development / Designing</h2>
-                <p class="body-1 serif">
-                  HTML5 semantic structure, CSS3 Flexbox &amp; Grid modern layouts, JavaScript DOM manipulation, and responsive web design.
+                <div class="subject-meta-pill-group" style="margin-bottom: 0.4rem;">
+                  <span class="subject-code-badge">BCA-MDC-301</span>
+                  <span class="subject-credit-tag">3 Credits</span>
+                </div>
+                <h2 class="display-3 serif EducationSections-module-scss-module__dxNdua__title">Modern Web Development</h2>
+                <p class="body-2 serif EducationSections-module-scss-module__dxNdua__summary">
+                  Semantic HTML5, CSS Grid &amp; Flexbox, modern JavaScript ES6+, asynchronous Fetch APIs, and responsive design.
                 </p>
                 <div class="topic-tags-row">
-                  <span class="topic-badge">Semantic HTML5</span>
-                  <span class="topic-badge">CSS Grid &amp; Flexbox</span>
-                  <span class="topic-badge">DOM Scripting</span>
+                  <span class="topic-badge">Unit I: Semantic Web</span>
+                  <span class="topic-badge">Unit II: CSS Layouts</span>
+                  <span class="topic-badge">Unit III: DOM &amp; ES6+</span>
                 </div>
               </div>
               <button class="Button-module-scss-module__f9ZZrG__button Button-module-scss-module__f9ZZrG__large Button-module-scss-module__f9ZZrG__secondary" onclick="navigateToSubject('web-dev')">
                 <span class="body-3">Open Subject Workspace →</span>
               </button>
             </div>
-            <div class="EducationSections-module-scss-module__dxNdua__illustrationWrapper">
-              <svg class="vector-art-svg" viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect x="25" y="35" width="110" height="90" rx="8" fill="#141413" fill-opacity="0.08" stroke="#141413" stroke-width="2.5"/>
-                <line x1="25" y1="58" x2="135" y2="58" stroke="#141413" stroke-width="2"/>
-                <circle cx="40" cy="46" r="3.5" fill="#cc785c"/>
-                <circle cx="52" cy="46" r="3.5" fill="#141413" fill-opacity="0.4"/>
-                <circle cx="64" cy="46" r="3.5" fill="#141413" fill-opacity="0.4"/>
-                <rect x="38" y="70" width="35" height="42" rx="4" fill="#141413" fill-opacity="0.2"/>
-                <rect x="82" y="70" width="42" height="18" rx="4" fill="#141413" fill-opacity="0.4"/>
-                <rect x="82" y="94" width="42" height="18" rx="4" fill="#141413" fill-opacity="0.2"/>
-              </svg>
-            </div>
           </div>
         </div>
 
-        <!-- 7. BACKEND WEB DEV -->
-        <div class="EducationSections-module-scss-module__dxNdua__section bg-sky subject-card-item" data-type="electives" data-theme="ivory">
+        <!-- SUBJECT 7: BACKEND DEV -->
+        <div class="EducationSections-module-scss-module__dxNdua__section bg-lavender" data-category="electives" id="card-backend-dev">
           <div class="EducationSections-module-scss-module__dxNdua__sectionInner">
             <div class="EducationSections-module-scss-module__dxNdua__contentCtaWrapper">
               <div class="EducationSections-module-scss-module__dxNdua__contentWrapper">
-                <span class="subject-code-tag">CSA-SEC-103/203/303 • Skill Enhancement • 3 Credits</span>
-                <h2 class="headline-4 serif">Backend Web Development</h2>
-                <p class="body-1 serif">
-                  Client-server architecture, REST API design, database connectivity, middleware routing, and session authentication.
+                <div class="subject-meta-pill-group" style="margin-bottom: 0.4rem;">
+                  <span class="subject-code-badge">BCA-SEC-301</span>
+                  <span class="subject-credit-tag">3 Credits</span>
+                </div>
+                <h2 class="display-3 serif EducationSections-module-scss-module__dxNdua__title">Backend Web Development</h2>
+                <p class="body-2 serif EducationSections-module-scss-module__dxNdua__summary">
+                  Node.js runtime, Express RESTful APIs, middleware architecture, database queries, and token authentication.
                 </p>
                 <div class="topic-tags-row">
-                  <span class="topic-badge">Node.js / Express</span>
-                  <span class="topic-badge">RESTful APIs</span>
-                  <span class="topic-badge">SQL Connectivity</span>
-                  <span class="topic-badge">JWT Auth</span>
+                  <span class="topic-badge">Unit I: Node.js &amp; Express</span>
+                  <span class="topic-badge">Unit II: REST APIs</span>
+                  <span class="topic-badge">Unit III: Auth &amp; DB</span>
                 </div>
               </div>
               <button class="Button-module-scss-module__f9ZZrG__button Button-module-scss-module__f9ZZrG__large Button-module-scss-module__f9ZZrG__secondary" onclick="navigateToSubject('backend-dev')">
                 <span class="body-3">Open Subject Workspace →</span>
               </button>
             </div>
-            <div class="EducationSections-module-scss-module__dxNdua__illustrationWrapper">
-              <svg class="vector-art-svg" viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect x="35" y="32" width="90" height="26" rx="6" fill="#141413" fill-opacity="0.1" stroke="#141413" stroke-width="2.5"/>
-                <circle cx="110" cy="45" r="3.5" fill="#cc785c"/>
-                <rect x="35" y="67" width="90" height="26" rx="6" fill="#141413" fill-opacity="0.1" stroke="#141413" stroke-width="2.5"/>
-                <circle cx="110" cy="80" r="3.5" fill="#cc785c"/>
-                <rect x="35" y="102" width="90" height="26" rx="6" fill="#141413" fill-opacity="0.1" stroke="#141413" stroke-width="2.5"/>
-                <circle cx="110" cy="115" r="3.5" fill="#cc785c"/>
-                <line x1="80" y1="58" x2="80" y2="67" stroke="#141413" stroke-width="2"/>
-                <line x1="80" y1="93" x2="80" y2="102" stroke="#141413" stroke-width="2"/>
-              </svg>
-            </div>
           </div>
         </div>
 
       </div>
 
-      <!-- 3.5 CONNECT AI & LIVE MCP HUB SECTION -->
-      <section class="connect-ai-banner-section" id="connect-ai-section">
+      <!-- 4. RECENT LECTURE TIMELINE & NOTES FEED -->
+      <section class="study-widgets-section" id="study-widgets" style="padding-top: 1.5rem;">
         <div class="page-wrapper">
-          <div class="connect-ai-banner-card">
-            <div class="connect-ai-card-content">
-              
-              <div class="connect-ai-header-col">
-                <div class="connect-ai-badge-row">
-                  <span class="mcp-live-pill" style="background: linear-gradient(135deg, #a855f7 0%, #7c3aed 100%);">⚡ MCP Protocol 2024-11-05</span>
-                  <span class="mcp-status-pill"><span class="mcp-pulse-dot"></span> Live Streamable HTTP Online</span>
-                  <span class="mcp-author-pill">Author: Baljot Chohan</span>
-                </div>
-                <h2 class="connect-ai-title serif">Connect AI Models to BCA III Hub via MCP</h2>
-                <p class="connect-ai-sub">
-                  Bridge Claude, ChatGPT, Gemini, and Cursor directly to the official Panjab University BCA 3rd Sem curriculum. AI models can search syllabus topics, fetch digital notes, and publish exam-ready study guides in real-time.
-                </p>
-
-                <!-- Live Endpoint Bar -->
-                <div class="connect-ai-endpoint-row">
-                  <div class="connect-endpoint-bar">
-                    <span class="connect-endpoint-label">Server Endpoint:</span>
-                    <span class="connect-endpoint-code" id="mcp-onpage-endpoint">https://bca-iii.vercel.app/api/mcp</span>
-                  </div>
-                  <button class="connect-copy-btn" onclick="copyMcpUrl('https://bca-iii.vercel.app/api/mcp', this)">
-                    <span>📋 Copy Server URL</span>
-                  </button>
-                </div>
-              </div>
-
-              <!-- Right Actions & Platform Badges -->
-              <div class="connect-ai-actions-col">
-                <div class="connect-platform-chips">
-                  <span class="platform-chip">🟣 Claude Desktop &amp; Web</span>
-                  <span class="platform-chip">🟢 ChatGPT Custom GPTs</span>
-                  <span class="platform-chip">🔵 Gemini CLI &amp; Antigravity</span>
-                  <span class="platform-chip">⚡ Cursor &amp; Windsurf</span>
-                </div>
-                <div class="connect-action-btns-row">
-                  <button class="connect-main-cta-btn" onclick="openMcpModal()">
-                    <span>✨ Open Setup Guide &amp; Tool Playground ➔</span>
-                  </button>
-                </div>
-              </div>
-
+          <div class="widget-card" style="max-width: 920px; margin: 0 auto;">
+            <div class="widget-header">
+              <h3 class="widget-title serif">Recent Lecture Timeline &amp; Notes</h3>
+              <span class="widget-badge" id="lecture-count-badge">Live Synced</span>
+            </div>
+            <p class="body-3" style="color: var(--text-muted); margin-bottom: 1rem;">
+              Daily lecture topics and published digital study guides across all courses.
+            </p>
+            <div class="lecture-timeline-list" id="dashboard-lectures-list">
+              <!-- Populated dynamically by app.js -->
             </div>
           </div>
         </div>
       </section>
 
-      <!-- 4. ACADEMIC WIDGETS SECTION (TIMELINE & TO-DO) -->
-      <section class="study-widgets-section" id="study-widgets">
-        <div class="page-wrapper">
-          <div class="study-widgets-grid">
-            
-            <!-- LIVE LECTURE TIMELINE -->
-            <div class="widget-card">
-              <div class="widget-header">
-                <h3 class="widget-title serif">Recent Lecture Timeline</h3>
-                <span class="widget-badge" id="lecture-count-badge">Live Synced</span>
-              </div>
-              <p class="body-3" style="color: var(--text-muted); margin-bottom: 1rem;">
-                Daily course lectures, faculty explanations, and attached reference materials.
-              </p>
-              <div class="lecture-timeline-list" id="dashboard-lectures-list">
-                <!-- Populated dynamically by app.js -->
-              </div>
-            </div>
-
-            <!-- STUDY TO-DO TRACKER -->
-            <div class="widget-card">
-              <div class="widget-header">
-                <h3 class="widget-title serif">Semester Study Tasks</h3>
-                <span class="widget-badge" id="todo-progress-badge">4 Tasks</span>
-              </div>
-              <p class="body-3" style="color: var(--text-muted); margin-bottom: 1rem;">
-                Track your syllabus milestones, algorithm revisions, and core topic reviews.
-              </p>
-              
-              <div class="todo-add-box">
-                <input type="text" id="new-todo-input" placeholder="Add study target (e.g. Revise 8086 Assembly)..."/>
-                <button onclick="addNewTodo()">Add</button>
-              </div>
-
-              <div class="todo-items-list" id="dashboard-todos-list">
-                <!-- Populated dynamically by app.js -->
-              </div>
-            </div>
-
-          </div>
-        </div>
-      </section>
-
-      <!-- 5. NEWSLETTER / ANNOUNCEMENTS -->
-      <section class="LandingPageSection-module-scss-module__ZSMdoa__root" data-theme="ivory">
+      <!-- 5. ANNOUNCEMENTS SECTION -->
+      <section class="LandingPageSection-module-scss-module__ZSMdoa__root" data-theme="ivory" style="padding-top: 1rem;">
         <div class="page-wrapper" data-theme="color-light" data-style="serif">
           <div class="NewsletterSubscribe-module-scss-module__MOPAja__wrapper">
             <div class="NewsletterSubscribe-module-scss-module__MOPAja__content--inline">
               <div class="NewsletterSubscribe-module-scss-module__MOPAja__textWrapper">
-                <h3 class="NewsletterSubscribe-module-scss-module__MOPAja__title serif">Class Announcements &amp; Exam Updates</h3>
+                <h3 class="NewsletterSubscribe-module-scss-module__MOPAja__title serif">Class Notices &amp; Exam Updates</h3>
                 <p class="body-2 serif NewsletterSubscribe-module-scss-module__MOPAja__summary">
-                  Official notices, assignment deadlines, and exam schedules posted directly by administrators.
+                  Official notices posted by <strong>Baljot Chohan</strong> &amp; <strong>Mehakpreet Kaur</strong>.
                 </p>
               </div>
               <div class="announcements-mini-feed" id="dashboard-announcements-list">
@@ -760,24 +551,83 @@
             <!-- TAB 2: DIGITAL NOTES REPOSITORY -->
             <div id="ws-tab-notes" class="workspace-tab-content" style="display: none;">
               
-              <div class="notes-repository-header">
-                <div class="notes-filter-pills" id="ws-notes-filter-bar">
-                  <button class="note-filter-btn active" onclick="filterNotesByUnit('all', this)">All Notes</button>
-                  <button class="note-filter-btn" onclick="filterNotesByUnit('Unit I', this)">Unit I</button>
-                  <button class="note-filter-btn" onclick="filterNotesByUnit('Unit II', this)">Unit II</button>
-                  <button class="note-filter-btn" onclick="filterNotesByUnit('Unit III', this)">Unit III</button>
-                  <button class="note-filter-btn" onclick="filterNotesByUnit('Unit IV', this)">Unit IV</button>
+              <!-- VIEW 2A: TOPIC LIST CARDS -->
+              <div id="ws-notes-list-subview">
+                <div class="notes-repository-header">
+                  <div class="notes-filter-pills" id="ws-notes-filter-bar">
+                    <button class="note-filter-btn active" onclick="filterNotesByUnit('all', this)">All Topics</button>
+                    <button class="note-filter-btn" onclick="filterNotesByUnit('Unit I', this)">Unit I</button>
+                    <button class="note-filter-btn" onclick="filterNotesByUnit('Unit II', this)">Unit II</button>
+                    <button class="note-filter-btn" onclick="filterNotesByUnit('Unit III', this)">Unit III</button>
+                    <button class="note-filter-btn" onclick="filterNotesByUnit('Unit IV', this)">Unit IV</button>
+                  </div>
+
+                  <button class="note-tool-btn" onclick="exportCurrentSubjectNotes()" title="Download Notes as Markdown">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                    <span>Export Markdown</span>
+                  </button>
                 </div>
 
-                <button class="note-tool-btn" onclick="exportCurrentSubjectNotes()" title="Download Notes as Markdown">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                  <span>Export Markdown</span>
-                </button>
+                <!-- Topic Cards Grid / List Container -->
+                <div class="notes-topics-grid" id="ws-notes-stream">
+                  <!-- Populated dynamically with sleek topic cards by app.js -->
+                </div>
               </div>
 
-              <!-- Notes List Container -->
-              <div class="digital-notes-stream" id="ws-notes-stream">
-                <!-- Populated dynamically by app.js -->
+              <!-- VIEW 2B: FULL-PAGE ARTICLE READER (OPENED ON TOPIC CLICK) -->
+              <div id="ws-notes-reader-subview" style="display: none;">
+                <!-- Reader Top Nav -->
+                <div class="note-reader-nav-bar">
+                  <button class="note-reader-back-btn" onclick="closeNoteReaderView()">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                    <span>← Back to Topics</span>
+                  </button>
+                  <div class="note-reader-crumbs" id="note-reader-crumbs">
+                    <!-- Dynamic crumbs -->
+                  </div>
+                  <div class="note-reader-tools">
+                    <button class="note-tool-btn" onclick="copyCurrentOpenNote()" title="Copy Markdown">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                      <span>Copy</span>
+                    </button>
+                    <button class="note-tool-btn" onclick="window.print()" title="Print Note">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                      <span>Print</span>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Note Article Body -->
+                <article class="note-article-wrapper">
+                  <header class="note-article-header">
+                    <div class="note-article-meta-row">
+                      <span class="note-unit-badge" id="note-reader-unit">Unit I</span>
+                      <span class="note-author-badge" id="note-reader-author">✍️ By Baljot Chohan</span>
+                      <span class="note-time-badge" id="note-reader-time">8 min read</span>
+                      <span class="note-date-badge" id="note-reader-date">August 2026</span>
+                    </div>
+                    <h1 class="note-article-title serif" id="note-reader-title">Note Title</h1>
+                    <div class="note-tags-row" id="note-reader-tags"></div>
+                  </header>
+
+                  <div class="note-article-body markdown-rendered-content" id="note-reader-body">
+                    <!-- Rendered Markdown + Diagrams + Manim interactive visualizers -->
+                  </div>
+
+                  <!-- Reader Bottom Navigation -->
+                  <footer class="note-reader-footer-nav">
+                    <button class="note-page-turn-btn" id="note-prev-btn" onclick="navigateNotePrev()">
+                      <span>← Previous Topic</span>
+                      <strong id="note-prev-title"></strong>
+                    </button>
+                    <button class="note-page-turn-btn next" id="note-next-btn" onclick="navigateNoteNext()">
+                      <span>Next Topic →</span>
+                      <strong id="note-next-title"></strong>
+                    </button>
+                  </footer>
+                </article>
               </div>
 
             </div>
@@ -933,29 +783,24 @@
       <!-- Modal Body -->
       <div class="admin-modal-body">
         
-        <!-- 1. LOGIN SCREEN (If not authenticated) -->
-        <div id="admin-auth-screen" style="display: block; padding: 0.25rem 0;">
-          <div style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.15rem 1.25rem; margin-bottom: 1.35rem;">
-            <div style="font-weight: 600; font-size: 0.95rem; margin-bottom: 0.35rem; color: var(--text-main); display: flex; align-items: center; gap: 0.45rem;">
-              <span>🛡️</span> <span>Administrator Verification</span>
+        <!-- 1. PASSKEY AUTHENTICATION SCREEN -->
+        <div id="admin-auth-screen">
+          <div style="text-align: center; padding: 1.5rem 0.5rem;">
+            <div style="width: 52px; height: 52px; border-radius: 50%; background: var(--bg-surface-subtle); display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem auto; font-size: 1.5rem;">
+              🔐
             </div>
-            <p class="body-3" style="color: var(--text-subtle); margin: 0; line-height: 1.5; font-size: 0.84rem;">
-              Authenticate to create, edit, or remove notes, lecture logs, and university announcements. All updates synchronize live to Firebase.
+            <h3 class="serif" style="font-size: 1.25rem; margin-bottom: 0.35rem;">Administrator Authentication</h3>
+            <p class="body-3" style="color: var(--text-muted); max-width: 360px; margin: 0 auto 1.25rem auto;">
+              Enter your master passkey to publish digital notes, record daily lectures, and post announcements.
             </p>
-          </div>
-          
-          <form onsubmit="handleInAppAdminLogin(event)">
-            <div class="admin-form-group">
-              <label class="admin-form-label" for="inapp-passkey">Administrator Passkey</label>
-              <input type="password" id="inapp-passkey" class="admin-form-input" placeholder="Enter passkey to unlock..." autocomplete="current-password"/>
-              <div id="inapp-login-error" style="background: rgba(229, 62, 62, 0.08); border: 1px solid rgba(229, 62, 62, 0.28); border-radius: var(--radius-sm); padding: 0.55rem 0.85rem; color: #d44f4f; font-size: 0.825rem; font-weight: 500; display: none; margin-top: 0.5rem;">
-                ❌ Incorrect passkey. Access restricted to authorized admins.
-              </div>
+            
+            <div style="max-width: 320px; margin: 0 auto;">
+              <input type="password" id="admin-passkey-input" class="admin-form-input" placeholder="Enter Admin Passkey..." style="text-align: center; font-size: 1rem; letter-spacing: 0.1em; margin-bottom: 0.75rem;" onkeydown="if(event.key==='Enter') handleInAppAdminLogin()"/>
+              <button class="admin-submit-btn" onclick="handleInAppAdminLogin()">
+                <span>Unlock Academic Portal</span>
+              </button>
             </div>
-            <button type="submit" class="admin-submit-btn" style="width: 100%; margin-top: 0.5rem;">
-              <span>🔐 Verify &amp; Unlock Controls</span>
-            </button>
-          </form>
+          </div>
         </div>
 
         <!-- 2. AUTHENTICATED ADMIN DASHBOARD (Tabs) -->
@@ -982,7 +827,16 @@
 
           <!-- TAB 1: PUBLISH DIGITAL NOTE -->
           <div id="admintab-note" class="admin-tab-panel-view active">
+            
             <div class="admin-form-row-2">
+              <div class="admin-form-group">
+                <label class="admin-form-label">Author Identity *</label>
+                <select id="adm-note-author" class="admin-form-select">
+                  <option value="Baljot Chohan">Baljot Chohan (Administrator)</option>
+                  <option value="Mehakpreet Kaur">Mehakpreet Kaur (Administrator)</option>
+                </select>
+              </div>
+
               <div class="admin-form-group">
                 <label class="admin-form-label">Subject *</label>
                 <select id="adm-note-subject" class="admin-form-select">
@@ -995,7 +849,9 @@
                   <option value="backend-dev">Backend Web Dev (SEC)</option>
                 </select>
               </div>
+            </div>
 
+            <div class="admin-form-row-2">
               <div class="admin-form-group">
                 <label class="admin-form-label">Unit Mapping *</label>
                 <select id="adm-note-unit" class="admin-form-select">
@@ -1006,6 +862,11 @@
                   <option value="General">General Revision</option>
                 </select>
               </div>
+
+              <div class="admin-form-group">
+                <label class="admin-form-label">Read Time</label>
+                <input type="text" id="adm-note-readtime" class="admin-form-input" placeholder="e.g. 6 min read"/>
+              </div>
             </div>
 
             <div class="admin-form-group">
@@ -1013,15 +874,9 @@
               <input type="text" id="adm-note-title" class="admin-form-input" placeholder="e.g. 8086 Addressing Modes &amp; Physical Address Derivation"/>
             </div>
 
-            <div class="admin-form-row-2">
-              <div class="admin-form-group">
-                <label class="admin-form-label">Tags (comma separated)</label>
-                <input type="text" id="adm-note-tags" class="admin-form-input" placeholder="e.g. 8086, Registers, Assembly"/>
-              </div>
-              <div class="admin-form-group">
-                <label class="admin-form-label">Read Time</label>
-                <input type="text" id="adm-note-readtime" class="admin-form-input" placeholder="e.g. 6 min read"/>
-              </div>
+            <div class="admin-form-group">
+              <label class="admin-form-label">Tags (comma separated)</label>
+              <input type="text" id="adm-note-tags" class="admin-form-input" placeholder="e.g. 8086, Registers, Assembly"/>
             </div>
 
             <div class="admin-form-group">
@@ -1050,6 +905,14 @@
           <div id="admintab-lecture" class="admin-tab-panel-view" style="display: none;">
             <div class="admin-form-row-2">
               <div class="admin-form-group">
+                <label class="admin-form-label">Author Identity *</label>
+                <select id="adm-lec-author" class="admin-form-select">
+                  <option value="Baljot Chohan">Baljot Chohan (Administrator)</option>
+                  <option value="Mehakpreet Kaur">Mehakpreet Kaur (Administrator)</option>
+                </select>
+              </div>
+
+              <div class="admin-form-group">
                 <label class="admin-form-label">Subject *</label>
                 <select id="adm-lec-subject" class="admin-form-select">
                   <option value="comp-arch">Computer Architecture</option>
@@ -1061,7 +924,9 @@
                   <option value="backend-dev">Backend Web Dev</option>
                 </select>
               </div>
+            </div>
 
+            <div class="admin-form-row-2">
               <div class="admin-form-group">
                 <label class="admin-form-label">Unit</label>
                 <select id="adm-lec-unit" class="admin-form-select">
@@ -1071,17 +936,16 @@
                   <option value="Unit IV">Unit IV</option>
                 </select>
               </div>
-            </div>
 
-            <div class="admin-form-row-2">
               <div class="admin-form-group">
                 <label class="admin-form-label">Lecture Date *</label>
                 <input type="date" id="adm-lec-date" class="admin-form-input"/>
               </div>
-              <div class="admin-form-group">
-                <label class="admin-form-label">Lecture Time</label>
-                <input type="text" id="adm-lec-time" class="admin-form-input" placeholder="e.g. 10:00 AM"/>
-              </div>
+            </div>
+
+            <div class="admin-form-group">
+              <label class="admin-form-label">Lecture Time</label>
+              <input type="text" id="adm-lec-time" class="admin-form-input" placeholder="e.g. 10:00 AM"/>
             </div>
 
             <div class="admin-form-group">
@@ -1106,12 +970,15 @@
 
           <!-- TAB 3: PUBLISH ANNOUNCEMENT -->
           <div id="admintab-announcement" class="admin-tab-panel-view" style="display: none;">
-            <div class="admin-form-group">
-              <label class="admin-form-label">Announcement Title *</label>
-              <input type="text" id="adm-ann-title" class="admin-form-input" placeholder="e.g. Mid-Semester Exam Datesheet Released"/>
-            </div>
-
             <div class="admin-form-row-2">
+              <div class="admin-form-group">
+                <label class="admin-form-label">Posted By *</label>
+                <select id="adm-ann-author" class="admin-form-select">
+                  <option value="Baljot Chohan">Baljot Chohan (Administrator)</option>
+                  <option value="Mehakpreet Kaur">Mehakpreet Kaur (Administrator)</option>
+                </select>
+              </div>
+
               <div class="admin-form-group">
                 <label class="admin-form-label">Category</label>
                 <select id="adm-ann-category" class="admin-form-select">
@@ -1121,10 +988,16 @@
                   <option value="urgent">🚨 Urgent / Important</option>
                 </select>
               </div>
-              <div class="admin-form-group">
-                <label class="admin-form-label">Attached Link</label>
-                <input type="text" id="adm-ann-link" class="admin-form-input" placeholder="e.g. Syllabus.pdf"/>
-              </div>
+            </div>
+
+            <div class="admin-form-group">
+              <label class="admin-form-label">Announcement Title *</label>
+              <input type="text" id="adm-ann-title" class="admin-form-input" placeholder="e.g. Mid-Semester Exam Datesheet Released"/>
+            </div>
+
+            <div class="admin-form-group">
+              <label class="admin-form-label">Attached Link</label>
+              <input type="text" id="adm-ann-link" class="admin-form-input" placeholder="e.g. Syllabus.pdf"/>
             </div>
 
             <div class="admin-form-group">
@@ -1405,32 +1278,37 @@
           </div>
         </div>
 
-        <!-- 5. ADMIN MODE TAB (UNLOCKED TOOLS) -->
+        <!-- 5. ADMIN MODE TAB (UNLOCKED TOOLS FOR BALJOT & MEHAKPREET) -->
         <div id="mcp-tab-admin" class="mcp-tab-pane" style="display: none;">
           <div style="display: flex; flex-direction: column; gap: 0.9rem;">
             <div style="background: rgba(239, 68, 68, 0.06); border: 1px solid rgba(239, 68, 68, 0.25); border-radius: var(--radius-md); padding: 0.9rem 1.1rem;">
               <div style="display: flex; align-items: center; gap: 0.45rem; margin-bottom: 0.35rem;">
                 <span style="font-size: 1.1rem;">🛡️</span>
-                <span style="font-weight: 700; font-size: 0.92rem; color: #dc2626;">Author &amp; Admin Superpowers via MCP</span>
+                <span style="font-weight: 700; font-size: 0.92rem; color: #dc2626;">Co-Author &amp; Admin Superpowers via MCP</span>
               </div>
               <p style="margin: 0; font-size: 0.82rem; color: var(--text-subtle); line-height: 1.55;">
-                As the admin, connecting with your passkey unlocks <strong>full write and authoring tools</strong>. AI models will draft comprehensive notes automatically attributed to <strong>Baljot Chohan</strong>, format mathematical equations, embed visual animations, and publish directly to the live hub.
+                Both <strong>Baljot Chohan</strong> and <strong>Mehakpreet Kaur</strong> are authorized administrators. When you or Mehak ask your respective AIs (Claude, ChatGPT, Gemini, Cursor) to publish notes, the AI attaches your author name and automatically publishes the study guide with diagrams and math formulas.
               </p>
             </div>
 
-            <div>
-              <h4 style="margin: 0 0 0.25rem 0; font-size: 0.95rem; color: var(--text-main);">Claude Desktop Admin Config</h4>
-              <p style="margin: 0 0 0.5rem 0; font-size: 0.82rem; color: var(--text-subtle);">
-                Paste into <code style="font-size: 0.78rem; background: var(--bg-surface-subtle); padding: 0.15rem 0.4rem; border-radius: 4px;">~/Library/Application Support/Claude/claude_desktop_config.json</code>:
+            <!-- Baljot Config -->
+            <div style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 0.9rem 1.1rem;">
+              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.35rem;">
+                <h4 style="margin: 0; font-size: 0.95rem; color: var(--text-main);">👤 Baljot Chohan's AI Config (Claude Desktop)</h4>
+                <span class="note-unit-badge">Baljot's Device</span>
+              </div>
+              <p style="margin: 0 0 0.5rem 0; font-size: 0.8rem; color: var(--text-subtle);">
+                Paste into <code style="font-size: 0.76rem; background: var(--bg-surface); padding: 0.1rem 0.35rem; border-radius: 4px;">claude_desktop_config.json</code> on Baljot's laptop:
               </p>
               <div class="mcp-code-block">
-                <button class="mcp-code-copy-floating" onclick="copyMcpCode('claude-admin-snippet', this)">Copy Admin Config</button>
-                <pre id="claude-admin-snippet" style="margin: 0;">{
+                <button class="mcp-code-copy-floating" onclick="copyMcpCode('claude-baljot-snippet', this)">Copy Config</button>
+                <pre id="claude-baljot-snippet" style="margin: 0;">{
   "mcpServers": {
-    "bca3-admin": {
+    "bca3-baljot": {
       "url": "https://bca-iii.vercel.app/api/mcp",
       "headers": {
-        "Authorization": "Bearer Defenderbhabhiontop"
+        "Authorization": "Bearer Defenderbhabhiontop",
+        "X-Author-Name": "Baljot Chohan"
       }
     }
   }
@@ -1438,17 +1316,40 @@
               </div>
             </div>
 
+            <!-- Mehakpreet Config -->
             <div style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 0.9rem 1.1rem;">
-              <h4 style="margin: 0 0 0.35rem 0; font-size: 0.95rem; color: var(--text-main);">How to Command Your AI as Baljot Chohan:</h4>
+              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.35rem;">
+                <h4 style="margin: 0; font-size: 0.95rem; color: var(--text-main);">👤 Mehakpreet Kaur's AI Config (Claude Desktop)</h4>
+                <span class="note-unit-badge" style="background: rgba(168, 85, 247, 0.12); color: #9333ea;">Mehakpreet's Device</span>
+              </div>
+              <p style="margin: 0 0 0.5rem 0; font-size: 0.8rem; color: var(--text-subtle);">
+                Paste into <code style="font-size: 0.76rem; background: var(--bg-surface); padding: 0.1rem 0.35rem; border-radius: 4px;">claude_desktop_config.json</code> on Mehakpreet's laptop:
+              </p>
+              <div class="mcp-code-block">
+                <button class="mcp-code-copy-floating" onclick="copyMcpCode('claude-mehak-snippet', this)">Copy Config</button>
+                <pre id="claude-mehak-snippet" style="margin: 0;">{
+  "mcpServers": {
+    "bca3-mehak": {
+      "url": "https://bca-iii.vercel.app/api/mcp",
+      "headers": {
+        "Authorization": "Bearer Defenderbhabhiontop",
+        "X-Author-Name": "Mehakpreet Kaur"
+      }
+    }
+  }
+}</pre>
+              </div>
+            </div>
+
+            <!-- Prompts -->
+            <div style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 0.9rem 1.1rem;">
+              <h4 style="margin: 0 0 0.35rem 0; font-size: 0.95rem; color: var(--text-main);">Example AI Prompts:</h4>
               <div style="display: flex; flex-direction: column; gap: 0.45rem; font-size: 0.82rem; color: var(--text-subtle);">
                 <div style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 0.55rem 0.75rem; font-style: italic;">
-                  💬 <strong>"Claude, write a high-yield study note on 8086 Memory Segmentation with diagrams and publish it to Computer Architecture Unit III under my name Baljot Chohan."</strong>
+                  💬 <strong>Baljot:</strong> "AI, write high-yield digital notes on 8086 Physical Address Calculation with ASCII diagrams and publish it under Computer Architecture Unit III."
                 </div>
                 <div style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 0.55rem 0.75rem; font-style: italic;">
-                  💬 <strong>"Claude, log today's lecture for Data Structures covering AVL Tree rotations."</strong>
-                </div>
-                <div style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 0.55rem 0.75rem; font-style: italic;">
-                  💬 <strong>"Claude, check which topics in Numerical Methods Unit II are missing notes and create them for me."</strong>
+                  💬 <strong>Mehakpreet:</strong> "AI, create comprehensive notes on Binary Search Tree insertion and deletion algorithms and publish them to Data Structures Unit III."
                 </div>
               </div>
             </div>

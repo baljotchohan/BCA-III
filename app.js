@@ -242,12 +242,22 @@ function toggleTopicCheck(topicKey, checkbox) {
 }
 
 /* ==========================================================================
-   4. DIGITAL NOTES REPOSITORY & FOCUS VIEWER
+   4. DIGITAL NOTES REPOSITORY (TOPIC CARDS + FULL-PAGE ARTICLE READER)
    ========================================================================== */
+
+let _currentlyOpenNoteId = null;
 
 async function renderSubjectNotes(subject) {
   const container = document.getElementById('ws-notes-stream');
   if (!container) return;
+
+  // Make sure we are on the list subview
+  const listSubView = document.getElementById('ws-notes-list-subview');
+  const readerSubView = document.getElementById('ws-notes-reader-subview');
+  if (listSubView && readerSubView && !_currentlyOpenNoteId) {
+    listSubView.style.display = 'block';
+    readerSubView.style.display = 'none';
+  }
 
   // Fetch live digital notes from Firebase 'notes' collection (and fallback check 'lectures' for legacy items)
   const [rawFbNotes, rawFbLectures] = await Promise.all([
@@ -270,6 +280,7 @@ async function renderSubjectNotes(subject) {
       date: l.date,
       readTime: l.readTime || '6 min read',
       tags: l.tags || ['Study Guide'],
+      author: l.author || 'Baljot Chohan',
       isAdminPublished: true
     }));
 
@@ -302,63 +313,193 @@ async function renderSubjectNotes(subject) {
     container.innerHTML = `
       <div class="empty-state" style="text-align: center; padding: 2.5rem 1rem; color: var(--text-subtle);">
         <p style="font-size: 0.95rem; margin-bottom: 1rem;">No notes found under <strong>${escapeHtml(currentNoteFilter)}</strong>.</p>
-        <button class="quick-date-pill" onclick="filterNotesByUnit('all', document.querySelector('#ws-notes-filter-bar .note-filter-btn'))">Show All Units</button>
+        <button class="note-filter-btn active" onclick="filterNotesByUnit('all', document.querySelector('#ws-notes-filter-bar .note-filter-btn'))">Show All Topics</button>
       </div>
     `;
     return;
   }
 
+  // Render sleek, compact Topic Cards instead of huge text walls
   container.innerHTML = filtered.map(note => {
     const noteKey = note.fbKey || note.id;
     const isCloud = Boolean(note.fbKey);
     const authorName = note.author || 'Baljot Chohan';
+    const excerpt = getPlainExcerpt(note.content, 140);
 
     return `
-      <div class="digital-note-card">
-        <div class="note-card-meta">
+      <div class="note-topic-card" onclick="openNoteReaderView('${noteKey}')">
+        <div class="note-topic-header">
           <div class="note-meta-left" style="display: flex; align-items: center; gap: 0.45rem; flex-wrap: wrap;">
             <span class="note-unit-badge">${escapeHtml(note.unit || 'Unit I')}</span>
-            <span class="note-author-badge">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-              By ${escapeHtml(authorName)}
-            </span>
-            <span class="note-read-time">${escapeHtml(note.readTime || '5 min read')}</span>
-            ${note.date ? `<span style="font-size: 0.72rem; color: var(--text-subtle); display: inline-flex; align-items: center; gap: 0.2rem;">📅 ${escapeHtml(note.date)}</span>` : ''}
+            <span class="note-author-pill">✍️ By ${escapeHtml(authorName)}</span>
+            <span class="note-read-time">⏱️ ${escapeHtml(note.readTime || '6 min read')}</span>
+            ${note.date ? `<span style="font-size: 0.72rem; color: var(--text-subtle);">📅 ${escapeHtml(note.date)}</span>` : ''}
           </div>
-          <div class="note-actions-bar">
+          <div class="note-actions-bar" onclick="event.stopPropagation()">
             ${isAdminAuthenticated() && isCloud ? `
               <button class="note-tool-btn" onclick="deleteNoteLive('${note.fbKey}', event)" title="Admin: Delete Note" style="color: #d44f4f; border-color: rgba(212,79,79,0.3); background: rgba(212,79,79,0.06);">
                 <span>🗑️ Delete</span>
               </button>
             ` : ''}
-            <button class="note-tool-btn" onclick="copyNoteContent('${noteKey}')" title="Copy note">
+            <button class="note-tool-btn" onclick="copyNoteContent('${noteKey}'); event.stopPropagation();" title="Copy note">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
               <span>Copy</span>
             </button>
-            <button class="note-tool-btn" onclick="openZenReaderWithNote('${noteKey}')" title="Focus view">
-              <span>Focus ↗</span>
-            </button>
           </div>
         </div>
 
-        <h2 class="note-card-title">${escapeHtml(note.title)}</h2>
-
-        <div class="note-content-body" id="note-body-${noteKey}">
-          ${renderMarkdownBlocks(note.content)}
+        <div class="note-topic-title-row">
+          <h3 class="note-topic-title">${escapeHtml(note.title)}</h3>
         </div>
 
-        ${note.tags && note.tags.length ? `
-          <div class="topic-tags-row">
-            ${note.tags.map(t => `<span class="topic-tag-pill">${escapeHtml(t.replace(/^#/, ''))}</span>`).join('')}
+        ${excerpt ? `<p class="note-topic-excerpt">${escapeHtml(excerpt)}</p>` : ''}
+
+        <div class="note-topic-footer">
+          <div class="topic-tags-row" style="margin: 0;">
+            ${(note.tags || []).slice(0, 3).map(t => `<span class="topic-tag-pill">${escapeHtml(t.replace(/^#/, ''))}</span>`).join('')}
           </div>
-        ` : ''}
+          <button class="note-read-btn">
+            <span>📖 Read Full Note ➔</span>
+          </button>
+        </div>
       </div>
     `;
   }).join('');
+}
 
-  if (window.ManimVisuals) {
-    setTimeout(() => window.ManimVisuals.mountAll(container), 40);
+function openNoteReaderView(noteKey) {
+  const note = (_currentSubjectNotes || []).find(n => (n.fbKey === noteKey || n.id === noteKey));
+  if (!note) return;
+
+  _currentlyOpenNoteId = noteKey;
+
+  const listSubView = document.getElementById('ws-notes-list-subview');
+  const readerSubView = document.getElementById('ws-notes-reader-subview');
+  if (listSubView) listSubView.style.display = 'none';
+  if (readerSubView) readerSubView.style.display = 'block';
+
+  const authorName = note.author || 'Baljot Chohan';
+  const subject = BCA_3RD_SEM_DATA.subjects.find(s => s.id === activeSubjectId);
+  const subjectTitle = subject ? subject.title : 'Subject';
+
+  // Breadcrumbs
+  const crumbsEl = document.getElementById('note-reader-crumbs');
+  if (crumbsEl) {
+    crumbsEl.innerHTML = `${escapeHtml(subjectTitle)} › <strong style="color: var(--text-main);">${escapeHtml(note.unit || 'Unit')}</strong> › ${escapeHtml(note.title)}`;
   }
+
+  // Header metadata
+  const unitEl = document.getElementById('note-reader-unit');
+  if (unitEl) unitEl.textContent = note.unit || 'Unit I';
+
+  const authorEl = document.getElementById('note-reader-author');
+  if (authorEl) authorEl.textContent = `✍️ By ${authorName}`;
+
+  const timeEl = document.getElementById('note-reader-time');
+  if (timeEl) timeEl.textContent = note.readTime || '6 min read';
+
+  const dateEl = document.getElementById('note-reader-date');
+  if (dateEl) dateEl.textContent = note.date ? `📅 ${note.date}` : 'August 2026';
+
+  const titleEl = document.getElementById('note-reader-title');
+  if (titleEl) titleEl.textContent = note.title;
+
+  const tagsEl = document.getElementById('note-reader-tags');
+  if (tagsEl) {
+    tagsEl.innerHTML = (note.tags || []).map(t => `<span class="topic-tag-pill">${escapeHtml(t.replace(/^#/, ''))}</span>`).join('');
+  }
+
+  // Render markdown body with diagrams & LaTeX
+  const bodyEl = document.getElementById('note-reader-body');
+  if (bodyEl) {
+    bodyEl.innerHTML = renderMarkdownBlocks(note.content);
+    if (window.ManimVisuals) {
+      setTimeout(() => window.ManimVisuals.mountAll(bodyEl), 40);
+    }
+  }
+
+  // Update previous/next topic buttons
+  updateReaderNavButtons(noteKey);
+
+  // Smooth scroll to top of workspace
+  const workspaceView = document.getElementById('subject-workspace-view');
+  if (workspaceView) {
+    workspaceView.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+}
+
+function closeNoteReaderView() {
+  _currentlyOpenNoteId = null;
+  const listSubView = document.getElementById('ws-notes-list-subview');
+  const readerSubView = document.getElementById('ws-notes-reader-subview');
+  if (readerSubView) readerSubView.style.display = 'none';
+  if (listSubView) listSubView.style.display = 'block';
+}
+
+function updateReaderNavButtons(currentKey) {
+  const all = _currentSubjectNotes || [];
+  const idx = all.findIndex(n => (n.fbKey === currentKey || n.id === currentKey));
+
+  const prevBtn = document.getElementById('note-prev-btn');
+  const nextBtn = document.getElementById('note-next-btn');
+  const prevTitle = document.getElementById('note-prev-title');
+  const nextTitle = document.getElementById('note-next-title');
+
+  if (idx > 0) {
+    const prevNote = all[idx - 1];
+    if (prevBtn) prevBtn.style.visibility = 'visible';
+    if (prevTitle) prevTitle.textContent = prevNote.title;
+  } else {
+    if (prevBtn) prevBtn.style.visibility = 'hidden';
+  }
+
+  if (idx >= 0 && idx < all.length - 1) {
+    const nextNote = all[idx + 1];
+    if (nextBtn) nextBtn.style.visibility = 'visible';
+    if (nextTitle) nextTitle.textContent = nextNote.title;
+  } else {
+    if (nextBtn) nextBtn.style.visibility = 'hidden';
+  }
+}
+
+function navigateNotePrev() {
+  const all = _currentSubjectNotes || [];
+  const idx = all.findIndex(n => (n.fbKey === _currentlyOpenNoteId || n.id === _currentlyOpenNoteId));
+  if (idx > 0) {
+    const prevNote = all[idx - 1];
+    openNoteReaderView(prevNote.fbKey || prevNote.id);
+  }
+}
+
+function navigateNoteNext() {
+  const all = _currentSubjectNotes || [];
+  const idx = all.findIndex(n => (n.fbKey === _currentlyOpenNoteId || n.id === _currentlyOpenNoteId));
+  if (idx >= 0 && idx < all.length - 1) {
+    const nextNote = all[idx + 1];
+    openNoteReaderView(nextNote.fbKey || nextNote.id);
+  }
+}
+
+function copyCurrentOpenNote() {
+  const note = (_currentSubjectNotes || []).find(n => (n.fbKey === _currentlyOpenNoteId || n.id === _currentlyOpenNoteId));
+  if (note && note.content) {
+    navigator.clipboard.writeText(note.content).then(() => {
+      showToast('Copied full markdown note to clipboard! 📋');
+    });
+  }
+}
+
+function getPlainExcerpt(content, maxLen = 140) {
+  if (!content) return '';
+  const clean = content
+    .replace(/@\[.*?\]\(.*?\)/g, '')
+    .replace(/@\[.*?\]/g, '')
+    .replace(/```[\s\S]*?```/g, '')
+    .replace(/#+\s*/g, '')
+    .replace(/[*_`>]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  return clean.length > maxLen ? clean.substring(0, maxLen) + '...' : clean;
 }
 
 function filterNotesByUnit(unit, btn) {
@@ -1060,21 +1201,32 @@ function openAdminModal() {
   const controlsScreen = document.getElementById('admin-controls-screen');
   const badge = document.getElementById('admin-status-badge');
 
+  // Restore author selection from localStorage
+  const savedAuthor = localStorage.getItem('bca3_admin_author') || 'Baljot Chohan';
+  ['adm-note-author', 'adm-lec-author', 'adm-ann-author'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = savedAuthor;
+  });
+
   if (isAuth) {
-    authScreen.style.display = 'none';
-    controlsScreen.style.display = 'block';
-    badge.innerText = '🛡️ Admin Verified';
-    badge.style.backgroundColor = 'var(--color-cactus)';
-    badge.style.color = 'var(--text-main)';
+    if (authScreen) authScreen.style.display = 'none';
+    if (controlsScreen) controlsScreen.style.display = 'block';
+    if (badge) {
+      badge.innerText = '🛡️ Admin Verified';
+      badge.style.backgroundColor = 'var(--color-cactus)';
+      badge.style.color = 'var(--text-main)';
+    }
     switchAdminTab('note');
   } else {
-    authScreen.style.display = 'block';
-    controlsScreen.style.display = 'none';
-    badge.innerText = '🔒 Admin Restricted';
-    badge.style.backgroundColor = 'var(--color-oat)';
-    badge.style.color = 'var(--color-coral)';
+    if (authScreen) authScreen.style.display = 'block';
+    if (controlsScreen) controlsScreen.style.display = 'none';
+    if (badge) {
+      badge.innerText = '🔒 Admin Restricted';
+      badge.style.backgroundColor = 'var(--color-oat)';
+      badge.style.color = 'var(--color-coral)';
+    }
     setTimeout(() => {
-      const passInput = document.getElementById('inapp-passkey');
+      const passInput = document.getElementById('admin-passkey-input') || document.getElementById('inapp-passkey');
       if (passInput) passInput.focus();
     }, 100);
   }
@@ -1087,13 +1239,14 @@ function closeAdminModal() {
 }
 
 function handleInAppAdminLogin(e) {
-  e.preventDefault();
-  const passkey = document.getElementById('inapp-passkey').value.trim();
+  if (e && e.preventDefault) e.preventDefault();
+  const passInput = document.getElementById('admin-passkey-input') || document.getElementById('inapp-passkey');
+  const passkey = passInput ? passInput.value.trim() : '';
   const errEl = document.getElementById('inapp-login-error');
 
   if (passkey === ADMIN_PASSKEY) {
     sessionStorage.setItem(ADMIN_SESSION_KEY, 'authenticated');
-    errEl.style.display = 'none';
+    if (errEl) errEl.style.display = 'none';
     showToast('🛡️ Admin verification successful! Portal unlocked.');
     updateAdminHeaderUI();
     openAdminModal();
@@ -1102,11 +1255,13 @@ function handleInAppAdminLogin(e) {
     const subject = BCA_3RD_SEM_DATA.subjects.find(s => s.id === activeSubjectId);
     if (subject) renderSubjectNotes(subject);
     renderDashboardLectures();
-    renderDashboardTodos();
   } else {
-    errEl.style.display = 'block';
-    document.getElementById('inapp-passkey').value = '';
-    document.getElementById('inapp-passkey').focus();
+    if (errEl) errEl.style.display = 'block';
+    showToast('❌ Incorrect passkey.');
+    if (passInput) {
+      passInput.value = '';
+      passInput.focus();
+    }
   }
 }
 
@@ -1121,7 +1276,6 @@ function handleInAppAdminLogout() {
   const subject = BCA_3RD_SEM_DATA.subjects.find(s => s.id === activeSubjectId);
   if (subject) renderSubjectNotes(subject);
   renderDashboardLectures();
-  renderDashboardTodos();
 }
 
 function updateAdminHeaderUI() {
@@ -1172,6 +1326,10 @@ function switchAdminTab(tabName) {
 
 // 1. Publish Note (supports create + edit) - 100% Cloud Firebase RTDB
 async function publishAdminNote() {
+  const authorSelect = document.getElementById('adm-note-author');
+  const authorName = (authorSelect && authorSelect.value) ? authorSelect.value : (localStorage.getItem('bca3_admin_author') || 'Baljot Chohan');
+  localStorage.setItem('bca3_admin_author', authorName);
+
   const subjectId = document.getElementById('adm-note-subject').value;
   const unit = document.getElementById('adm-note-unit').value;
   const title = document.getElementById('adm-note-title').value.trim();
@@ -1197,7 +1355,7 @@ async function publishAdminNote() {
     tags: tagsStr ? tagsStr.split(',').map(t => t.trim()).filter(Boolean) : ['Revision'],
     content,
     isAdminPublished: true,
-    author: 'Baljot Chohan',
+    author: authorName,
     date: isEditing ? (_editingItem.date || new Date().toISOString().split('T')[0]) : new Date().toISOString().split('T')[0],
     timestamp: isEditing ? (_editingItem.timestamp || Date.now()) : Date.now()
   };
@@ -1226,7 +1384,7 @@ async function publishAdminNote() {
   document.getElementById('adm-note-content').value = '';
   resetEditState('note');
 
-  showToast(isEditing ? '✅ Public note updated in cloud!' : '✅ Digital note published live to all students!');
+  showToast(isEditing ? '✅ Public note updated in cloud!' : `✅ Digital note published live by ${authorName}!`);
   closeAdminModal();
 
   const subject = BCA_3RD_SEM_DATA.subjects.find(s => s.id === subjectId) || BCA_3RD_SEM_DATA.subjects.find(s => s.id === activeSubjectId);
@@ -1237,6 +1395,10 @@ async function publishAdminNote() {
 
 // 2. Publish Lecture Log (supports create + edit) - 100% Cloud Firebase RTDB
 async function publishAdminLecture() {
+  const authorSelect = document.getElementById('adm-lec-author');
+  const authorName = (authorSelect && authorSelect.value) ? authorSelect.value : (localStorage.getItem('bca3_admin_author') || 'Baljot Chohan');
+  localStorage.setItem('bca3_admin_author', authorName);
+
   const subjectId = document.getElementById('adm-lec-subject').value;
   const unit = document.getElementById('adm-lec-unit').value;
   const date = document.getElementById('adm-lec-date').value || new Date().toISOString().split('T')[0];
@@ -1265,6 +1427,7 @@ async function publishAdminLecture() {
     notes: desc,
     fileUrl: link || 'Syllabus.pdf',
     link: link || 'Syllabus.pdf',
+    author: authorName,
     timestamp: isEditing ? (_editingItem.timestamp || Date.now()) : Date.now()
   };
 
@@ -1291,7 +1454,7 @@ async function publishAdminLecture() {
   document.getElementById('adm-lec-link').value = '';
   resetEditState('lecture');
 
-  showToast(isEditing ? '✅ Lecture log updated in cloud!' : '✅ Lecture log recorded & calendar updated!');
+  showToast(isEditing ? '✅ Lecture log updated in cloud!' : `✅ Lecture log recorded by ${authorName}!`);
   closeAdminModal();
 
   renderDashboardLectures();
@@ -1301,6 +1464,10 @@ async function publishAdminLecture() {
 
 // 3. Publish Announcement (supports create + edit) - 100% Cloud Firebase RTDB
 async function publishAdminAnnouncement() {
+  const authorSelect = document.getElementById('adm-ann-author');
+  const authorName = (authorSelect && authorSelect.value) ? authorSelect.value : (localStorage.getItem('bca3_admin_author') || 'Baljot Chohan');
+  localStorage.setItem('bca3_admin_author', authorName);
+
   const title = document.getElementById('adm-ann-title').value.trim();
   const category = document.getElementById('adm-ann-category').value;
   const link = document.getElementById('adm-ann-link').value.trim();
@@ -1320,6 +1487,7 @@ async function publishAdminAnnouncement() {
     category,
     link,
     message,
+    author: authorName,
     date: isEditing ? (_editingItem.date || new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })) : new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }),
     timestamp: isEditing ? (_editingItem.timestamp || Date.now()) : Date.now()
   };
@@ -1347,7 +1515,7 @@ async function publishAdminAnnouncement() {
   document.getElementById('adm-ann-msg').value = '';
   resetEditState('announcement');
 
-  showToast(isEditing ? '✅ Announcement updated in cloud!' : '✅ Announcement published to all students!');
+  showToast(isEditing ? '✅ Announcement updated in cloud!' : `✅ Notice published by ${authorName}!`);
   closeAdminModal();
   renderDashboardAnnouncements();
 }
