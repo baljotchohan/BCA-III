@@ -857,10 +857,10 @@ async function handleMcpRpc(payload, authHeader = '', authorHeader = '') {
   }
 
   if (method === "tools/list") {
-    // Only reveal admin authoring tools if client is authenticated as Admin
-    const availableTools = isAdmin ? [...PUBLIC_TOOLS, ...ADMIN_TOOLS] : PUBLIC_TOOLS;
-    return { jsonrpc: "2.0", id: reqId, result: { tools: availableTools } };
+    // Return all public and admin tools (admin tools require passkey or Bearer header on call)
+    return { jsonrpc: "2.0", id: reqId, result: { tools: [...PUBLIC_TOOLS, ...ADMIN_TOOLS] } };
   }
+
 
   if (method === "tools/call") {
     const name = params.name;

@@ -872,9 +872,9 @@ async function handleMcpRpc(payload, authHeader = '') {
 
   // 3. Tools List
   if (method === "tools/list") {
-    const allTools = isAdmin ? [...PUBLIC_TOOLS, ...ADMIN_TOOLS] : PUBLIC_TOOLS;
-    return { jsonrpc: "2.0", id: reqId, result: { tools: allTools } };
+    return { jsonrpc: "2.0", id: reqId, result: { tools: [...PUBLIC_TOOLS, ...ADMIN_TOOLS] } };
   }
+
 
 
   // 4. Tools Call
