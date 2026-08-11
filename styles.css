@@ -2342,7 +2342,7 @@ body.modal-open {
 .admin-modal-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 10000;
+  z-index: 20000;
   background: rgba(18, 18, 17, 0.75);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
@@ -3923,7 +3923,7 @@ body.modal-open {
 .mcp-modal-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 10000;
+  z-index: 20000;
   background-color: rgba(20, 20, 19, 0.68);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
@@ -4976,7 +4976,7 @@ body.modal-open {
   height: 100vh;
   background: rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(4px);
-  z-index: 9999;
+  z-index: 20000;
   display: flex;
   align-items: center;
   justify-content: center;

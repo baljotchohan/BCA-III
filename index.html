@@ -150,12 +150,14 @@
             </button>
           </div>
 
-          <button class="header-admin-btn" onclick="openAdminModal()" title="Admin Control Center (Publish Notes, Lectures, Announcements)">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-            </svg>
-            <span class="admin-btn-label">Admin</span>
-          </button>
+          <div id="header-admin-wrap">
+            <button class="header-admin-btn" onclick="openAdminModal()" title="Admin Control Center (Publish Notes, Lectures, Announcements)">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+              </svg>
+              <span class="admin-btn-label">Admin</span>
+            </button>
+          </div>
 
           <button class="header-mcp-btn" onclick="openMcpModal()" title="Connect AI Models (Claude, ChatGPT, Gemini, Cursor)">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -180,7 +182,7 @@
 
 
         <!-- MOBILE HAMBURGER -->
-        <button class="SiteHeader-module-scss-module__zKj4Ca__mobileIcon" aria-label="Navigation menu">
+        <button class="SiteHeader-module-scss-module__zKj4Ca__mobileIcon" onclick="toggleMobileDrawer(); return false;" aria-label="Navigation menu">
           <svg class="Icon-module-scss-module__lqbdHG__icon" width="24" height="24" viewBox="0 0 40 40">
             <path d="M18.75 28C19.1641 28.0002 19.5 28.3359 19.5 28.75C19.4999 29.1641 19.164 29.4998 18.75 29.5H7.91699C7.50281 29.5 7.16705 29.1642 7.16699 28.75C7.16699 28.3358 7.50278 28 7.91699 28H18.75ZM32.084 19.25C32.4979 19.2504 32.834 19.586 32.834 20C32.8339 20.4139 32.4979 20.7496 32.084 20.75H7.91699C7.50281 20.75 7.16705 20.4142 7.16699 20C7.16699 19.5858 7.50278 19.25 7.91699 19.25H32.084ZM32.084 10.5C32.4979 10.5004 32.834 10.836 32.834 11.25C32.8339 11.6639 32.4979 11.9996 32.084 12H7.91699C7.50282 12 7.16706 11.6642 7.16699 11.25C7.16699 10.8358 7.50278 10.5 7.91699 10.5H32.084Z" fill="currentColor"></path>
           </svg>
@@ -915,7 +917,7 @@
   <!-- ========================================================================
        STUDENT & ADMIN PROFILE DRAWER / MODAL
        ======================================================================== -->
-  <div id="profile-modal" class="profile-modal-backdrop" style="display: none;">
+  <div id="profile-modal" class="profile-modal-backdrop" style="display: none;" onclick="if(event.target === this) closeProfileModal()">
     <div class="profile-modal-card">
       <div class="profile-modal-header">
         <div class="profile-modal-title-wrap">
@@ -1074,7 +1076,7 @@
   <!-- ========================================================================
        INTEGRATED IN-APP ADMIN MODAL (CREATE & PUBLISH NOTES & LOGS)
        ======================================================================== -->
-  <div id="admin-modal" class="admin-modal-backdrop" style="display: none;">
+  <div id="admin-modal" class="admin-modal-backdrop" style="display: none;" onclick="if(event.target === this) closeAdminModal()">
     <div class="admin-modal-card">
       
       <!-- Modal Header -->
@@ -1433,7 +1435,7 @@
   <!-- ========================================================================
        CONNECT AI & MCP HUB MODAL (CLAUDE, CHATGPT, GEMINI, CURSOR)
        ======================================================================== -->
-  <div id="mcp-modal" class="mcp-modal-backdrop" style="display: none;">
+  <div id="mcp-modal" class="mcp-modal-backdrop" style="display: none;" onclick="if(event.target === this) closeMcpModal()">
     <div class="mcp-modal-card">
       
       <!-- Modal Header -->

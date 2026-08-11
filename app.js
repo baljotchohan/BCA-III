@@ -1231,44 +1231,46 @@ function openAdminModal() {
   const modal = document.getElementById('admin-modal');
   if (!modal) return;
   modal.style.display = 'flex';
+  modal.style.zIndex = '20000';
   lockScroll(true);
 
-  const isAuth = isAdminAuthenticated();
-  const authScreen = document.getElementById('admin-auth-screen');
-  const controlsScreen = document.getElementById('admin-controls-screen');
-  const badge = document.getElementById('admin-status-badge');
+  try {
+    const isAuth = isAdminAuthenticated();
+    const authScreen = document.getElementById('admin-auth-screen');
+    const controlsScreen = document.getElementById('admin-controls-screen');
+    const badge = document.getElementById('admin-status-badge');
 
-  // Restore author selection from localStorage
-  const savedAuthor = currentUserProfile ? currentUserProfile.name : (localStorage.getItem('bca3_admin_author') || 'Baljot Chohan');
-  ['adm-note-author', 'adm-lec-author', 'adm-ann-author'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.value = savedAuthor;
-  });
+    // Restore author selection from localStorage
+    const savedAuthor = currentUserProfile ? currentUserProfile.name : (localStorage.getItem('bca3_admin_author') || 'Baljot Chohan');
+    ['adm-note-author', 'adm-lec-author', 'adm-ann-author'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.value = savedAuthor;
+    });
 
-  if (isAuth) {
-    // Google-verified admin — show portal directly, no passkey
-    if (authScreen) authScreen.style.display = 'none';
-    if (controlsScreen) controlsScreen.style.display = 'block';
-    if (badge) {
-      badge.innerText = `🛡️ ${currentUserProfile ? currentUserProfile.name.split(' ')[0] : 'Admin'} — Verified`;
-      badge.style.backgroundColor = 'var(--color-cactus)';
-      badge.style.color = 'var(--text-main)';
-    }
-    // Update admin modal heading
-    const heading = document.getElementById('admin-modal-heading');
-    if (heading) heading.innerText = 'Academic Management Portal';
-    switchAdminTab('note');
-  } else {
-    // Not admin — show Google Sign-In prompt instead of passkey screen
-    if (authScreen) authScreen.style.display = 'block';
-    if (controlsScreen) controlsScreen.style.display = 'none';
-    if (badge) {
+    if (isAuth) {
+      if (authScreen) authScreen.style.display = 'none';
+      if (controlsScreen) controlsScreen.style.display = 'block';
+      if (badge) {
+        badge.innerText = `🛡️ ${currentUserProfile ? currentUserProfile.name.split(' ')[0] : 'Admin'} — Verified`;
+        badge.style.backgroundColor = 'var(--color-cactus)';
+        badge.style.color = 'var(--text-main)';
+      }
+      const heading = document.getElementById('admin-modal-heading');
+      if (heading) heading.innerText = 'Academic Management Portal';
+      switchAdminTab('note');
+    } else {
+      if (authScreen) authScreen.style.display = 'block';
+      if (controlsScreen) controlsScreen.style.display = 'none';
+      if (badge) {
       badge.innerText = '🔒 Admin Only';
       badge.style.backgroundColor = 'var(--color-oat)';
       badge.style.color = 'var(--color-coral)';
     }
     const heading = document.getElementById('admin-modal-heading');
     if (heading) heading.innerText = 'Administrator Access Required';
+  }
+  } catch (err) {
+    console.error('Error in openAdminModal:', err);
   }
 }
 
@@ -1330,7 +1332,7 @@ function switchAdminTab(tabName) {
     btn.classList.toggle('active', btn.getAttribute('data-admintab') === tabName);
   });
 
-  ['note', 'lecture', 'announcement', 'manage'].forEach(t => {
+  ['note', 'lecture', 'announcement', 'manage', 'submissions'].forEach(t => {
     const panel = document.getElementById(`admintab-${t}`);
     if (panel) panel.style.display = t === tabName ? 'block' : 'none';
   });
@@ -1338,6 +1340,64 @@ function switchAdminTab(tabName) {
   if (tabName === 'manage') {
     renderAdminManageData();
   }
+  if (tabName === 'submissions') {
+    renderAdminSubmissionsQueue();
+  }
+}
+
+function renderAdminSubmissionsQueue() {
+  const container = document.getElementById('admin-submissions-queue-list');
+  if (!container) return;
+  const submissions = JSON.parse(localStorage.getItem('bca_student_submissions') || '[]');
+  const countBadge = document.getElementById('admin-subm-badge-count');
+  if (countBadge) countBadge.textContent = submissions.length;
+
+  if (!submissions.length) {
+    container.innerHTML = `<div class="admin-empty-state"><p>No student submissions in queue.</p></div>`;
+    return;
+  }
+
+  container.innerHTML = submissions.map((s, idx) => `
+    <div style="background: var(--bg-surface); padding: 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color); margin-bottom: 0.75rem;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+        <span class="dropdown-badge">${escapeHtml(s.subject)} • ${escapeHtml(s.unit)}</span>
+        <span style="font-size: 0.75rem; color: var(--text-subtle);">${escapeHtml(s.date || 'Recent')}</span>
+      </div>
+      <h4 style="margin: 0.25rem 0 0.5rem 0; font-size: 1rem; color: var(--text-main);">${escapeHtml(s.title)}</h4>
+      <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.4; margin-bottom: 0.75rem;">${escapeHtml(s.content ? s.content.substring(0, 150) + '...' : '')}</p>
+      <div style="display: flex; gap: 0.5rem;">
+        <button class="admin-submit-btn" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;" onclick="approveStudentSubmission(${idx})">Approve & Publish</button>
+        <button class="admin-item-btn delete" style="width: auto; padding: 0.35rem 0.75rem; font-size: 0.8rem;" onclick="rejectStudentSubmission(${idx})">Reject</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function approveStudentSubmission(idx) {
+  const submissions = JSON.parse(localStorage.getItem('bca_student_submissions') || '[]');
+  if (!submissions[idx]) return;
+  const item = submissions[idx];
+  // Add to local cloud cache
+  _globalCloudData.notes.unshift({
+    title: item.title,
+    content: item.content,
+    subject: item.subject,
+    unit: item.unit,
+    author: item.author || 'Student Contributor',
+    timestamp: Date.now()
+  });
+  submissions.splice(idx, 1);
+  localStorage.setItem('bca_student_submissions', JSON.stringify(submissions));
+  renderAdminSubmissionsQueue();
+  showToast('Approved & published student note! 🚀');
+}
+
+function rejectStudentSubmission(idx) {
+  const submissions = JSON.parse(localStorage.getItem('bca_student_submissions') || '[]');
+  submissions.splice(idx, 1);
+  localStorage.setItem('bca_student_submissions', JSON.stringify(submissions));
+  renderAdminSubmissionsQueue();
+  showToast('Submission removed.');
 }
 
 // 1. Publish Note (supports create + edit) - 100% Cloud Firebase RTDB

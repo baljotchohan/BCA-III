@@ -2,30 +2,22 @@
   "version": 2,
   "cleanUrls": true,
   "rewrites": [
-    { "source": "/mcp",                                          "destination": "/api/mcp" },
-    { "source": "/api/mcp",                                      "destination": "/api/mcp" },
-    { "source": "/openapi.json",                                 "destination": "/api/openapi" },
-    { "source": "/api/authorize",                                "destination": "/api/authorize" },
-    { "source": "/api/token",                                    "destination": "/api/token" },
-    { "source": "/api/register",                                 "destination": "/api/register" },
-    { "source": "/.well-known/oauth-authorization-server",       "destination": "/api/oauth-metadata" },
-    { "source": "/.well-known/oauth-protected-resource",         "destination": "/api/mcp" }
+    { "source": "/mcp", "destination": "/api/mcp" },
+    { "source": "/api/mcp", "destination": "/api/mcp" },
+    { "source": "/openapi.json", "destination": "/api/openapi" },
+    { "source": "/.well-known/oauth-protected-resource", "destination": "/api/mcp" },
+    { "source": "/.well-known/oauth-authorization-server", "destination": "/api/oauth-metadata" },
+    { "source": "/api/authorize", "destination": "/api/authorize" },
+    { "source": "/api/token", "destination": "/api/token" },
+    { "source": "/api/register", "destination": "/api/register" }
   ],
   "headers": [
     {
       "source": "/api/(.*)",
       "headers": [
-        { "key": "Access-Control-Allow-Origin",  "value": "*" },
+        { "key": "Access-Control-Allow-Origin", "value": "*" },
         { "key": "Access-Control-Allow-Methods", "value": "GET, POST, OPTIONS" },
-        { "key": "Access-Control-Allow-Headers", "value": "Content-Type, Authorization, Mcp-Session-Id" }
-      ]
-    },
-    {
-      "source": "/.well-known/(.*)",
-      "headers": [
-        { "key": "Access-Control-Allow-Origin",  "value": "*" },
-        { "key": "Access-Control-Allow-Methods", "value": "GET, OPTIONS" },
-        { "key": "Access-Control-Allow-Headers", "value": "Content-Type" }
+        { "key": "Access-Control-Allow-Headers", "value": "Content-Type, Authorization, Mcp-Session-Id, X-Author-Name" }
       ]
     }
   ]
