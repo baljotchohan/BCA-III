@@ -4177,152 +4177,508 @@ body.modal-open {
 }
 
 /* ==========================================================================
-   MOBILE MEDIA QUERY OVERRIDES (<= 768px and <= 480px)
+   ADVANCED MOBILE UI/UX ALIGNMENTS & TOUCH-FIRST RESPONSIVE ENGINE
    ========================================================================== */
 
+/* Universal Mobile Base & Form Zoom Prevention */
 @media (max-width: 768px) {
-  /* Header Button Responsive Tuning */
+  html, body {
+    overflow-x: hidden !important;
+    width: 100% !important;
+    max-width: 100vw !important;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Prevent iOS Safari 16px auto-zoom on input focus */
+  input, select, textarea, button {
+    font-size: 16px !important;
+  }
+
+  /* Mobile Safe Area Padding */
+  .page-wrapper {
+    padding-left: clamp(0.75rem, 3.5vw, 1.25rem) !important;
+    padding-right: clamp(0.75rem, 3.5vw, 1.25rem) !important;
+  }
+
+  /* Header Optimization */
+  .SiteHeader-module-scss-module__zKj4Ca__root {
+    padding: 0 0.75rem !important;
+  }
+
+  .brand-main-title {
+    font-size: 1.18rem !important;
+    font-weight: 700 !important;
+  }
+
+  .header-actions-group {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.3rem !important;
+  }
+
   .header-mcp-btn {
-    padding: 0.35rem 0.6rem;
-    gap: 0.35rem;
+    padding: 0.35rem 0.65rem !important;
+    height: 36px !important;
+    gap: 0.3rem !important;
+    font-size: 0.78rem !important;
   }
 
-  .header-mcp-btn .mcp-btn-label {
-    display: inline;
-    font-size: 0.76rem;
+  .header-admin-btn {
+    padding: 0.35rem 0.65rem !important;
+    height: 36px !important;
+    font-size: 0.78rem !important;
+    gap: 0.3rem !important;
   }
 
-  .header-mcp-btn .mcp-live-pill {
-    display: none;
+  /* Hero Section & Filter Bar */
+  .Hero-module-scss-module__sp7muW__title {
+    font-size: clamp(1.75rem, 6.5vw, 2.35rem) !important;
+    line-height: 1.18 !important;
+    margin-bottom: 0.5rem !important;
   }
 
-  /* On-page Connect Card */
-  .connect-ai-banner-card {
-    padding: 1.35rem 1.15rem;
+  .Hero-module-scss-module__sp7muW__summary {
+    font-size: 0.92rem !important;
+    line-height: 1.55 !important;
+    color: var(--text-muted) !important;
   }
 
-  .connect-ai-card-content {
-    grid-template-columns: 1fr;
-    gap: 1.25rem;
+  .academy-filter-bar {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    scrollbar-width: none !important;
+    -webkit-overflow-scrolling: touch !important;
+    padding: 0.5rem 0.15rem 0.65rem 0.15rem !important;
+    margin-top: 0.85rem !important;
+    gap: 0.45rem !important;
   }
 
-  .connect-ai-title {
-    font-size: 1.3rem;
+  .academy-filter-bar::-webkit-scrollbar {
+    display: none !important;
   }
 
-  .connect-ai-endpoint-row {
-    flex-direction: column;
-    align-items: stretch;
+  .filter-pill {
+    padding: 0.42rem 0.9rem !important;
+    font-size: 0.8rem !important;
+    flex-shrink: 0 !important;
+    white-space: nowrap !important;
+    min-height: 38px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
   }
 
-  .connect-endpoint-bar {
-    width: 100%;
-    min-width: 0;
+  /* Banner Package Section */
+  .PackageBanner-module-scss-module__FhS4PW__banner {
+    padding: 1.25rem 1.1rem !important;
+    border-radius: var(--radius-md) !important;
   }
 
-  .connect-copy-btn {
-    width: 100%;
-    height: 38px;
+  .PackageBanner-module-scss-module__FhS4PW__announcement {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 0.85rem !important;
   }
 
-  .connect-main-cta-btn {
-    width: 100%;
-    height: 42px;
+  .PackageBanner-module-scss-module__FhS4PW__metadata {
+    width: 100% !important;
   }
 
-  /* MCP Modal Mobile Refinements */
-  .mcp-modal-backdrop {
-    padding: 0.5rem;
+  .PackageBanner-module-scss-module__FhS4PW__metadata a {
+    width: 100% !important;
+    height: 44px !important;
+    justify-content: center !important;
+    display: flex !important;
+    align-items: center !important;
   }
 
+  .PackageBanner-module-scss-module__FhS4PW__packages {
+    width: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.5rem !important;
+    margin-top: 0.85rem !important;
+  }
+
+  .PackageBanner-module-scss-module__FhS4PW__package {
+    padding: 0.85rem 1rem !important;
+    border-radius: var(--radius-sm) !important;
+  }
+
+  /* All 7 Subject Cards */
+  .EducationSections-module-scss-module__dxNdua__sectionWrapper {
+    gap: 1rem !important;
+    margin-top: 1rem !important;
+    margin-bottom: 2.5rem !important;
+  }
+
+  .EducationSections-module-scss-module__dxNdua__section {
+    padding: 1.25rem 1.1rem !important;
+    border-radius: var(--radius-md) !important;
+  }
+
+  .EducationSections-module-scss-module__dxNdua__sectionInner {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 1rem !important;
+  }
+
+  .EducationSections-module-scss-module__dxNdua__illustrationWrapper {
+    display: none !important; /* Conceal heavy decorative SVG on mobile for instant focus */
+  }
+
+  .EducationSections-module-scss-module__dxNdua__contentCtaWrapper {
+    width: 100% !important;
+    max-width: 100% !important;
+    gap: 1rem !important;
+  }
+
+  .EducationSections-module-scss-module__dxNdua__contentWrapper h2 {
+    font-size: 1.35rem !important;
+    line-height: 1.25 !important;
+  }
+
+  .EducationSections-module-scss-module__dxNdua__contentWrapper p {
+    font-size: 0.88rem !important;
+    line-height: 1.5 !important;
+  }
+
+  .EducationSections-module-scss-module__dxNdua__contentCtaWrapper button {
+    width: 100% !important;
+    height: 44px !important;
+    justify-content: center !important;
+    font-size: 0.88rem !important;
+    font-weight: 600 !important;
+    display: flex !important;
+    align-items: center !important;
+  }
+
+  /* Academic Study Widgets */
+  .study-widgets-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+  }
+
+  .widget-card {
+    padding: 1.15rem 1rem !important;
+    border-radius: var(--radius-md) !important;
+  }
+
+  .lecture-item {
+    padding: 0.75rem 0.15rem !important;
+    gap: 0.75rem !important;
+    align-items: center !important;
+  }
+
+  .lecture-date-box {
+    width: 44px !important;
+    height: 44px !important;
+    flex-shrink: 0 !important;
+  }
+
+  .todo-add-box {
+    display: flex !important;
+    flex-direction: row !important;
+    gap: 0.45rem !important;
+  }
+
+  .todo-add-box input {
+    flex: 1 !important;
+    min-width: 0 !important;
+    height: 42px !important;
+  }
+
+  .todo-add-box button {
+    height: 42px !important;
+    padding: 0 1.15rem !important;
+    flex-shrink: 0 !important;
+  }
+
+  .todo-item-row {
+    padding: 0.55rem 0.25rem !important;
+    min-height: 44px !important;
+    display: flex !important;
+    align-items: center !important;
+  }
+
+  /* Subject Workspace Responsive Overrides */
+  .subject-breadcrumb-bar {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 0.65rem !important;
+    margin-bottom: 1rem !important;
+  }
+
+  .subject-breadcrumbs {
+    font-size: 0.8rem !important;
+    flex-wrap: wrap !important;
+  }
+
+  .back-to-dashboard-btn {
+    width: 100% !important;
+    height: 40px !important;
+    justify-content: center !important;
+  }
+
+  .subject-hero-card {
+    padding: 1.25rem 1rem !important;
+    margin-bottom: 1.25rem !important;
+    border-radius: var(--radius-md) !important;
+  }
+
+  .subject-hero-title {
+    font-size: 1.55rem !important;
+    line-height: 1.22 !important;
+    margin-bottom: 0.45rem !important;
+  }
+
+  .subject-hero-desc {
+    font-size: 0.9rem !important;
+    line-height: 1.55 !important;
+    margin-bottom: 0.85rem !important;
+  }
+
+  .subject-hero-actions {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 0.45rem !important;
+    width: 100% !important;
+  }
+
+  .subject-hero-actions .primary {
+    grid-column: 1 / -1 !important;
+    height: 44px !important;
+  }
+
+  .subject-hero-btn {
+    height: 40px !important;
+    justify-content: center !important;
+    font-size: 0.78rem !important;
+  }
+
+  .workspace-tabs-nav {
+    display: flex !important;
+    overflow-x: auto !important;
+    scrollbar-width: none !important;
+    -webkit-overflow-scrolling: touch !important;
+    gap: 0.35rem !important;
+    padding-bottom: 0.35rem !important;
+    margin-bottom: 1.25rem !important;
+  }
+
+  .workspace-tabs-nav::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  .workspace-tab-btn {
+    flex-shrink: 0 !important;
+    white-space: nowrap !important;
+    height: 40px !important;
+    padding: 0 0.95rem !important;
+    font-size: 0.82rem !important;
+  }
+
+  /* Unit Checklist Cards Mobile Alignment */
+  .unit-card-block {
+    padding: 1.25rem 1rem !important;
+    border-radius: var(--radius-md) !important;
+    margin-bottom: 1.25rem !important;
+  }
+
+  .topic-checklist-item {
+    padding: 0.6rem 0.25rem !important;
+    min-height: 44px !important;
+    display: flex !important;
+    align-items: flex-start !important;
+    gap: 0.65rem !important;
+  }
+
+  .topic-checklist-item .topic-checkbox {
+    width: 18px !important;
+    height: 18px !important;
+    margin-top: 0.15rem !important;
+    flex-shrink: 0 !important;
+  }
+
+  .topic-checklist-item span {
+    font-size: 0.88rem !important;
+    line-height: 1.45 !important;
+  }
+
+  /* Digital Notes Topic Cards on Mobile */
+  .notes-filter-pills {
+    display: flex !important;
+    overflow-x: auto !important;
+    scrollbar-width: none !important;
+    -webkit-overflow-scrolling: touch !important;
+    gap: 0.35rem !important;
+    padding-bottom: 0.35rem !important;
+  }
+
+  .note-filter-btn {
+    flex-shrink: 0 !important;
+    white-space: nowrap !important;
+    height: 36px !important;
+    padding: 0 0.85rem !important;
+    font-size: 0.78rem !important;
+  }
+
+  .note-topic-card {
+    padding: 1.15rem 1rem !important;
+    border-radius: var(--radius-md) !important;
+    gap: 0.55rem !important;
+  }
+
+  .note-topic-header {
+    flex-wrap: wrap !important;
+    gap: 0.35rem !important;
+  }
+
+  .note-topic-title {
+    font-size: 1.15rem !important;
+    line-height: 1.3 !important;
+  }
+
+  .note-topic-excerpt {
+    font-size: 0.85rem !important;
+    line-height: 1.45 !important;
+    -webkit-line-clamp: 2 !important;
+  }
+
+  .note-topic-footer {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 0.65rem !important;
+    padding-top: 0.55rem !important;
+  }
+
+  .note-read-btn {
+    width: 100% !important;
+    height: 42px !important;
+    justify-content: center !important;
+    font-size: 0.84rem !important;
+    margin-left: 0 !important;
+  }
+
+  /* Full-Page Article Reader View on Mobile */
+  .note-reader-nav-bar {
+    padding: 0.65rem 0.85rem !important;
+    top: var(--total-header-height) !important;
+    margin-bottom: 1rem !important;
+    border-radius: var(--radius-sm) !important;
+  }
+
+  .note-reader-back-btn {
+    height: 38px !important;
+    padding: 0 0.85rem !important;
+    font-size: 0.82rem !important;
+  }
+
+  .note-article-wrapper {
+    padding: 1.25rem 1rem !important;
+    border-radius: var(--radius-md) !important;
+  }
+
+  .note-article-header {
+    padding-bottom: 1rem !important;
+    margin-bottom: 1.25rem !important;
+  }
+
+  .note-article-title {
+    font-size: 1.45rem !important;
+    line-height: 1.25 !important;
+  }
+
+  .note-article-body {
+    font-size: 0.94rem !important;
+    line-height: 1.6 !important;
+  }
+
+  /* Safe container for code, formulas, and visual simulations */
+  .notion-code-container,
+  .notion-code-block,
+  .manim-canvas-container,
+  .manim-card-pro,
+  .latex-math-block {
+    max-width: 100% !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  .note-reader-footer-nav {
+    flex-direction: column !important;
+    gap: 0.65rem !important;
+    padding-top: 1.25rem !important;
+  }
+
+  .note-page-turn-btn {
+    width: 100% !important;
+    height: 48px !important;
+  }
+
+  /* Modals on Mobile */
+  .admin-modal-card,
   .mcp-modal-card {
-    max-height: 94vh;
-    border-radius: var(--radius-md);
+    width: 95vw !important;
+    max-width: 95vw !important;
+    max-height: 90vh !important;
+    max-height: 90dvh !important;
+    margin: 0.5rem !important;
+    border-radius: var(--radius-md) !important;
   }
 
-  .mcp-modal-header {
-    padding: 0.9rem 1.1rem;
+  .admin-modal-tabs-nav {
+    overflow-x: auto !important;
+    scrollbar-width: none !important;
+    -webkit-overflow-scrolling: touch !important;
+    display: flex !important;
+    gap: 0.25rem !important;
   }
 
-  .mcp-modal-title {
-    font-size: 1.1rem;
+  .admin-modal-tab-btn {
+    flex-shrink: 0 !important;
+    white-space: nowrap !important;
+    height: 38px !important;
   }
 
-  .mcp-modal-body {
-    padding: 1rem 1.1rem;
-    gap: 1rem;
-  }
-
-  .mcp-status-banner {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.5rem;
-  }
-
-  .mcp-endpoint-url-bar {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 0.45rem;
-  }
-
-  .mcp-copy-btn {
-    width: 100%;
-    justify-content: center;
-    height: 36px;
-  }
-
-  .mcp-param-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .mcp-run-btn {
-    width: 100%;
-    height: 40px;
-  }
-
-  .mcp-code-block {
-    font-size: 0.76rem;
-    padding-top: 2.2rem;
+  .admin-submit-btn {
+    height: 46px !important;
+    font-size: 0.9rem !important;
   }
 }
 
+/* Extra Small Screens (<= 480px) */
 @media (max-width: 480px) {
   .header-mcp-btn .mcp-btn-label {
-    display: none;
+    display: none !important;
   }
 
   .header-mcp-btn {
-    padding: 0.35rem 0.45rem;
-    border-radius: 50%;
-    width: 36px;
-    height: 36px;
-    justify-content: center;
+    width: 36px !important;
+    height: 36px !important;
+    padding: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 50% !important;
   }
 
-  .connect-platform-chips {
-    gap: 0.3rem;
+  .subject-hero-actions {
+    grid-template-columns: 1fr !important;
   }
 
-  .platform-chip {
-    font-size: 0.7rem;
-    padding: 0.25rem 0.5rem;
+  .subject-hero-actions .primary {
+    grid-column: auto !important;
   }
 
-  .connect-ai-banner-section {
-    padding: 1.5rem 0 0.5rem 0;
+  .todo-add-box {
+    flex-direction: column !important;
   }
 
-  .note-card-meta {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.45rem;
-  }
-
-  .note-actions-bar {
-    width: 100%;
-    justify-content: flex-start;
-    gap: 0.35rem;
-    flex-wrap: wrap;
+  .todo-add-box button {
+    width: 100% !important;
   }
 }
+
 
