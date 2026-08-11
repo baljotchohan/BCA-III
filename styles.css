@@ -3657,8 +3657,38 @@ body.modal-open {
    CONNECT AI (MCP) BUTTON, ON-PAGE BANNER & HUB MODAL STYLING
    ========================================================================== */
 
+/* Header Admin Portal Button */
+.header-admin-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.75rem;
+  height: 36px;
+  border-radius: var(--radius-full);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  background-color: rgba(239, 68, 68, 0.07);
+  color: var(--color-coral);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.header-admin-btn:hover {
+  background-color: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.6);
+  transform: translateY(-1px);
+}
+
+.header-admin-btn svg {
+  color: #ef4444;
+  flex-shrink: 0;
+}
+
 /* Header Connect AI Button - Clean & Minimal */
 .header-mcp-btn {
+
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
@@ -4733,10 +4763,12 @@ body.modal-open {
 
 /* Extra Small Screens (<= 480px) */
 @media (max-width: 480px) {
+  .header-admin-btn .admin-btn-label,
   .header-mcp-btn .mcp-btn-label {
     display: none !important;
   }
 
+  .header-admin-btn,
   .header-mcp-btn {
     width: 36px !important;
     height: 36px !important;
@@ -4748,6 +4780,7 @@ body.modal-open {
   }
 
   .subject-hero-actions {
+
     grid-template-columns: 1fr 1fr !important;
   }
 

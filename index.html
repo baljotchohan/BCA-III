@@ -130,14 +130,27 @@
                   </div>
                 </div>
               </div>
+            </li>
             <li class="body-3 SiteHeader-module-scss-module__zKj4Ca__navItem">
               <a href="#dashboard-lectures-list" class="SiteHeader-module-scss-module__zKj4Ca__navText">Lecture Timeline</a>
+            </li>
+            <li class="body-3 SiteHeader-module-scss-module__zKj4Ca__navItem">
+              <button class="SiteHeader-module-scss-module__zKj4Ca__navText" onclick="openAdminModal()" style="display: inline-flex; align-items: center; gap: 0.35rem; cursor: pointer; color: var(--color-coral); font-weight: 600; background: none; border: none; padding: 0; font-family: inherit; font-size: inherit;">
+                <span>🛡️ Admin Portal</span>
+              </button>
             </li>
           </ul>
         </nav>
 
         <!-- UTILITY TOOLS -->
         <div class="header-utility-btns">
+          <button class="header-admin-btn" onclick="openAdminModal()" title="Admin Control Center (Publish Notes, Lectures, Announcements)">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+            </svg>
+            <span class="admin-btn-label">Admin</span>
+          </button>
+
           <button class="header-mcp-btn" onclick="openMcpModal()" title="Connect AI Models (Claude, ChatGPT, Gemini, Cursor)">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
@@ -158,6 +171,7 @@
             </svg>
           </button>
         </div>
+
 
         <!-- MOBILE HAMBURGER -->
         <button class="SiteHeader-module-scss-module__zKj4Ca__mobileIcon" aria-label="Navigation menu">
@@ -1219,8 +1233,11 @@
       <a class="mobile-drawer-link" href="#" onclick="openMcpModal(); return false;" style="color: #a855f7; font-weight: 600;">✨ Connect AI (MCP Hub)</a>
       <a class="mobile-drawer-link" href="#study-widgets">Lecture Log</a>
       <a class="mobile-drawer-link" href="#study-widgets">To-Do Tracker</a>
-      <a class="mobile-drawer-link" href="./Syllabus.pdf" target="_blank">Download Syllabus PDF</a>
-      <a class="mobile-drawer-link" href="#" onclick="openAdminModal()">Admin Portal</a>
+      <a class="mobile-drawer-link" href="#" onclick="openAdminModal(); return false;" style="color: var(--color-coral); font-weight: 700; display: flex; align-items: center; justify-content: space-between;">
+        <span>🛡️ Admin Portal</span>
+        <span style="font-size: 0.65rem; background: rgba(217, 70, 239, 0.1); border: 1px solid rgba(217, 70, 239, 0.3); padding: 0.1rem 0.45rem; border-radius: 4px; color: var(--color-coral);">PASSKEY</span>
+      </a>
+
     </div>
   </div>
 
