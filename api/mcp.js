@@ -1658,15 +1658,19 @@ async function handleMcpRpc(payload, authHeader = '', authorHeader = '') {
 
 // Vercel Serverless Function Export
 module.exports = async (req, res) => {
+  const BASE = 'https://bca-iii.vercel.app';
+
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Admin-Passkey, X-Author-Name');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, Mcp-Session-Id, X-Author-Name');
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
 
   if (req.method === 'GET') {
+    // Advertise OAuth authorization server so MCP clients discover it
+    res.setHeader('Link', `<${BASE}/.well-known/oauth-authorization-server>; rel="oauth-authorization-server"`);
     return res.status(200).json({
       status: "online",
       name: "BCA III Academic Hub Serverless MCP Endpoint",
@@ -1675,15 +1679,43 @@ module.exports = async (req, res) => {
       semester: "BCA 3rd Semester (2026-27)",
       protocolVersion: PROTOCOL_VERSION,
       toolsCount: PUBLIC_TOOLS.length + ADMIN_TOOLS.length,
-      availableTools: [...PUBLIC_TOOLS, ...ADMIN_TOOLS].map(t => t.name)
+      availableTools: [...PUBLIC_TOOLS, ...ADMIN_TOOLS].map(t => t.name),
+      auth: {
+        type: "oauth2",
+        authorizationEndpoint: `${BASE}/api/authorize`,
+        tokenEndpoint: `${BASE}/api/token`,
+        metadataEndpoint: `${BASE}/.well-known/oauth-authorization-server`,
+        scopes: ["read", "write", "admin"],
+        note: "Sign in with Google — admin emails get full write access"
+      }
     });
   }
 
   if (req.method === 'POST') {
     try {
-      const authHeader = req.headers['authorization'] || req.headers['x-admin-passkey'] || '';
+      const authHeader = req.headers['authorization'] || '';
       const authorHeader = req.headers['x-author-name'] || '';
       const payload = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+
+      // Quick pre-check: if no auth header at all on a tools/call, return 401 with WWW-Authenticate
+      // so Claude/Cursor immediately trigger their OAuth flow
+      if (!authHeader && payload?.method === 'tools/call') {
+        res.setHeader('WWW-Authenticate',
+          `Bearer realm="BCA III Hub MCP", ` +
+          `error="unauthorized", ` +
+          `error_description="Sign in with Google to access BCA III Hub tools", ` +
+          `authorization_uri="${BASE}/api/authorize"`
+        );
+        return res.status(401).json({
+          jsonrpc: "2.0",
+          id: payload?.id || null,
+          error: {
+            code: -32001,
+            message: "Unauthorized: Sign in with Google at " + BASE + "/api/authorize"
+          }
+        });
+      }
+
       const response = await handleMcpRpc(payload, authHeader, authorHeader);
       return res.status(200).json(response);
     } catch (err) {
