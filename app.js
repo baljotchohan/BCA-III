@@ -311,13 +311,19 @@ async function renderSubjectNotes(subject) {
   container.innerHTML = filtered.map(note => {
     const noteKey = note.fbKey || note.id;
     const isCloud = Boolean(note.fbKey);
+    const authorName = note.author || 'Baljot Chohan';
 
     return `
       <div class="digital-note-card">
         <div class="note-card-meta">
-          <div class="note-meta-left">
+          <div class="note-meta-left" style="display: flex; align-items: center; gap: 0.45rem; flex-wrap: wrap;">
             <span class="note-unit-badge">${escapeHtml(note.unit || 'Unit I')}</span>
+            <span class="note-author-badge">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+              By ${escapeHtml(authorName)}
+            </span>
             <span class="note-read-time">${escapeHtml(note.readTime || '5 min read')}</span>
+            ${note.date ? `<span style="font-size: 0.72rem; color: var(--text-subtle); display: inline-flex; align-items: center; gap: 0.2rem;">📅 ${escapeHtml(note.date)}</span>` : ''}
           </div>
           <div class="note-actions-bar">
             ${isAdminAuthenticated() && isCloud ? `
@@ -870,8 +876,28 @@ async function renderDashboardLectures() {
   const container = document.getElementById('dashboard-lectures-list');
   if (!container) return;
 
-  // Fetch live lectures from Firebase
-  let fbLectures = await _fbFetch('lectures');
+  // Fetch live notes and lectures from Firebase RTDB
+  const [fbNotes, fbLectures] = await Promise.all([
+    _fbFetch('notes'),
+    _fbFetch('lectures')
+  ]);
+
+  const cloudItems = [
+    ...fbNotes.map(n => ({
+      ...n,
+      topic: n.title || n.topic,
+      subjectName: getSubjectName(n.subject || n.subjectId),
+      subjectId: n.subject || n.subjectId,
+      time: n.readTime || 'Digital Note',
+      isNote: true
+    })),
+    ...fbLectures.map(l => ({
+      ...l,
+      subjectName: getSubjectName(l.subject || l.subjectId),
+      subjectId: l.subject || l.subjectId,
+      isNote: false
+    }))
+  ].sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
 
   // Gather static lectures
   let staticLectures = [];
@@ -879,7 +905,7 @@ async function renderDashboardLectures() {
     (s.lectures || []).forEach(l => staticLectures.push({ ...l, subjectName: s.title, subjectId: s.id }));
   });
 
-  const all = [...fbLectures.map(l => ({ ...l, subjectName: getSubjectName(l.subject || l.subjectId), subjectId: l.subject || l.subjectId })), ...staticLectures];
+  const all = [...cloudItems, ...staticLectures];
 
   const badge = document.getElementById('lecture-count-badge');
   if (badge) badge.innerText = `${all.length} Notes/Lectures`;
@@ -889,7 +915,7 @@ async function renderDashboardLectures() {
     return;
   }
 
-  container.innerHTML = all.slice(0, 8).map(l => `
+  container.innerHTML = all.slice(0, 10).map(l => `
     <div class="lecture-item" onclick="navigateToSubject('${l.subjectId}')" style="cursor: pointer; position: relative;">
       <div class="lecture-date-box">
         <span class="lecture-month">AUG</span>
@@ -1171,7 +1197,7 @@ async function publishAdminNote() {
     tags: tagsStr ? tagsStr.split(',').map(t => t.trim()).filter(Boolean) : ['Revision'],
     content,
     isAdminPublished: true,
-    author: 'Admin',
+    author: 'Baljot Chohan',
     date: isEditing ? (_editingItem.date || new Date().toISOString().split('T')[0]) : new Date().toISOString().split('T')[0],
     timestamp: isEditing ? (_editingItem.timestamp || Date.now()) : Date.now()
   };
@@ -1893,14 +1919,17 @@ function openMcpModal() {
   if (!modal) return;
   
   // Dynamically update the displayed endpoint with the active origin if needed
+  // Dynamically update the displayed endpoint with the active origin if needed
+  const isVercel = window.location.hostname.includes('vercel.app');
+  const endpoint = isVercel 
+    ? `${window.location.origin}/api/mcp`
+    : 'https://bca-iii.vercel.app/api/mcp';
+
   const displayEl = document.getElementById('mcp-remote-url-display');
-  if (displayEl) {
-    const isVercel = window.location.hostname.includes('vercel.app');
-    const endpoint = isVercel 
-      ? `${window.location.origin}/api/mcp`
-      : 'https://bca-iii.vercel.app/api/mcp';
-    displayEl.textContent = endpoint;
-  }
+  if (displayEl) displayEl.textContent = endpoint;
+
+  const onpageEl = document.getElementById('mcp-onpage-endpoint');
+  if (onpageEl) onpageEl.textContent = endpoint;
 
   modal.style.display = 'flex';
   lockScroll(true);
@@ -1987,10 +2016,18 @@ function handleMcpToolChange() {
     subjectWrap.style.display = 'block';
     unitWrap.style.display = 'block';
     queryWrap.style.display = 'none';
+  } else if (tool === 'get_digital_notes') {
+    subjectWrap.style.display = 'block';
+    unitWrap.style.display = 'none';
+    queryWrap.style.display = 'none';
   } else if (tool === 'search_digital_notes') {
     subjectWrap.style.display = 'block';
     unitWrap.style.display = 'none';
     queryWrap.style.display = 'block';
+  } else if (tool === 'get_syllabus_structure_for_ai') {
+    subjectWrap.style.display = 'block';
+    unitWrap.style.display = 'none';
+    queryWrap.style.display = 'none';
   } else {
     subjectWrap.style.display = 'none';
     unitWrap.style.display = 'none';
@@ -2029,8 +2066,14 @@ async function executeMcpPlaygroundTest() {
     payload.params.arguments = { subject_id: subject };
   } else if (tool === 'get_unit_details') {
     payload.params.arguments = { subject_id: subject, unit_number: unit };
+  } else if (tool === 'get_digital_notes') {
+    payload.params.arguments = { subject_id: subject, limit: 10 };
   } else if (tool === 'search_digital_notes') {
     payload.params.arguments = { query: query, subject_id: subject };
+  } else if (tool === 'get_syllabus_structure_for_ai') {
+    payload.params.arguments = { subject_id: subject };
+  } else if (tool === 'get_hub_stats') {
+    payload.params.arguments = {};
   } else if (tool === 'get_daily_lectures') {
     payload.params.arguments = { date: 'latest' };
   } else if (tool === 'get_announcements') {

@@ -142,8 +142,16 @@
           </ul>
         </nav>
 
-        <!-- UTILITY TOOLS: COMMAND PALETTE, THEME, & ADMIN -->
+        <!-- UTILITY TOOLS: CONNECT AI, COMMAND PALETTE, THEME, & ADMIN -->
         <div class="header-utility-btns">
+          <button class="header-mcp-btn" onclick="openMcpModal()" title="Connect AI Models (Claude, ChatGPT, Gemini, Cursor) to BCA III Hub via MCP">
+            <svg class="mcp-sparkle-svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2L14.4 8.6L21 11L14.4 13.4L12 20L9.6 13.4L3 11L9.6 8.6L12 2Z"/>
+            </svg>
+            <span class="mcp-btn-label">Connect AI</span>
+            <span class="mcp-live-pill">MCP</span>
+          </button>
+
           <button class="header-icon-btn" onclick="openCommandPalette()" title="Search Syllabus, Notes &amp; Lectures (⌘K)">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <circle cx="11" cy="11" r="8"></circle>
@@ -169,17 +177,8 @@
           </div>
         </div>
 
-        <!-- DOWNLOAD SYLLABUS PDF CTA & CONNECT AI CTA -->
+        <!-- DOWNLOAD SYLLABUS PDF CTA -->
         <div class="SiteHeader-module-scss-module__zKj4Ca__claudeCtaWrapper" style="display: flex; gap: 0.5rem; align-items: center;">
-
-          <button class="header-mcp-btn" onclick="openMcpModal()" title="Connect AI Models (Claude, ChatGPT, Gemini, Cursor) to BCA III Hub via MCP">
-            <svg class="mcp-sparkle-svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 2L14.4 8.6L21 11L14.4 13.4L12 20L9.6 13.4L3 11L9.6 8.6L12 2Z"/>
-            </svg>
-            <span>Connect AI</span>
-            <span class="mcp-live-pill">MCP</span>
-          </button>
-
           <a href="./Syllabus.pdf" target="_blank" class="SiteHeader-module-scss-module__zKj4Ca__claudeCtaButton body-3" title="Download Official PU Syllabus PDF">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
@@ -541,6 +540,55 @@
         </div>
 
       </div>
+
+      <!-- 3.5 CONNECT AI & LIVE MCP HUB SECTION -->
+      <section class="connect-ai-banner-section" id="connect-ai-section">
+        <div class="page-wrapper">
+          <div class="connect-ai-banner-card">
+            <div class="connect-ai-card-content">
+              
+              <div class="connect-ai-header-col">
+                <div class="connect-ai-badge-row">
+                  <span class="mcp-live-pill" style="background: linear-gradient(135deg, #a855f7 0%, #7c3aed 100%);">⚡ MCP Protocol 2024-11-05</span>
+                  <span class="mcp-status-pill"><span class="mcp-pulse-dot"></span> Live Streamable HTTP Online</span>
+                  <span class="mcp-author-pill">Author: Baljot Chohan</span>
+                </div>
+                <h2 class="connect-ai-title serif">Connect AI Models to BCA III Hub via MCP</h2>
+                <p class="connect-ai-sub">
+                  Bridge Claude, ChatGPT, Gemini, and Cursor directly to the official Panjab University BCA 3rd Sem curriculum. AI models can search syllabus topics, fetch digital notes, and publish exam-ready study guides in real-time.
+                </p>
+
+                <!-- Live Endpoint Bar -->
+                <div class="connect-ai-endpoint-row">
+                  <div class="connect-endpoint-bar">
+                    <span class="connect-endpoint-label">Server Endpoint:</span>
+                    <span class="connect-endpoint-code" id="mcp-onpage-endpoint">https://bca-iii.vercel.app/api/mcp</span>
+                  </div>
+                  <button class="connect-copy-btn" onclick="copyMcpUrl('https://bca-iii.vercel.app/api/mcp', this)">
+                    <span>📋 Copy Server URL</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Right Actions & Platform Badges -->
+              <div class="connect-ai-actions-col">
+                <div class="connect-platform-chips">
+                  <span class="platform-chip">🟣 Claude Desktop &amp; Web</span>
+                  <span class="platform-chip">🟢 ChatGPT Custom GPTs</span>
+                  <span class="platform-chip">🔵 Gemini CLI &amp; Antigravity</span>
+                  <span class="platform-chip">⚡ Cursor &amp; Windsurf</span>
+                </div>
+                <div class="connect-action-btns-row">
+                  <button class="connect-main-cta-btn" onclick="openMcpModal()">
+                    <span>✨ Open Setup Guide &amp; Tool Playground ➔</span>
+                  </button>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </section>
 
       <!-- 4. ACADEMIC WIDGETS SECTION (TIMELINE & TO-DO) -->
       <section class="study-widgets-section" id="study-widgets">
@@ -1206,7 +1254,7 @@
             </div>
           </div>
           <div style="display: flex; gap: 0.4rem; flex-wrap: wrap;">
-            <span class="mcp-live-pill" style="background: rgba(168, 85, 247, 0.15); color: #a855f7; border: 1px solid rgba(168, 85, 247, 0.3);">6 Tools</span>
+            <span class="mcp-live-pill" style="background: rgba(168, 85, 247, 0.15); color: #a855f7; border: 1px solid rgba(168, 85, 247, 0.3);">11 Tools Active</span>
             <span class="mcp-live-pill" style="background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3);">PU 2026-27</span>
           </div>
         </div>
@@ -1240,7 +1288,7 @@
             <span>⚡ Cursor / IDEs</span>
           </button>
           <button class="mcp-tab-btn" data-mcptab="admin" onclick="switchMcpTab('admin')" style="color: #ef4444; font-weight: 700;">
-            <span>🛡️ Admin Mode</span>
+            <span>🛡️ Admin &amp; Author Mode</span>
           </button>
           <button class="mcp-tab-btn" data-mcptab="playground" onclick="switchMcpTab('playground')">
             <span>🧪 Live Tool Playground</span>
@@ -1363,10 +1411,10 @@
             <div style="background: rgba(239, 68, 68, 0.06); border: 1px solid rgba(239, 68, 68, 0.25); border-radius: var(--radius-md); padding: 0.9rem 1.1rem;">
               <div style="display: flex; align-items: center; gap: 0.45rem; margin-bottom: 0.35rem;">
                 <span style="font-size: 1.1rem;">🛡️</span>
-                <span style="font-weight: 700; font-size: 0.92rem; color: #dc2626;">Admin Superpowers via MCP</span>
+                <span style="font-weight: 700; font-size: 0.92rem; color: #dc2626;">Author &amp; Admin Superpowers via MCP</span>
               </div>
               <p style="margin: 0; font-size: 0.82rem; color: var(--text-subtle); line-height: 1.55;">
-                As the admin, connecting with your passkey unlocks <strong>4 exclusive write/publish tools</strong>: <code style="color: var(--text-main); font-weight: 600;">publish_digital_note</code>, <code style="color: var(--text-main); font-weight: 600;">publish_lecture_log</code>, <code style="color: var(--text-main); font-weight: 600;">publish_announcement</code>, and <code style="color: var(--text-main); font-weight: 600;">delete_hub_record</code>.
+                As the admin, connecting with your passkey unlocks <strong>full write and authoring tools</strong>. AI models will draft comprehensive notes automatically attributed to <strong>Baljot Chohan</strong>, format mathematical equations, embed visual animations, and publish directly to the live hub.
               </p>
             </div>
 
@@ -1391,16 +1439,16 @@
             </div>
 
             <div style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 0.9rem 1.1rem;">
-              <h4 style="margin: 0 0 0.35rem 0; font-size: 0.95rem; color: var(--text-main);">How to Command Your AI as Admin:</h4>
+              <h4 style="margin: 0 0 0.35rem 0; font-size: 0.95rem; color: var(--text-main);">How to Command Your AI as Baljot Chohan:</h4>
               <div style="display: flex; flex-direction: column; gap: 0.45rem; font-size: 0.82rem; color: var(--text-subtle);">
                 <div style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 0.55rem 0.75rem; font-style: italic;">
-                  💬 <strong>"Claude, write a high-yield study note on 8086 Memory Segmentation with diagrams and publish it to Computer Architecture Unit III."</strong>
+                  💬 <strong>"Claude, write a high-yield study note on 8086 Memory Segmentation with diagrams and publish it to Computer Architecture Unit III under my name Baljot Chohan."</strong>
                 </div>
                 <div style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 0.55rem 0.75rem; font-style: italic;">
                   💬 <strong>"Claude, log today's lecture for Data Structures covering AVL Tree rotations."</strong>
                 </div>
                 <div style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 0.55rem 0.75rem; font-style: italic;">
-                  💬 <strong>"Claude, broadcast an announcement: PU Internal MST Exams start next Monday."</strong>
+                  💬 <strong>"Claude, check which topics in Numerical Methods Unit II are missing notes and create them for me."</strong>
                 </div>
               </div>
             </div>
@@ -1422,7 +1470,10 @@
                 <select id="mcp-tool-select" class="mcp-input" onchange="handleMcpToolChange()">
                   <option value="get_syllabus">get_syllabus (Full Subject Curriculum)</option>
                   <option value="get_unit_details">get_unit_details (Unit I–IV Breakdown)</option>
+                  <option value="get_digital_notes">get_digital_notes (Retrieve All Live Digital Notes)</option>
                   <option value="search_digital_notes">search_digital_notes (Search Live Notes)</option>
+                  <option value="get_syllabus_structure_for_ai">get_syllabus_structure_for_ai (Curriculum Topic Map)</option>
+                  <option value="get_hub_stats">get_hub_stats (Hub Statistics)</option>
                   <option value="get_daily_lectures">get_daily_lectures (Daily Lecture Logs)</option>
                   <option value="get_announcements">get_announcements (PU Notices)</option>
                 </select>

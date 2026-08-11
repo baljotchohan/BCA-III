@@ -3469,37 +3469,39 @@ body.modal-open {
 }
 
 /* ==========================================================================
-   CONNECT AI (MCP) BUTTON & HUB MODAL STYLING
+   CONNECT AI (MCP) BUTTON, ON-PAGE BANNER & HUB MODAL STYLING
    ========================================================================== */
 
+/* Header Connect AI Button */
 .header-mcp-btn {
   display: inline-flex;
   align-items: center;
-  gap: 0.45rem;
-  padding: 0.35rem 0.85rem;
+  gap: 0.4rem;
+  padding: 0.35rem 0.75rem;
   height: 36px;
   border-radius: var(--radius-full);
-  border: 1px solid rgba(168, 85, 247, 0.35);
-  background: linear-gradient(135deg, rgba(168, 85, 247, 0.08) 0%, rgba(217, 70, 239, 0.05) 100%), var(--bg-surface);
+  border: 1px solid rgba(168, 85, 247, 0.4);
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.12) 0%, rgba(217, 70, 239, 0.08) 100%), var(--bg-surface);
   color: var(--text-main);
   font-size: 0.8125rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   flex-shrink: 0;
-  box-shadow: 0 1px 3px rgba(168, 85, 247, 0.1);
+  box-shadow: 0 1px 4px rgba(168, 85, 247, 0.15);
 }
 
 .header-mcp-btn:hover {
-  border-color: rgba(168, 85, 247, 0.7);
-  background: linear-gradient(135deg, rgba(168, 85, 247, 0.16) 0%, rgba(217, 70, 239, 0.12) 100%), var(--bg-surface);
+  border-color: rgba(168, 85, 247, 0.8);
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.2) 0%, rgba(217, 70, 239, 0.15) 100%), var(--bg-surface);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(168, 85, 247, 0.2);
+  box-shadow: 0 4px 12px rgba(168, 85, 247, 0.25);
 }
 
 .mcp-sparkle-svg {
   color: #a855f7;
   animation: mcpSparklePulse 2.8s infinite ease-in-out;
+  flex-shrink: 0;
 }
 
 @keyframes mcpSparklePulse {
@@ -3510,7 +3512,7 @@ body.modal-open {
 .mcp-live-pill {
   display: inline-flex;
   align-items: center;
-  padding: 0.12rem 0.4rem;
+  padding: 0.12rem 0.45rem;
   border-radius: 999px;
   background: #a855f7;
   color: #ffffff;
@@ -3521,12 +3523,204 @@ body.modal-open {
   box-shadow: 0 1px 3px rgba(168, 85, 247, 0.4);
 }
 
+/* On-Page Connect AI Banner Section */
+.connect-ai-banner-section {
+  padding: 2.25rem 0 1rem 0;
+}
+
+.connect-ai-banner-card {
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.07) 0%, rgba(217, 70, 239, 0.04) 50%, var(--bg-surface-subtle) 100%);
+  border: 1px solid rgba(168, 85, 247, 0.28);
+  border-radius: var(--radius-lg);
+  padding: 1.75rem 2rem;
+  box-shadow: 0 12px 32px -8px rgba(168, 85, 247, 0.12), 0 0 0 1px rgba(168, 85, 247, 0.05);
+  position: relative;
+  overflow: hidden;
+}
+
+.connect-ai-card-content {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 2rem;
+  align-items: center;
+}
+
+.connect-ai-header-col {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.connect-ai-badge-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.mcp-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+}
+
+.mcp-author-pill {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #a855f7;
+  background: rgba(168, 85, 247, 0.1);
+  border: 1px solid rgba(168, 85, 247, 0.25);
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+}
+
+.connect-ai-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--text-main);
+  margin: 0.2rem 0 0 0;
+  letter-spacing: -0.01em;
+}
+
+.connect-ai-sub {
+  font-size: 0.88rem;
+  line-height: 1.55;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.connect-ai-endpoint-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.connect-endpoint-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 0.45rem 0.85rem;
+  flex: 1;
+  min-width: 240px;
+  overflow: hidden;
+}
+
+.connect-endpoint-label {
+  font-size: 0.74rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-subtle);
+  flex-shrink: 0;
+}
+
+.connect-endpoint-code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
+  font-size: 0.82rem;
+  color: var(--text-main);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.connect-copy-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  background: linear-gradient(135deg, #a855f7 0%, #7c3aed 100%);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 0.48rem 0.95rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  box-shadow: 0 2px 6px rgba(168, 85, 247, 0.3);
+}
+
+.connect-copy-btn:hover {
+  opacity: 0.94;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(168, 85, 247, 0.4);
+}
+
+.connect-ai-actions-col {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.connect-platform-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.platform-chip {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-main);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  padding: 0.3rem 0.65rem;
+  border-radius: 6px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.connect-action-btns-row {
+  display: flex;
+  gap: 0.65rem;
+}
+
+.connect-main-cta-btn {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  background: var(--bg-surface);
+  color: var(--text-main);
+  border: 1px solid rgba(168, 85, 247, 0.4);
+  border-radius: var(--radius-md);
+  padding: 0.7rem 1.25rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.connect-main-cta-btn:hover {
+  background: var(--bg-surface-subtle);
+  border-color: #a855f7;
+  color: #a855f7;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(168, 85, 247, 0.2);
+}
+
 /* MCP Modal Backdrop & Card */
 .mcp-modal-backdrop {
   position: fixed;
   inset: 0;
   z-index: 10000;
-  background-color: rgba(20, 20, 19, 0.65);
+  background-color: rgba(20, 20, 19, 0.68);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   display: flex;
@@ -3565,25 +3759,25 @@ body.modal-open {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1.25rem 1.75rem;
+  padding: 1.15rem 1.5rem;
   border-bottom: 1px solid var(--border-subtle);
   background-color: var(--bg-surface);
 }
 
 .mcp-modal-title {
-  font-size: 1.35rem;
-  font-weight: 600;
+  font-size: 1.25rem;
+  font-weight: 700;
   margin: 0;
   color: var(--text-main);
   letter-spacing: -0.02em;
 }
 
 .mcp-modal-body {
-  padding: 1.5rem 1.75rem;
+  padding: 1.35rem 1.5rem;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 1.35rem;
+  gap: 1.25rem;
 }
 
 /* Status Banner */
@@ -3595,7 +3789,7 @@ body.modal-open {
   border: 1px solid rgba(168, 85, 247, 0.25);
   border-radius: var(--radius-md);
   padding: 0.85rem 1.15rem;
-  gap: 1rem;
+  gap: 0.85rem;
 }
 
 .mcp-status-left {
@@ -3611,6 +3805,7 @@ body.modal-open {
   background-color: #10b981;
   box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
   animation: mcpDotPulse 2s infinite cubic-bezier(0.66, 0, 0, 1);
+  flex-shrink: 0;
 }
 
 @keyframes mcpDotPulse {
@@ -3621,10 +3816,10 @@ body.modal-open {
   background: var(--bg-surface-subtle);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
-  padding: 1rem 1.25rem;
+  padding: 0.9rem 1.15rem;
   display: flex;
   flex-direction: column;
-  gap: 0.65rem;
+  gap: 0.55rem;
 }
 
 .mcp-endpoint-url-bar {
@@ -3671,11 +3866,12 @@ body.modal-open {
 /* Tabs */
 .mcp-tabs-bar {
   display: flex;
-  gap: 0.5rem;
+  gap: 0.4rem;
   border-bottom: 1px solid var(--border-subtle);
-  padding-bottom: 0.25rem;
+  padding-bottom: 0.35rem;
   overflow-x: auto;
   scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
 }
 
 .mcp-tabs-bar::-webkit-scrollbar {
@@ -3683,19 +3879,20 @@ body.modal-open {
 }
 
 .mcp-tab-btn {
-  padding: 0.5rem 0.95rem;
+  padding: 0.45rem 0.85rem;
   border-radius: var(--radius-md);
   border: 1px solid transparent;
   background: transparent;
   color: var(--text-subtle);
-  font-size: 0.84rem;
+  font-size: 0.82rem;
   font-weight: 600;
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 0.45rem;
+  gap: 0.4rem;
   transition: all 0.15s ease;
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .mcp-tab-btn:hover {
@@ -3709,13 +3906,13 @@ body.modal-open {
   border-color: var(--border-color);
 }
 
-/* Code Snippet Box */
+/* Code Snippet Box (With space for floating button) */
 .mcp-code-block {
   position: relative;
   background: #141413;
   color: #f3f4f6;
   border-radius: var(--radius-md);
-  padding: 1.15rem 1.25rem;
+  padding: 2.2rem 1.15rem 1.15rem 1.15rem;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 0.82rem;
   line-height: 1.55;
@@ -3723,23 +3920,30 @@ body.modal-open {
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+.mcp-code-block pre {
+  margin: 0;
+  overflow-x: auto;
+  white-space: pre;
+}
+
 .mcp-code-copy-floating {
   position: absolute;
-  top: 0.65rem;
-  right: 0.65rem;
-  background: rgba(255, 255, 255, 0.12);
+  top: 0.5rem;
+  right: 0.5rem;
+  background: rgba(255, 255, 255, 0.14);
   color: #fff;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.22);
   border-radius: var(--radius-sm);
   padding: 0.25rem 0.6rem;
   font-size: 0.72rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.15s ease;
+  z-index: 2;
 }
 
 .mcp-code-copy-floating:hover {
-  background: rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.28);
 }
 
 /* Playground Styling */
@@ -3747,16 +3951,16 @@ body.modal-open {
   background: var(--bg-surface-subtle);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
-  padding: 1.25rem;
+  padding: 1.15rem;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0.9rem;
 }
 
 .mcp-param-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 0.85rem;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.75rem;
 }
 
 .mcp-input {
@@ -3795,19 +3999,209 @@ body.modal-open {
   background: #0f172a;
   color: #e2e8f0;
   border-radius: var(--radius-md);
-  padding: 1rem;
+  padding: 0.95rem;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
   font-size: 0.8rem;
   max-height: 240px;
   overflow-y: auto;
   border: 1px solid rgba(255, 255, 255, 0.1);
+  margin: 0;
 }
 
+/* Note Author Badge */
+.note-author-badge {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #a855f7;
+  background: rgba(168, 85, 247, 0.1);
+  border: 1px solid rgba(168, 85, 247, 0.25);
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+/* Topic Checklist Item Fix (Checkbox + Text Alignment) */
+.topic-check-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  padding: 0.45rem 0.25rem;
+  border-bottom: 1px solid var(--border-subtle);
+  transition: background 0.15s ease;
+}
+
+.topic-check-item:last-child {
+  border-bottom: none;
+}
+
+.topic-checkbox {
+  flex-shrink: 0;
+  margin-top: 0.22rem;
+  width: 17px;
+  height: 17px;
+  cursor: pointer;
+  accent-color: #a855f7;
+}
+
+.topic-check-label {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.86rem;
+  line-height: 1.45;
+  color: var(--text-main);
+  cursor: pointer;
+  word-break: break-word;
+}
+
+/* ==========================================================================
+   MOBILE MEDIA QUERY OVERRIDES (<= 768px and <= 480px)
+   ========================================================================== */
+
 @media (max-width: 768px) {
-  .header-mcp-btn span:not(.mcp-live-pill) {
+  /* Header Button Responsive Tuning */
+  .header-mcp-btn {
+    padding: 0.35rem 0.6rem;
+    gap: 0.35rem;
+  }
+
+  .header-mcp-btn .mcp-btn-label {
+    display: inline;
+    font-size: 0.76rem;
+  }
+
+  .header-mcp-btn .mcp-live-pill {
     display: none;
   }
-  .header-mcp-btn {
-    padding: 0.35rem 0.55rem;
+
+  /* On-page Connect Card */
+  .connect-ai-banner-card {
+    padding: 1.35rem 1.15rem;
+  }
+
+  .connect-ai-card-content {
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+  }
+
+  .connect-ai-title {
+    font-size: 1.3rem;
+  }
+
+  .connect-ai-endpoint-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .connect-endpoint-bar {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .connect-copy-btn {
+    width: 100%;
+    height: 38px;
+  }
+
+  .connect-main-cta-btn {
+    width: 100%;
+    height: 42px;
+  }
+
+  /* MCP Modal Mobile Refinements */
+  .mcp-modal-backdrop {
+    padding: 0.5rem;
+  }
+
+  .mcp-modal-card {
+    max-height: 94vh;
+    border-radius: var(--radius-md);
+  }
+
+  .mcp-modal-header {
+    padding: 0.9rem 1.1rem;
+  }
+
+  .mcp-modal-title {
+    font-size: 1.1rem;
+  }
+
+  .mcp-modal-body {
+    padding: 1rem 1.1rem;
+    gap: 1rem;
+  }
+
+  .mcp-status-banner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .mcp-endpoint-url-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.45rem;
+  }
+
+  .mcp-copy-btn {
+    width: 100%;
+    justify-content: center;
+    height: 36px;
+  }
+
+  .mcp-param-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .mcp-run-btn {
+    width: 100%;
+    height: 40px;
+  }
+
+  .mcp-code-block {
+    font-size: 0.76rem;
+    padding-top: 2.2rem;
   }
 }
+
+@media (max-width: 480px) {
+  .header-mcp-btn .mcp-btn-label {
+    display: none;
+  }
+
+  .header-mcp-btn {
+    padding: 0.35rem 0.45rem;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    justify-content: center;
+  }
+
+  .connect-platform-chips {
+    gap: 0.3rem;
+  }
+
+  .platform-chip {
+    font-size: 0.7rem;
+    padding: 0.25rem 0.5rem;
+  }
+
+  .connect-ai-banner-section {
+    padding: 1.5rem 0 0.5rem 0;
+  }
+
+  .note-card-meta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.45rem;
+  }
+
+  .note-actions-bar {
+    width: 100%;
+    justify-content: flex-start;
+    gap: 0.35rem;
+    flex-wrap: wrap;
+  }
+}
+
