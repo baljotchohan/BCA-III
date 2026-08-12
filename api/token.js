@@ -68,15 +68,10 @@ function verifyFirebaseToken(idToken) {
   });
 }
 
-// ── Generate a random short code ──────────────────────────────────────────────
+const crypto = require('crypto');
 
 function generateCode() {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  let code = '';
-  for (let i = 0; i < 32; i++) {
-    code += chars[Math.floor(Math.random() * chars.length)];
-  }
-  return code;
+  return crypto.randomBytes(24).toString('hex');
 }
 
 // ── Main handler ──────────────────────────────────────────────────────────────

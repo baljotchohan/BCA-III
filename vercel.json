@@ -9,7 +9,9 @@
     { "source": "/.well-known/oauth-authorization-server", "destination": "/api/oauth-metadata" },
     { "source": "/api/authorize", "destination": "/api/authorize" },
     { "source": "/api/token", "destination": "/api/token" },
-    { "source": "/api/register", "destination": "/api/register" }
+    { "source": "/api/register", "destination": "/api/register" },
+    { "source": "/api/create-order", "destination": "/api/create-order" },
+    { "source": "/api/verify-payment", "destination": "/api/verify-payment" }
   ],
   "headers": [
     {

@@ -4,18 +4,33 @@
  * Syncs instantly to ALL student devices in real-time.
  */
 
-const ADMIN_KEY   = 'Defenderbhabhiontop';
 const SESSION_KEY = 'bca_hub_admin_session';
 const DB          = 'https://bca2nd-5c622-default-rtdb.firebaseio.com/bca3';
 
+async function getAuthTokenParam() {
+  try {
+    if (typeof firebase !== 'undefined' && firebase.auth && firebase.auth().currentUser) {
+      const token = await firebase.auth().currentUser.getIdToken();
+      return `?auth=${token}`;
+    }
+  } catch (e) {}
+  return '';
+}
+
 function isPortalAdminAuth() {
+  if (typeof firebase !== 'undefined' && firebase.auth && firebase.auth().currentUser) {
+    const email = firebase.auth().currentUser.email || '';
+    const ADMIN_EMAILS = ['baljotchohan23@gmail.com', 'mehakpreetkaur@gmail.com'];
+    if (ADMIN_EMAILS.includes(email)) return true;
+  }
   return sessionStorage.getItem(SESSION_KEY) === 'authenticated' || sessionStorage.getItem('bca_admin_session') === 'authenticated';
 }
 
 // ─── Firebase REST Helpers ────────────────────────────────────────────────────
 
 async function fbGet(path) {
-  const res = await fetch(`${DB}/${path}.json`);
+  const tokenParam = await getAuthTokenParam();
+  const res = await fetch(`${DB}/${path}.json${tokenParam}`);
   if (!res.ok) throw new Error(`Firebase GET failed: ${res.status}`);
   const data = await res.json();
   if (!data) return [];
@@ -25,7 +40,8 @@ async function fbGet(path) {
 }
 
 async function fbPush(path, data) {
-  const res = await fetch(`${DB}/${path}.json`, {
+  const tokenParam = await getAuthTokenParam();
+  const res = await fetch(`${DB}/${path}.json${tokenParam}`, {
     method:  'POST',
     headers: { 'Content-Type': 'application/json' },
     body:    JSON.stringify(data),
@@ -35,7 +51,8 @@ async function fbPush(path, data) {
 }
 
 async function fbDelete(path, fbKey) {
-  const res = await fetch(`${DB}/${path}/${fbKey}.json`, { method: 'DELETE' });
+  const tokenParam = await getAuthTokenParam();
+  const res = await fetch(`${DB}/${path}/${fbKey}.json${tokenParam}`, { method: 'DELETE' });
   if (!res.ok) throw new Error(`Firebase DELETE failed: ${res.status}`);
 }
 
@@ -59,22 +76,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // ─── Auth ─────────────────────────────────────────────────────────────────────
 function handleLogin(e) {
-  e.preventDefault();
-  const input = document.getElementById('passkey-input').value;
-  const err   = document.getElementById('login-error');
-
-  if (input === ADMIN_KEY) {
-    sessionStorage.setItem(SESSION_KEY, 'authenticated');
-    sessionStorage.setItem('bca_admin_session', 'authenticated');
-    err.classList.remove('visible');
-    showDashboard();
+  if (e && e.preventDefault) e.preventDefault();
+  if (typeof firebase !== 'undefined' && firebase.auth) {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    firebase.auth().signInWithPopup(provider).then((result) => {
+      const email = result.user.email;
+      const ADMIN_EMAILS = ['baljotchohan23@gmail.com', 'mehakpreetkaur@gmail.com'];
+      if (ADMIN_EMAILS.includes(email)) {
+        sessionStorage.setItem(SESSION_KEY, 'authenticated');
+        showDashboard();
+      } else {
+        alert('Access denied: ' + email + ' is not an authorized administrator account.');
+        firebase.auth().signOut();
+      }
+    }).catch((err) => {
+      const errEl = document.getElementById('login-error');
+      if (errEl) {
+        errEl.innerText = err.message || 'Google Sign-In failed.';
+        errEl.classList.add('visible');
+      }
+    });
   } else {
-    err.classList.add('visible');
-    document.getElementById('passkey-input').value = '';
-    document.getElementById('passkey-input').focus();
-    const card = document.querySelector('.admin-lock-card');
-    card.style.animation = 'none';
-    requestAnimationFrame(() => { card.style.animation = 'shake 0.35s ease'; });
+    alert('Firebase Authentication SDK is loading or unavailable.');
   }
 }
 
@@ -135,8 +158,14 @@ function updateAdminThemeBtn(theme) {
 function switchTab(tabName) {
   document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.admin-tab-panel').forEach(p => p.classList.remove('active'));
-  document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
-  document.getElementById(`tab-${tabName}`).classList.add('active');
+  const tabBtn = document.querySelector(`[data-tab="${tabName}"]`);
+  const panel = document.getElementById(`tab-${tabName}`);
+  if (tabBtn) tabBtn.classList.add('active');
+  if (panel) panel.classList.add('active');
+
+  if (tabName === 'revenue') {
+    refreshRevenueData();
+  }
 }
 
 function renderAll() {
@@ -145,6 +174,7 @@ function renderAll() {
   renderAnnouncements();
   renderAgenda();
   renderTodos();
+  refreshRevenueData();
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -624,3 +654,134 @@ style.textContent = `
   @keyframes spin  { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
 `;
 document.head.appendChild(style);
+
+// ─── REVENUE & SUBSCRIPTIONS ANALYTICS ──────────────────────────────────────
+async function refreshRevenueData() {
+  const totalAmountEl = document.getElementById('rev-total-amount');
+  const activeSubsEl = document.getElementById('rev-active-subs');
+  const noteSalesEl = document.getElementById('rev-note-sales');
+  const ordersListEl = document.getElementById('revenue-orders-list');
+
+  try {
+    const [rawOrders, rawUsers] = await Promise.all([
+      _fbFetch('orders'),
+      _fbFetch('users')
+    ]);
+
+    const orders = Array.isArray(rawOrders) ? rawOrders : Object.values(rawOrders || {});
+    const users = Array.isArray(rawUsers) ? rawUsers : Object.values(rawUsers || {});
+
+    let totalRev = 0;
+    let singleNoteCount = 0;
+
+    orders.forEach(o => {
+      if (o.status === 'PAID') {
+        if (o.itemType === 'single_note') {
+          totalRev += 15;
+          singleNoteCount++;
+        } else if (o.itemType === 'subscription') {
+          if (o.planTier === 'pro') totalRev += 49;
+          else if (o.planTier === 'plus') totalRev += 99;
+          else if (o.planTier === 'max') totalRev += 499;
+        }
+      }
+    });
+
+    const activeSubscribersCount = users.filter(u => u.subscription && u.subscription.status === 'active' && u.subscription.plan !== 'free').length;
+
+    if (totalAmountEl) totalAmountEl.textContent = `₹${totalRev.toFixed(2)}`;
+    if (activeSubsEl) activeSubsEl.textContent = activeSubscribersCount;
+    if (noteSalesEl) noteSalesEl.textContent = singleNoteCount;
+
+    if (ordersListEl) {
+      if (!orders.length) {
+        ordersListEl.innerHTML = `<div style="padding: 1.5rem; text-align: center; color: var(--text-subtle);">No transactions recorded yet.</div>`;
+        return;
+      }
+
+      ordersListEl.innerHTML = orders.reverse().map(o => `
+        <div style="background: var(--bg-surface-subtle); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 0.85rem 1rem; margin-bottom: 0.5rem; display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; flex-wrap: wrap;">
+          <div>
+            <div style="font-weight: 700; color: var(--text-main); font-size: 0.9rem;">
+              ${o.itemType === 'single_note' ? '⚡ Single Note Purchase (₹15)' : `⭐ Subscription Upgrade (${(o.planTier || '').toUpperCase()})`}
+            </div>
+            <div style="font-size: 0.76rem; color: var(--text-muted);">
+              User: ${o.uid || 'Anonymous'} | Payment ID: ${o.paymentId || 'N/A'}
+            </div>
+          </div>
+          <div style="text-align: right;">
+            <span style="display: inline-block; padding: 0.15rem 0.55rem; border-radius: 999px; font-size: 0.72rem; font-weight: 700; background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3);">
+              ✓ ${o.status || 'PAID'}
+            </span>
+            <div style="font-size: 0.72rem; color: var(--text-subtle); margin-top: 0.2rem;">
+              ${new Date(o.timestamp || Date.now()).toLocaleDateString('en-IN')}
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+  } catch (err) {
+    console.error('Error fetching revenue data:', err);
+    if (ordersListEl) ordersListEl.innerHTML = `<div style="padding: 1rem; color: #ef4444;">Error loading revenue analytics: ${err.message}</div>`;
+  }
+}
+
+async function adminGrantSubscription() {
+  const userIdInput = document.getElementById('grant-user-id');
+  const planSelect = document.getElementById('grant-plan-tier');
+
+  const userId = userIdInput ? userIdInput.value.trim() : '';
+  const planTier = planSelect ? planSelect.value : 'pro';
+
+  if (!userId) {
+    alert('Please enter a student email address or UID.');
+    return;
+  }
+
+  try {
+    const rawUsers = await _fbFetch('users');
+    const usersObj = rawUsers || {};
+
+    let targetKey = null;
+
+    if (typeof usersObj === 'object') {
+      for (const [key, user] of Object.entries(usersObj)) {
+        if (key === userId || (user.email && user.email.toLowerCase() === userId.toLowerCase())) {
+          targetKey = key;
+          break;
+        }
+      }
+    }
+
+    if (!targetKey) {
+      targetKey = userId.replace(/[^a-zA-Z0-9]/g, '_');
+    }
+
+    const now = Date.now();
+    let durationMs = 30 * 24 * 60 * 60 * 1000;
+    if (planTier === 'max') durationMs = 3650 * 24 * 60 * 60 * 1000;
+
+    const subData = {
+      plan: planTier,
+      status: planTier === 'free' ? 'expired' : 'active',
+      activatedAt: now,
+      validUntil: now + durationMs,
+      grantedByAdmin: true
+    };
+
+    await fetch(`https://bca2nd-5c622-default-rtdb.firebaseio.com/bca3/users/${targetKey}/subscription.json`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(subData)
+    });
+
+    showAdminToast(`Success! Granted ${planTier.toUpperCase()} pass to ${userId}`);
+    if (userIdInput) userIdInput.value = '';
+    refreshRevenueData();
+
+  } catch (err) {
+    console.error('Error granting subscription:', err);
+    alert('Failed to grant pass: ' + err.message);
+  }
+}
+

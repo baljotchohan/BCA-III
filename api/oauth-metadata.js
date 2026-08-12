@@ -31,8 +31,7 @@ module.exports = (req, res) => {
       name: 'BCA III Academic Hub',
       university: 'Panjab University, Chandigarh',
       semester: 'BCA 3rd Semester (2026-27)',
-      mcp_endpoint: `${base}/api/mcp`,
-      admin_emails: ['baljotchohan23@gmail.com', 'mehakpreetkaur@gmail.com']
+      mcp_endpoint: `${base}/api/mcp`
     }
   });
 };

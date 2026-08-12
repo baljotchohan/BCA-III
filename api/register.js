@@ -23,8 +23,9 @@ module.exports = async (req, res) => {
   const clientName = body.client_name || 'MCP Client';
   const redirectUris = body.redirect_uris || [];
 
-  const clientId = `bca3_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
-  const clientSecret = `bca3_sec_${Math.random().toString(36).substring(2, 12)}`;
+  const crypto = require('crypto');
+  const clientId = `bca3_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
+  const clientSecret = `bca3_sec_${crypto.randomBytes(8).toString('hex')}`;
 
   return res.status(201).json({
     client_id: clientId,

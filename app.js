@@ -19,11 +19,51 @@ function isAdminAuthenticated() {
   return !!(currentUserProfile && currentUserProfile.isAdmin === true);
 }
 
-function lockScroll(lock) {
+let _activeModalFocusTrap = null;
+
+function lockScroll(lock, modalEl) {
   if (lock) {
     document.body.classList.add('modal-open');
+    if (modalEl) {
+      trapModalFocus(modalEl);
+    }
   } else {
     document.body.classList.remove('modal-open');
+    releaseModalFocus();
+  }
+}
+
+function trapModalFocus(modalEl) {
+  releaseModalFocus();
+  const focusables = modalEl.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+  if (!focusables.length) return;
+  const first = focusables[0];
+  const last = focusables[focusables.length - 1];
+
+  function handleKeyDown(e) {
+    if (e.key !== 'Tab') return;
+    if (e.shiftKey) {
+      if (document.activeElement === first) {
+        last.focus();
+        e.preventDefault();
+      }
+    } else {
+      if (document.activeElement === last) {
+        first.focus();
+        e.preventDefault();
+      }
+    }
+  }
+
+  modalEl.addEventListener('keydown', handleKeyDown);
+  _activeModalFocusTrap = { modalEl, handleKeyDown };
+  first.focus();
+}
+
+function releaseModalFocus() {
+  if (_activeModalFocusTrap) {
+    _activeModalFocusTrap.modalEl.removeEventListener('keydown', _activeModalFocusTrap.handleKeyDown);
+    _activeModalFocusTrap = null;
   }
 }
 
@@ -349,17 +389,19 @@ async function renderSubjectNotes(subject) {
   }
 
   // Render sleek, compact Topic Cards instead of huge text walls
-  container.innerHTML = filtered.map(note => {
+  container.innerHTML = filtered.map((note, index) => {
     const noteKey = note.fbKey || note.id;
     const isCloud = Boolean(note.fbKey);
     const authorName = note.author || 'Baljot Chohan';
     const excerpt = getPlainExcerpt(note.content, 150, note.title);
+    const hasAccess = window.BCA3_PAYMENTS ? window.BCA3_PAYMENTS.hasNoteAccess(noteKey, index) : true;
 
     return `
       <div class="note-topic-card" onclick="openNoteReaderView('${noteKey}')">
         <div class="note-topic-header">
           <div class="note-meta-left" style="display: flex; align-items: center; gap: 0.45rem; flex-wrap: wrap;">
             <span class="note-unit-badge">${escapeHtml(note.unit || 'Unit I')}</span>
+            ${hasAccess ? '<span style="font-size: 0.72rem; color: #10b981; font-weight: 700;">🔓 Unlocked</span>' : '<span style="font-size: 0.72rem; color: #ef4444; font-weight: 700;">🔒 Locked (₹15)</span>'}
             <span class="note-author-pill">✍️ By ${escapeHtml(authorName)}</span>
             <span class="note-read-time">⏱️ ${escapeHtml(note.readTime || '6 min read')}</span>
             ${note.date ? `<span style="font-size: 0.72rem; color: var(--text-subtle);">📅 ${escapeHtml(note.date)}</span>` : ''}
@@ -438,12 +480,42 @@ function openNoteReaderView(noteKey) {
     tagsEl.innerHTML = (note.tags || []).map(t => `<span class="topic-tag-pill">${escapeHtml(t.replace(/^#/, ''))}</span>`).join('');
   }
 
+  // Check Paywall Access
+  const noteIndex = (_currentSubjectNotes || []).findIndex(n => (n.fbKey === noteKey || n.id === noteKey));
+  const hasAccess = window.BCA3_PAYMENTS ? window.BCA3_PAYMENTS.hasNoteAccess(noteKey, noteIndex) : true;
+
   // Render markdown body with diagrams & LaTeX
   const bodyEl = document.getElementById('note-reader-body');
   if (bodyEl) {
-    bodyEl.innerHTML = renderMarkdownBlocks(note.content);
-    if (window.ManimVisuals) {
-      setTimeout(() => window.ManimVisuals.mountAll(bodyEl), 40);
+    if (hasAccess) {
+      bodyEl.innerHTML = renderMarkdownBlocks(note.content);
+      if (window.ManimVisuals) {
+        setTimeout(() => window.ManimVisuals.mountAll(bodyEl), 40);
+      }
+    } else {
+      const excerptHtml = renderMarkdownBlocks(getPlainExcerpt(note.content, 220, note.title));
+      const safeTitle = escapeHtml(note.title).replace(/'/g, "\\'");
+      bodyEl.innerHTML = `
+        <div class="note-paywall-teaser">
+          <div class="note-paywall-blur-content">
+            ${excerptHtml}
+            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Core algorithms, proof statements, unit summary, and examination points continue below...</p>
+          </div>
+          <div class="note-paywall-overlay">
+            <div class="paywall-icon">🔒</div>
+            <h3 class="paywall-title">Digital Note Locked</h3>
+            <p class="paywall-desc">Unlock this individual note permanently for <strong>₹15</strong> or subscribe to <strong>Pro Scholar (₹49/mo)</strong> for unlimited semester notes & PDF downloads.</p>
+            <div class="paywall-actions">
+              <button class="paywall-unlock-btn" onclick="BCA3_PAYMENTS.payForSingleNote('${noteKey}', '${safeTitle}', 15)">
+                ⚡ Unlock Note for ₹15
+              </button>
+              <button class="paywall-subscribe-btn" onclick="BCA3_PAYMENTS.openPricingModal()">
+                ⭐ Upgrade to Pro (₹49/mo)
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
     }
   }
 
@@ -2578,11 +2650,13 @@ function updateProfileUI() {
         roleBadge.className = 'profile-badge admin';
         roleBadge.textContent = '🛡️ Administrator';
       } else {
-        roleBadge.className = 'profile-badge';
-        roleBadge.textContent = '🎓 Student Scholar';
+        const sub = currentUserProfile.subscription || { plan: 'free' };
+        const planName = sub.plan ? sub.plan.toUpperCase() : 'FREE';
+        roleBadge.className = `profile-badge ${sub.plan || 'free'}`;
+        roleBadge.textContent = `🎓 Plan: ${planName}`;
       }
     }
-    if (statusText) statusText.textContent = currentUserProfile.isAdmin ? 'Admin OAuth Verified' : 'Google Verified Student';
+    if (statusText) statusText.textContent = currentUserProfile.isAdmin ? 'Admin OAuth Verified' : `Verified Student (${currentUserProfile.subscription ? currentUserProfile.subscription.plan.toUpperCase() : 'Free Plan'})`;
     if (googleBtnText) googleBtnText.textContent = 'Sign Out Account';
     if (authTriggerBtn) authTriggerBtn.className = 'google-auth-btn signed-in';
     if (adminTabBtn) adminTabBtn.style.display = currentUserProfile.isAdmin ? 'block' : 'none';

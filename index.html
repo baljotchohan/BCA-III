@@ -1645,7 +1645,7 @@
     "bca3-baljot": {
       "url": "https://bca-iii.vercel.app/api/mcp",
       "headers": {
-        "Authorization": "Bearer Defenderbhabhiontop",
+        "Authorization": "Bearer YOUR_FIREBASE_ID_TOKEN_OR_ADMIN_SECRET",
         "X-Author-Name": "Baljot Chohan"
       }
     }
@@ -1670,7 +1670,7 @@
     "bca3-mehak": {
       "url": "https://bca-iii.vercel.app/api/mcp",
       "headers": {
-        "Authorization": "Bearer Defenderbhabhiontop",
+        "Authorization": "Bearer YOUR_FIREBASE_ID_TOKEN_OR_ADMIN_SECRET",
         "X-Author-Name": "Mehakpreet Kaur"
       }
     }
@@ -1941,7 +1941,94 @@
       </svg>
       <span>Profile</span>
     </button>
-  </nav>
+  <!-- SUBSCRIPTION & PRICING MODAL -->
+  <div id="pricingModal" class="modal-backdrop" style="display: none;">
+    <div class="pricing-modal-content">
+      <div class="pricing-header">
+        <span class="pricing-badge">⭐ UNLOCK UNLIMITED ACCESS</span>
+        <h2>Choose Your BCA III Study Plan</h2>
+        <p>Unlock structured notes, lab manuals, visual animations & AI tools designed for your semester.</p>
+        <button class="pricing-close-btn" onclick="BCA3_PAYMENTS.closePricingModal()">&times;</button>
+      </div>
+
+      <div class="pricing-grid">
+        <!-- Free Plan -->
+        <div class="pricing-card free-plan">
+          <div class="plan-header">
+            <h3>Starter</h3>
+            <div class="plan-price">₹0 <span>/ forever</span></div>
+            <p>Basic syllabus tree & unit previews</p>
+          </div>
+          <ul class="plan-features">
+            <li><span class="check">✓</span> Syllabus Tree & Unit Topics</li>
+            <li><span class="check">✓</span> 1 Free Note Preview per subject</li>
+            <li><span class="cross">✕</span> Full Note Reading locked</li>
+            <li><span class="cross">✕</span> PDF Downloads disabled</li>
+          </ul>
+          <button class="plan-btn btn-secondary" disabled>Current Plan</button>
+        </div>
+
+        <!-- Pro Plan -->
+        <div class="pricing-card pro-plan featured">
+          <div class="popular-ribbon">MOST POPULAR</div>
+          <div class="plan-header">
+            <h3>Pro Scholar</h3>
+            <div class="plan-price">₹49 <span>/ month</span></div>
+            <p>Full access to all subject notes & downloads</p>
+          </div>
+          <ul class="plan-features">
+            <li><span class="check">✓</span> <strong>Unlimited Notes Reading</strong></li>
+            <li><span class="check">✓</span> <strong>Full PDF Note Downloads</strong></li>
+            <li><span class="check">✓</span> Lecture Logs & Practical Guides</li>
+            <li><span class="check">✓</span> Calendar Day-Wise switching</li>
+          </ul>
+          <button class="plan-btn btn-primary" onclick="BCA3_PAYMENTS.payForSubscription('pro', 'Pro Scholar', 49)">
+            Upgrade to Pro (₹49)
+          </button>
+        </div>
+
+        <!-- Plus Plan -->
+        <div class="pricing-card plus-plan">
+          <div class="plan-header">
+            <h3>Plus AI</h3>
+            <div class="plan-price">₹99 <span>/ month</span></div>
+            <p>Pro access + AI Note Summarizer & Visuals</p>
+          </div>
+          <ul class="plan-features">
+            <li><span class="check">✓</span> <strong>Everything in Pro Tier</strong></li>
+            <li><span class="check">✓</span> <strong>AI Note Summarizer & Quiz generator</strong></li>
+            <li><span class="check">✓</span> <strong>Manim Visual AI Engine Access</strong></li>
+            <li><span class="check">✓</span> Priority Customer & Study Support</li>
+          </ul>
+          <button class="plan-btn btn-gradient-purple" onclick="BCA3_PAYMENTS.payForSubscription('plus', 'Plus AI', 99)">
+            Get Plus AI (₹99)
+          </button>
+        </div>
+
+        <!-- Max Lifetime Plan -->
+        <div class="pricing-card max-plan">
+          <div class="plan-header">
+            <h3>Max Lifetime</h3>
+            <div class="plan-price">₹499 <span>/ lifetime</span></div>
+            <p>One-time payment for full 3rd semester</p>
+          </div>
+          <ul class="plan-features">
+            <li><span class="check">✓</span> <strong>Lifetime Semester 3 Pass</strong></li>
+            <li><span class="check">✓</span> <strong>All Pro & Plus AI Features</strong></li>
+            <li><span class="check">✓</span> <strong>Offline Zip Note Download Bundles</strong></li>
+            <li><span class="check">✓</span> Direct Mentor Q&A Chat</li>
+          </ul>
+          <button class="plan-btn btn-gradient-pink" onclick="BCA3_PAYMENTS.payForSubscription('max', 'Max Lifetime', 499)">
+            Get Max Pass (₹499)
+          </button>
+        </div>
+      </div>
+
+      <div class="pricing-footer">
+        <p>💡 Just need a single note? You can unlock any individual note for only <strong>₹15</strong> directly on the subject page!</p>
+      </div>
+    </div>
+  </div>
 
   <!-- SCRIPTS -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -1950,6 +2037,7 @@
   <script src="syllabus-data.js?v=4.0"></script>
   <script src="firebase-config.js?v=4.0"></script>
   <script src="visuals-engine.js?v=4.0"></script>
+  <script src="payment.js?v=4.0"></script>
   <script src="app.js?v=4.0"></script>
 </body>
 </html>

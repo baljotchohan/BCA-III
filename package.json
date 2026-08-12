@@ -1,0 +1,12 @@
+{
+  "name": "bca-iii-hub",
+  "version": "1.0.0",
+  "description": "BCA III Hub Study Portal & Notes Platform",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js"
+  },
+  "dependencies": {
+    "razorpay": "^2.9.2"
+  }
+}

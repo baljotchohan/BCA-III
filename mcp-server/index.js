@@ -13,7 +13,7 @@ const readline = require('readline');
 const http = require('http');
 const https = require('https');
 
-const ADMIN_PASSKEY = process.env.ADMIN_PASSKEY || "Defenderbhabhiontop";
+const ADMIN_PASSKEY = process.env.ADMIN_PASSKEY || "";
 const DEFAULT_AUTHOR = "Baljot Chohan";
 
 // Complete Panjab University BCA 3rd Sem Syllabus Data (2026-27 NEP-2020 Framework)
@@ -828,6 +828,7 @@ function deleteFirebaseData(endpoint, id) {
 
 // Helper: Verify Admin Access
 function verifyAdmin(authHeader, passkeyArg) {
+  if (!ADMIN_PASSKEY || ADMIN_PASSKEY.trim() === "") return false;
   if (passkeyArg && passkeyArg.trim() === ADMIN_PASSKEY) return true;
   if (!authHeader) return false;
   const token = authHeader.replace(/^Bearer\s+/i, '').trim();

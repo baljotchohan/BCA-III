@@ -730,9 +730,10 @@ const PROMPTS = [
 ];
 
 // Helper: Fetch JSON from Firebase RTDB
-function fetchFirebaseData(endpoint) {
+function fetchFirebaseData(endpoint, authToken = '') {
   return new Promise((resolve) => {
-    const url = `https://bca2nd-5c622-default-rtdb.firebaseio.com/bca3/${endpoint}.json`;
+    const authParam = authToken ? `?auth=${encodeURIComponent(authToken)}` : '';
+    const url = `https://bca2nd-5c622-default-rtdb.firebaseio.com/bca3/${endpoint}.json${authParam}`;
     https.get(url, (res) => {
       let data = '';
       res.on('data', chunk => { data += chunk; });
@@ -753,12 +754,13 @@ function fetchFirebaseData(endpoint) {
 }
 
 // Helper: Post JSON to Firebase RTDB
-function pushFirebaseData(endpoint, payload) {
+function pushFirebaseData(endpoint, payload, authToken = '') {
   return new Promise((resolve, reject) => {
     const data = JSON.stringify(payload);
+    const authParam = authToken ? `?auth=${encodeURIComponent(authToken)}` : '';
     const options = {
       hostname: 'bca2nd-5c622-default-rtdb.firebaseio.com',
-      path: `/bca3/${endpoint}.json`,
+      path: `/bca3/${endpoint}.json${authParam}`,
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -784,12 +786,13 @@ function pushFirebaseData(endpoint, payload) {
 }
 
 // Helper: Patch JSON in Firebase RTDB
-function putFirebaseData(endpoint, id, payload) {
+function putFirebaseData(endpoint, id, payload, authToken = '') {
   return new Promise((resolve, reject) => {
     const data = JSON.stringify(payload);
+    const authParam = authToken ? `?auth=${encodeURIComponent(authToken)}` : '';
     const options = {
       hostname: 'bca2nd-5c622-default-rtdb.firebaseio.com',
-      path: `/bca3/${endpoint}/${id}.json`,
+      path: `/bca3/${endpoint}/${id}.json${authParam}`,
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
@@ -808,11 +811,12 @@ function putFirebaseData(endpoint, id, payload) {
 }
 
 // Helper: Delete JSON from Firebase RTDB
-function deleteFirebaseData(endpoint, id) {
+function deleteFirebaseData(endpoint, id, authToken = '') {
   return new Promise((resolve, reject) => {
+    const authParam = authToken ? `?auth=${encodeURIComponent(authToken)}` : '';
     const options = {
       hostname: 'bca2nd-5c622-default-rtdb.firebaseio.com',
-      path: `/bca3/${endpoint}/${id}.json`,
+      path: `/bca3/${endpoint}/${id}.json${authParam}`,
       method: 'DELETE'
     };
     const req = https.request(options, (res) => {

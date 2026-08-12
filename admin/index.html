@@ -131,6 +131,10 @@
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
           Study Tasks
         </button>
+        <button class="admin-tab" data-tab="revenue" onclick="switchTab('revenue')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+          Revenue &amp; Subscriptions
+        </button>
       </div>
     </header>
 
@@ -475,6 +479,65 @@
 
         <div id="todos-list" class="admin-items-list">
           <!-- Populated dynamically -->
+        </div>
+      </section>
+
+      <!-- TAB 6: REVENUE & SUBSCRIPTIONS -->
+      <section id="tab-revenue" class="admin-tab-panel">
+        <div class="admin-panel-header">
+          <div>
+            <h2 class="admin-panel-title serif">Revenue &amp; Subscriptions Dashboard</h2>
+            <p class="admin-panel-desc">Monitor Razorpay income, active student subscriptions, and manage user access passes.</p>
+          </div>
+          <button class="admin-action-btn primary" onclick="refreshRevenueData()">
+            🔄 Refresh Analytics
+          </button>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+          <div style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); padding: 1.15rem; border-radius: var(--radius-md);">
+            <div style="font-size: 0.78rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">Total Net Revenue</div>
+            <div id="rev-total-amount" style="font-size: 1.8rem; font-weight: 800; color: #10b981; margin-top: 0.35rem;">₹0.00</div>
+          </div>
+          <div style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); padding: 1.15rem; border-radius: var(--radius-md);">
+            <div style="font-size: 0.78rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">Active Subscribers</div>
+            <div id="rev-active-subs" style="font-size: 1.8rem; font-weight: 800; color: #6366f1; margin-top: 0.35rem;">0</div>
+          </div>
+          <div style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); padding: 1.15rem; border-radius: var(--radius-md);">
+            <div style="font-size: 0.78rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">Single Note Sales (₹15)</div>
+            <div id="rev-note-sales" style="font-size: 1.8rem; font-weight: 800; color: #a855f7; margin-top: 0.35rem;">0</div>
+          </div>
+        </div>
+
+        <!-- Manual Plan Grant Card -->
+        <div class="admin-form-card" style="margin-bottom: 1.5rem;">
+          <h3 class="admin-form-title">⚡ Grant Free Access / Gift Subscription</h3>
+          <p style="font-size: 0.84rem; color: var(--text-muted); margin-bottom: 1rem;">Manually grant a Pro, Plus, or Max pass to a student by entering their Google email address or UID.</p>
+          <div class="admin-form-grid">
+            <div class="admin-field">
+              <label class="admin-label">Student UID or Email *</label>
+              <input type="text" id="grant-user-id" class="admin-input-field" placeholder="e.g. student@gmail.com or user_xxx"/>
+            </div>
+            <div class="admin-field">
+              <label class="admin-label">Plan Tier *</label>
+              <select id="grant-plan-tier" class="admin-input-field">
+                <option value="pro">Pro Scholar (₹49/mo access)</option>
+                <option value="plus">Plus AI (₹99/mo access)</option>
+                <option value="max">Max Lifetime (₹499 lifetime pass)</option>
+                <option value="free">Reset to Free Tier</option>
+              </select>
+            </div>
+          </div>
+          <div class="admin-form-actions">
+            <button class="admin-action-btn primary" onclick="adminGrantSubscription()">
+              🎁 Grant Access Pass
+            </button>
+          </div>
+        </div>
+
+        <h3 style="font-size: 1.1rem; margin-bottom: 0.85rem; color: var(--text-main);">Recent Transactions &amp; Orders</h3>
+        <div id="revenue-orders-list" class="admin-items-list">
+          <div style="padding: 1.5rem; text-align: center; color: var(--text-subtle);">Loading transaction orders...</div>
         </div>
       </section>
 

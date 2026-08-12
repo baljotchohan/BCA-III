@@ -320,7 +320,7 @@ module.exports = async (req, res) => {
     <hr class="divider"/>
 
     <p class="permissions-note">
-      Admin emails (<strong>baljotchohan23@gmail.com</strong> &amp; <strong>mehakpreetkaur@gmail.com</strong>) unlock live write privileges. Students receive read-only access.
+      Authorized administrator Google accounts unlock live write privileges. Registered students receive read-only academic access.
     </p>
   </div>
 
