@@ -2567,15 +2567,20 @@ function initFirebaseAuth() {
   if (typeof firebase !== 'undefined' && firebase.auth) {
     firebase.auth().onAuthStateChanged((user) => {
       if (user) {
+        const prevNotes = (currentUserProfile && currentUserProfile.purchasedNotes) || (savedLocal ? (JSON.parse(savedLocal).purchasedNotes || {}) : {});
+        const prevSub = (currentUserProfile && currentUserProfile.subscription) || (savedLocal ? (JSON.parse(savedLocal).subscription || null) : null);
+        const isAdminUser = (FIREBASE.adminEmails || []).includes(user.email);
+
         currentUserProfile = {
           uid: user.uid,
           name: user.displayName || 'BCA Scholar',
           email: user.email || '',
           photo: user.photoURL || '',
-          isAdmin: (FIREBASE.adminEmails || []).includes(user.email)
+          isAdmin: isAdminUser,
+          purchasedNotes: prevNotes,
+          subscription: prevSub || (isAdminUser ? { plan: 'max', status: 'active', validUntil: Date.now() + 3650*24*60*60*1000 } : null)
         };
         localStorage.setItem('studiq_user_profile', JSON.stringify(currentUserProfile));
-        // Dismiss any sign-in nudge since user just signed in
         dismissGuestNudge();
       } else {
         // Signed out — clear any locally cached profile
