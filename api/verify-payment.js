@@ -29,7 +29,11 @@ module.exports = async function handler(req, res) {
       return res.status(400).json({ error: 'Missing required Razorpay payment verification parameters' });
     }
 
-    const keySecret = process.env.RAZORPAY_KEY_SECRET || '6m1RH27SVzDPedct3EKjWEkY';
+    const keySecret = process.env.RAZORPAY_KEY_SECRET;
+
+    if (!keySecret) {
+      return res.status(500).json({ error: 'Server configuration error: RAZORPAY_KEY_SECRET environment variable is missing.' });
+    }
 
     // HMAC SHA-256 verification
     const generatedSignature = crypto
@@ -37,7 +41,7 @@ module.exports = async function handler(req, res) {
       .update(`${razorpay_order_id}|${razorpay_payment_id}`)
       .digest('hex');
 
-    const isVerified = (generatedSignature === razorpay_signature) || keySecret === 'dummyKeySecret';
+    const isVerified = (generatedSignature === razorpay_signature);
 
     if (!isVerified) {
       return res.status(400).json({ success: false, error: 'Invalid Razorpay signature. Payment verification failed.' });

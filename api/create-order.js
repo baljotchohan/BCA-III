@@ -22,7 +22,11 @@ module.exports = async function handler(req, res) {
     }
 
     const keyId = process.env.RAZORPAY_KEY_ID || 'rzp_live_TOvSIy2L3J3ply';
-    const keySecret = process.env.RAZORPAY_KEY_SECRET || '6m1RH27SVzDPedct3EKjWEkY';
+    const keySecret = process.env.RAZORPAY_KEY_SECRET;
+
+    if (!keySecret) {
+      return res.status(500).json({ error: 'Server configuration error: RAZORPAY_KEY_SECRET environment variable is missing.' });
+    }
 
     const razorpay = new Razorpay({
       key_id: keyId,
