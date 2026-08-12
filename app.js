@@ -504,13 +504,16 @@ function openNoteReaderView(noteKey) {
           <div class="note-paywall-overlay">
             <div class="paywall-icon">🔒</div>
             <h3 class="paywall-title">Digital Note Locked</h3>
-            <p class="paywall-desc">Unlock this individual note permanently for <strong>₹15</strong> or subscribe to <strong>Pro Scholar (₹49/mo)</strong> for unlimited semester notes & PDF downloads.</p>
+            <p class="paywall-desc">Unlock this note permanently for <strong>₹15</strong> or subscribe to <strong>Pro Scholar Pass (₹49/mo)</strong> for unlimited full notes &amp; PDF downloads.</p>
+            <div class="paywall-upi-badge">
+              <span>💳 UPI • Google Pay • PhonePe • Paytm • Cards Supported</span>
+            </div>
             <div class="paywall-actions">
               <button class="paywall-unlock-btn" onclick="BCA3_PAYMENTS.payForSingleNote('${noteKey}', '${safeTitle}', 15)">
-                ⚡ Unlock Note for ₹15
+                ⚡ Pay ₹15 via UPI / Card
               </button>
               <button class="paywall-subscribe-btn" onclick="BCA3_PAYMENTS.openPricingModal()">
-                ⭐ Upgrade to Pro (₹49/mo)
+                ⭐ Pro Pass (₹49/mo)
               </button>
             </div>
           </div>
