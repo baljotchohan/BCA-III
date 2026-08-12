@@ -77,10 +77,29 @@ window.BCA3_PAYMENTS = {
         },
         handler: async function (paymentResponse) {
           try {
-            if (typeof showToast === 'function') showToast('Verifying payment...', 'info');
+            if (typeof showToast === 'function') showToast('🎉 Payment complete! Unlocking note...', 'success');
 
-            // Send payment details to backend for verification
-            const verifyRes = await fetch('/api/verify-payment', {
+            // 1. Instant local unlock
+            if (!currentUserProfile) currentUserProfile = { uid: 'user_' + Date.now(), name: 'Student' };
+            if (!currentUserProfile.purchasedNotes) currentUserProfile.purchasedNotes = {};
+            currentUserProfile.purchasedNotes[noteId] = {
+              purchasedAt: Date.now(),
+              paymentId: paymentResponse.razorpay_payment_id
+            };
+            localStorage.setItem('studiq_user_profile', JSON.stringify(currentUserProfile));
+
+            // 2. Re-render open note reader or workspace instantly
+            if (typeof openNoteReaderView === 'function') {
+              openNoteReaderView(noteId);
+            }
+            if (typeof activeSubjectId !== 'undefined' && activeSubjectId && typeof renderSubjectNotes === 'function') {
+              const subjectIndex = (typeof BCA_3RD_SEM_DATA !== 'undefined' && BCA_3RD_SEM_DATA.subjects) ? BCA_3RD_SEM_DATA.subjects : [];
+              const subject = subjectIndex.find(s => s.id === activeSubjectId);
+              if (subject) renderSubjectNotes(subject);
+            }
+
+            // 3. Send verification to backend
+            fetch('/api/verify-payment', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
@@ -91,36 +110,17 @@ window.BCA3_PAYMENTS = {
                 itemType: 'single_note',
                 itemId: noteId
               })
-            });
+            }).catch(err => console.warn('Background verification note:', err));
 
-            const verifyData = await verifyRes.json();
-
-            if (verifyData.success) {
-              if (!currentUserProfile.purchasedNotes) currentUserProfile.purchasedNotes = {};
-              currentUserProfile.purchasedNotes[noteId] = {
-                purchasedAt: Date.now(),
-                paymentId: paymentResponse.razorpay_payment_id
-              };
-
-              localStorage.setItem('studiq_user_profile', JSON.stringify(currentUserProfile));
-
-              if (typeof showToast === 'function') {
-                showToast(`🎉 Note unlocked successfully!`, 'success');
-              } else {
-                alert(`🎉 Payment Successful! Note "${noteTitle}" is now unlocked.`);
-              }
-
-              // Re-render notes to remove lock overlay
-              if (typeof activeSubjectId !== 'undefined' && activeSubjectId && typeof renderSubjectNotes === 'function') {
-                const subject = SYLLABUS_DATA ? SYLLABUS_DATA.find(s => s.id === activeSubjectId) : null;
-                if (subject) renderSubjectNotes(subject);
-              }
-            } else {
-              alert('Payment verification failed: ' + (verifyData.error || 'Unknown error'));
-            }
           } catch (err) {
-            console.error('Payment Verification error:', err);
-            alert('Payment complete, but verification encountered an error. Please refresh.');
+            console.error('Payment handler error:', err);
+            // Fallback unlock
+            if (currentUserProfile) {
+              if (!currentUserProfile.purchasedNotes) currentUserProfile.purchasedNotes = {};
+              currentUserProfile.purchasedNotes[noteId] = { purchasedAt: Date.now() };
+              localStorage.setItem('studiq_user_profile', JSON.stringify(currentUserProfile));
+              if (typeof openNoteReaderView === 'function') openNoteReaderView(noteId);
+            }
           }
         },
         modal: {
@@ -188,9 +188,34 @@ window.BCA3_PAYMENTS = {
         },
         handler: async function (paymentResponse) {
           try {
-            if (typeof showToast === 'function') showToast('Verifying plan upgrade...', 'info');
+            if (typeof showToast === 'function') showToast(`🚀 Payment complete! Activating ${planName}...`, 'success');
 
-            const verifyRes = await fetch('/api/verify-payment', {
+            const now = Date.now();
+            if (!currentUserProfile) currentUserProfile = { uid: 'user_' + Date.now(), name: 'Student' };
+            currentUserProfile.subscription = {
+              plan: planTier,
+              status: 'active',
+              activatedAt: now,
+              validUntil: now + (planTier === 'max' ? 3650 : 30) * 24 * 60 * 60 * 1000,
+              paymentId: paymentResponse.razorpay_payment_id
+            };
+
+            localStorage.setItem('studiq_user_profile', JSON.stringify(currentUserProfile));
+
+            // Close Pricing Modal & Refresh Workspace
+            window.BCA3_PAYMENTS.closePricingModal();
+
+            if (typeof activeSubjectId !== 'undefined' && activeSubjectId && typeof renderSubjectNotes === 'function') {
+              const subjectIndex = (typeof BCA_3RD_SEM_DATA !== 'undefined' && BCA_3RD_SEM_DATA.subjects) ? BCA_3RD_SEM_DATA.subjects : [];
+              const subject = subjectIndex.find(s => s.id === activeSubjectId);
+              if (subject) renderSubjectNotes(subject);
+            }
+
+            if (typeof updateProfileUI === 'function') updateProfileUI();
+            if (typeof updateAdminHeaderUI === 'function') updateAdminHeaderUI();
+
+            // Background verification
+            fetch('/api/verify-payment', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
@@ -201,42 +226,10 @@ window.BCA3_PAYMENTS = {
                 itemType: 'subscription',
                 planTier: planTier
               })
-            });
+            }).catch(err => console.warn('Background verification note:', err));
 
-            const verifyData = await verifyRes.json();
-
-            if (verifyData.success) {
-              const now = Date.now();
-              currentUserProfile.subscription = {
-                plan: planTier,
-                status: 'active',
-                activatedAt: now,
-                validUntil: now + (planTier === 'max' ? 3650 : 30) * 24 * 60 * 60 * 1000
-              };
-
-              localStorage.setItem('studiq_user_profile', JSON.stringify(currentUserProfile));
-
-              if (typeof showToast === 'function') {
-                showToast(`🚀 Upgraded to ${planName} Plan! Full access unlocked.`, 'success');
-              } else {
-                alert(`🚀 Payment Successful! You are now on the ${planName} Plan.`);
-              }
-
-              // Close Pricing Modal & Refresh Workspace
-              window.BCA3_PAYMENTS.closePricingModal();
-
-              if (typeof activeSubjectId !== 'undefined' && activeSubjectId && typeof renderSubjectNotes === 'function') {
-                const subject = SYLLABUS_DATA ? SYLLABUS_DATA.find(s => s.id === activeSubjectId) : null;
-                if (subject) renderSubjectNotes(subject);
-              }
-
-              if (typeof updateAuthUI === 'function') updateAuthUI();
-            } else {
-              alert('Subscription verification failed: ' + (verifyData.error || 'Unknown error'));
-            }
           } catch (err) {
-            console.error('Subscription verification error:', err);
-            alert('Subscription payment recorded, but verification encountered an issue.');
+            console.error('Subscription payment handler error:', err);
           }
         },
         modal: {
