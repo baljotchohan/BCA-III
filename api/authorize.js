@@ -3,7 +3,7 @@
  * GET /api/authorize
  *
  * Anthropic-Inspired Warm Obsidian Glass Aesthetic.
- * Renders a Google OAuth authorization interface.
+ * Mobile-First Google OAuth with Automatic Popup/Redirect fallback.
  */
 
 module.exports = async (req, res) => {
@@ -15,6 +15,7 @@ module.exports = async (req, res) => {
 
   const safeRedirect = encodeURIComponent(redirect_uri);
   const safeState = encodeURIComponent(state);
+  const safeClientId = encodeURIComponent(client_id);
   const displayClient = client_id.toLowerCase().includes('chatgpt') ? 'ChatGPT' 
                       : client_id.toLowerCase().includes('claude') ? 'Claude' 
                       : client_id.toLowerCase().includes('cursor') ? 'Cursor' 
@@ -24,7 +25,7 @@ module.exports = async (req, res) => {
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
   <title>BCA III Hub — Authorize ${displayClient}</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
@@ -34,11 +35,11 @@ module.exports = async (req, res) => {
     
     :root {
       --bg-dark: #0c0c14;
-      --card-bg: rgba(18, 18, 28, 0.75);
+      --card-bg: rgba(18, 18, 28, 0.85);
       --border-light: rgba(255, 255, 255, 0.08);
-      --border-accent: rgba(204, 120, 92, 0.35);
+      --border-accent: rgba(204, 120, 92, 0.45);
       --terracotta: #cc785c;
-      --terracotta-glow: rgba(204, 120, 92, 0.15);
+      --terracotta-glow: rgba(204, 120, 92, 0.18);
       --text-main: #f3f3f8;
       --text-muted: #9494a8;
       --text-dim: #636378;
@@ -53,33 +54,23 @@ module.exports = async (req, res) => {
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 1.5rem;
+      padding: 1.25rem;
       position: relative;
       overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
     }
 
-    /* Ambient Warm Glow Background Effects */
+    /* Ambient Warm Glow */
     body::before {
       content: '';
       position: absolute;
-      top: -15vh;
+      top: -10vh;
       left: 50%;
       transform: translateX(-50%);
-      width: 900px;
+      width: 100vw;
+      max-width: 900px;
       height: 500px;
       background: radial-gradient(ellipse 60% 50% at 50% 0%, var(--terracotta-glow), transparent 70%);
-      pointer-events: none;
-      z-index: 0;
-    }
-
-    body::after {
-      content: '';
-      position: absolute;
-      bottom: -20vh;
-      right: 10%;
-      width: 600px;
-      height: 600px;
-      background: radial-gradient(circle, rgba(138, 92, 246, 0.08), transparent 60%);
       pointer-events: none;
       z-index: 0;
     }
@@ -88,37 +79,43 @@ module.exports = async (req, res) => {
       position: relative;
       z-index: 1;
       background: var(--card-bg);
-      backdrop-filter: blur(24px);
-      -webkit-backdrop-filter: blur(24px);
+      backdrop-filter: blur(28px);
+      -webkit-backdrop-filter: blur(28px);
       border: 1px solid var(--border-light);
       border-radius: 28px;
-      padding: 3rem 2.25rem 2.5rem;
+      padding: 2.75rem 2rem 2.25rem;
       max-width: 440px;
       width: 100%;
       text-align: center;
       box-shadow: 0 32px 96px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1);
-      transition: transform 0.3s ease, border-color 0.3s ease;
+      transition: border-color 0.3s ease;
     }
 
-    .auth-card:hover {
-      border-color: var(--border-accent);
+    @media (max-width: 480px) {
+      .auth-card {
+        padding: 2rem 1.25rem 1.75rem;
+        border-radius: 22px;
+      }
+      .title {
+        font-size: 1.85rem !important;
+      }
     }
 
-    /* Top Brand Badging */
+    /* Top Badging */
     .brand-badge {
       display: inline-flex;
       align-items: center;
       gap: 0.5rem;
       padding: 0.35rem 0.85rem;
       border-radius: 99px;
-      background: rgba(204, 120, 92, 0.08);
+      background: rgba(204, 120, 92, 0.1);
       border: 1px solid var(--border-accent);
-      font-size: 0.75rem;
+      font-size: 0.72rem;
       font-weight: 600;
       color: var(--terracotta);
       letter-spacing: 0.04em;
       text-transform: uppercase;
-      margin-bottom: 1.75rem;
+      margin-bottom: 1.5rem;
     }
 
     .brand-badge-dot {
@@ -135,59 +132,56 @@ module.exports = async (req, res) => {
       50% { opacity: 0.4; }
     }
 
-    /* Hub Logo Icon Ring */
     .logo-container {
       position: relative;
-      width: 80px;
-      height: 80px;
-      margin: 0 auto 1.5rem;
+      width: 72px;
+      height: 72px;
+      margin: 0 auto 1.25rem;
     }
 
     .logo-ring {
       width: 100%;
       height: 100%;
-      border-radius: 24px;
+      border-radius: 22px;
       background: linear-gradient(145deg, #1e1e2d, #141420);
       border: 1px solid rgba(255, 255, 255, 0.12);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 2.2rem;
+      font-size: 2rem;
       box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3);
     }
 
-    /* Main Headline Typography (Anthropic Instrument Serif) */
     .title {
       font-family: 'Instrument Serif', Georgia, serif;
       font-size: 2.1rem;
       font-weight: 400;
       line-height: 1.15;
       color: #ffffff;
-      margin-bottom: 0.5rem;
+      margin-bottom: 0.35rem;
       letter-spacing: -0.01em;
     }
 
     .subtitle {
-      font-size: 0.88rem;
+      font-size: 0.85rem;
       color: var(--text-muted);
-      margin-bottom: 0.25rem;
+      margin-bottom: 0.2rem;
       font-weight: 500;
     }
 
     .university-tag {
-      font-size: 0.78rem;
+      font-size: 0.75rem;
       color: var(--text-dim);
-      margin-bottom: 2rem;
+      margin-bottom: 1.5rem;
       font-weight: 500;
     }
 
-    /* Connection Target Box */
     .connection-box {
       background: rgba(255, 255, 255, 0.03);
-      border: 1px solid rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.07);
       border-radius: 14px;
       padding: 0.75rem 1rem;
-      margin-bottom: 1.75rem;
+      margin-bottom: 1.5rem;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -200,7 +194,7 @@ module.exports = async (req, res) => {
       color: var(--text-main);
     }
 
-    /* Premium Google Sign-In Button */
+    /* Primary Buttons */
     .google-btn {
       display: flex;
       align-items: center;
@@ -216,8 +210,9 @@ module.exports = async (req, res) => {
       font-weight: 600;
       font-family: inherit;
       cursor: pointer;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.1);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
       transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      -webkit-tap-highlight-color: transparent;
     }
 
     .google-btn:hover {
@@ -228,7 +223,6 @@ module.exports = async (req, res) => {
 
     .google-btn:active {
       transform: translateY(0);
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
     }
 
     .google-btn:disabled {
@@ -237,35 +231,97 @@ module.exports = async (req, res) => {
       transform: none;
     }
 
-    /* Status Output */
+    .action-link-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      width: 100%;
+      padding: 0.85rem 1.25rem;
+      background: linear-gradient(135deg, #cc785c, #e08b6e);
+      color: #ffffff;
+      text-decoration: none;
+      border: none;
+      border-radius: 14px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 0.75rem;
+      box-shadow: 0 4px 16px rgba(204, 120, 92, 0.3);
+      transition: transform 0.2s ease;
+    }
+
+    .action-link-btn:hover {
+      transform: translateY(-2px);
+    }
+
+    .user-info-box {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 14px;
+      padding: 0.85rem 1rem;
+      margin-bottom: 1.25rem;
+      text-align: left;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .user-avatar {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: var(--terracotta);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      color: white;
+      font-size: 0.9rem;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    .user-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .user-meta-name {
+      font-weight: 600;
+      font-size: 0.88rem;
+      color: var(--text-main);
+    }
+
+    .user-meta-email {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
     .status-msg {
       margin-top: 1.25rem;
       font-size: 0.82rem;
       color: var(--text-dim);
       min-height: 1.4em;
       transition: color 0.2s ease;
+      line-height: 1.4;
     }
 
     .status-msg.success { color: var(--cactus-green); font-weight: 600; }
     .status-msg.error   { color: #ef4444; font-weight: 600; }
 
-    /* Divider */
     .divider {
       border: none;
       border-top: 1px solid rgba(255, 255, 255, 0.06);
-      margin: 1.75rem 0 1.25rem 0;
+      margin: 1.5rem 0 1.15rem 0;
     }
 
-    /* Access Permissions Note */
     .permissions-note {
-      font-size: 0.78rem;
+      font-size: 0.75rem;
       color: var(--text-dim);
-      line-height: 1.6;
+      line-height: 1.5;
       text-align: center;
-    }
-
-    .permissions-note strong {
-      color: var(--text-muted);
     }
 
     .spinner {
@@ -286,7 +342,7 @@ module.exports = async (req, res) => {
   <div class="auth-card">
     <div class="brand-badge">
       <span class="brand-badge-dot"></span>
-      <span>Official Model Context Protocol</span>
+      <span>Model Context Protocol (MCP)</span>
     </div>
 
     <div class="logo-container">
@@ -305,15 +361,19 @@ module.exports = async (req, res) => {
       <span>Connecting <strong>${displayClient}</strong> to Hub MCP</span>
     </div>
 
-    <button class="google-btn" id="signInBtn" onclick="startSignIn()">
-      <svg width="20" height="20" viewBox="0 0 24 24">
-        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
-        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-      </svg>
-      <span>Continue with Google</span>
-    </button>
+    <div id="authArea">
+      <button class="google-btn" id="signInBtn" onclick="startSignIn()">
+        <svg width="20" height="20" viewBox="0 0 24 24">
+          <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+          <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+          <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+          <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+        </svg>
+        <span>Continue with Google</span>
+      </button>
+    </div>
+
+    <div id="manualRedirectArea" style="display: none;"></div>
 
     <p class="status-msg" id="statusMsg">Sign in with Google to authorize session</p>
 
@@ -333,33 +393,50 @@ module.exports = async (req, res) => {
       projectId: "bca2nd-5c622"
     });
 
-    const redirectUri = decodeURIComponent("${safeRedirect}");
-    const state = decodeURIComponent("${safeState}");
+    const params = new URLSearchParams(window.location.search);
+    let serverRedirect = "${safeRedirect}" ? decodeURIComponent("${safeRedirect}") : '';
+    let serverState = "${safeState}" ? decodeURIComponent("${safeState}") : '';
+
+    let redirectUri = params.get('redirect_uri') || params.get('redirectUri') || serverRedirect || sessionStorage.getItem('bca_mcp_redirect_uri') || '';
+    let state = params.get('state') || serverState || sessionStorage.getItem('bca_mcp_state') || '';
+
+    // Cache parameters for mobile redirect survival
+    if (redirectUri) sessionStorage.setItem('bca_mcp_redirect_uri', redirectUri);
+    if (state) sessionStorage.setItem('bca_mcp_state', state);
+
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile|mobile|CriOS/i.test(navigator.userAgent) || window.innerWidth <= 768;
+    let authProcessed = false;
 
     function setStatus(msg, type = '') {
       const el = document.getElementById('statusMsg');
+      if (!el) return;
       el.textContent = msg;
       el.className = 'status-msg ' + type;
     }
 
-    async function startSignIn() {
-      const btn = document.getElementById('signInBtn');
-      btn.disabled = true;
-      btn.innerHTML = '<span class="spinner"></span><span>Verifying...</span>';
-      setStatus('Opening Google Sign-In...');
+    async function handleAuthSuccess(user) {
+      if (authProcessed) return;
+      authProcessed = true;
+
+      const authArea = document.getElementById('authArea');
+      if (authArea) {
+        authArea.innerHTML = \`
+          <div class="user-info-box">
+            <div class="user-avatar">
+              \${user.photoURL ? \`<img src="\${user.photoURL}" alt="\${user.displayName || 'User'}"/>\` : (user.displayName ? user.displayName.charAt(0).toUpperCase() : '👤')}
+            </div>
+            <div style="flex:1; min-width:0; overflow:hidden;">
+              <div class="user-meta-name">\${user.displayName || 'BCA Scholar'}</div>
+              <div class="user-meta-email" style="text-overflow:ellipsis; overflow:hidden; white-space:nowrap;">\${user.email || ''}</div>
+            </div>
+          </div>
+        \`;
+      }
+
+      setStatus('✨ Authenticated as ' + (user.displayName || user.email) + '! Generating grant token...', 'success');
 
       try {
-        await firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(() => {});
-        const provider = new firebase.auth.GoogleAuthProvider();
-        provider.addScope('email');
-        provider.addScope('profile');
-
-        const result = await firebase.auth().signInWithPopup(provider);
-        const user = result.user;
         const idToken = await user.getIdToken(true);
-
-        setStatus('Generating authorization grant...', '');
-
         const resp = await fetch('/api/token', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -367,22 +444,110 @@ module.exports = async (req, res) => {
         });
         const data = await resp.json();
 
-        if (!data.code) throw new Error('Failed to generate auth code');
+        if (!data.code) throw new Error(data.error_description || data.error || 'Failed to generate auth code');
 
-        setStatus('✨ Authenticated as ' + (user.displayName || user.email) + '! Connecting...', 'success');
+        setStatus('🚀 Authorized! Redirecting to ${displayClient}...', 'success');
 
-        setTimeout(() => {
-          const sep = redirectUri.includes('?') ? '&' : '?';
-          window.location.href = redirectUri + sep + 'code=' + encodeURIComponent(data.code) + '&state=' + encodeURIComponent(state);
-        }, 750);
+        const targetRedirect = redirectUri || sessionStorage.getItem('bca_mcp_redirect_uri') || '';
+        const targetState = state || sessionStorage.getItem('bca_mcp_state') || '';
 
+        if (targetRedirect && targetRedirect !== 'undefined' && targetRedirect.length > 5) {
+          const sep = targetRedirect.includes('?') ? '&' : '?';
+          const finalUrl = targetRedirect + sep + 'code=' + encodeURIComponent(data.code) + (targetState ? '&state=' + encodeURIComponent(targetState) : '');
+
+          // Provide immediate fallback tap button for mobile WebViews that block automatic navigation
+          const manualArea = document.getElementById('manualRedirectArea');
+          if (manualArea) {
+            manualArea.style.display = 'block';
+            manualArea.innerHTML = \`
+              <a href="\${finalUrl}" class="action-link-btn" id="manualRedirectBtn">
+                <span>🚀 Complete Connection to ${displayClient} ➔</span>
+              </a>
+            \`;
+          }
+
+          setTimeout(() => {
+            window.location.replace(finalUrl);
+          }, 600);
+        } else {
+          setStatus('✅ Connected successfully! You may now return to ${displayClient}.', 'success');
+        }
       } catch (err) {
-        console.error(err);
-        btn.disabled = false;
-        btn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg><span>Try Again</span>';
-        setStatus(err.code === 'auth/popup-closed-by-user' ? 'Sign-in cancelled. Try again.' : 'Authentication error: ' + (err.message || err.code), 'error');
+        console.error('Grant exchange error:', err);
+        authProcessed = false;
+        setStatus('Grant generation error: ' + (err.message || 'Please try again'), 'error');
+        resetSignInButton();
       }
     }
+
+    function resetSignInButton() {
+      const authArea = document.getElementById('authArea');
+      if (authArea) {
+        authArea.innerHTML = \`
+          <button class="google-btn" id="signInBtn" onclick="startSignIn()">
+            <svg width="20" height="20" viewBox="0 0 24 24">
+              <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+              <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+              <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+              <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+            </svg>
+            <span>Try Again</span>
+          </button>
+        \`;
+      }
+    }
+
+    async function startSignIn() {
+      const btn = document.getElementById('signInBtn');
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner"></span><span>Connecting...</span>';
+      }
+      setStatus('Connecting to Google...');
+
+      try {
+        await firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(() => {});
+        const provider = new firebase.auth.GoogleAuthProvider();
+        provider.addScope('email');
+        provider.addScope('profile');
+
+        if (isMobile) {
+          // Mobile browsers and in-app webviews perform best with direct redirect
+          await firebase.auth().signInWithRedirect(provider);
+        } else {
+          // Desktop uses popup with instant fallback to redirect
+          try {
+            const result = await firebase.auth().signInWithPopup(provider);
+            if (result && result.user) {
+              await handleAuthSuccess(result.user);
+            }
+          } catch (popupErr) {
+            console.warn('Popup blocked or failed, falling back to redirect:', popupErr);
+            await firebase.auth().signInWithRedirect(provider);
+          }
+        }
+      } catch (err) {
+        console.error('Sign-in error:', err);
+        resetSignInButton();
+        setStatus(err.code === 'auth/popup-closed-by-user' ? 'Sign-in cancelled. Tap Try Again.' : 'Error: ' + (err.message || err.code), 'error');
+      }
+    }
+
+    // 1. Check for return from signInWithRedirect
+    firebase.auth().getRedirectResult().then(async (result) => {
+      if (result && result.user) {
+        await handleAuthSuccess(result.user);
+      }
+    }).catch(err => {
+      console.warn('Redirect result check error:', err);
+    });
+
+    // 2. Automatically detect active Google auth session on page load
+    firebase.auth().onAuthStateChanged(async (user) => {
+      if (user && !authProcessed) {
+        await handleAuthSuccess(user);
+      }
+    });
   </script>
 </body>
 </html>`;
