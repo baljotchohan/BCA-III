@@ -150,14 +150,16 @@ body{font-family:var(--font-sans);background:var(--bg-page);color:var(--text-mai
 
 /* ──────────── MAIN LAYOUT & CONTAINER ──────────── */
 .reader-wrap{
-  max-width: 960px;
-  margin: 2rem auto;
-  padding: 2.5rem 2.5rem 8rem;
+  max-width: 1140px;
+  width: min(95%, 1140px);
+  margin: 1.5rem auto 5rem;
+  padding: clamp(2rem, 4vw, 3.5rem) clamp(1.75rem, 4vw, 3.75rem) 6rem;
   background: var(--bg-surface);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-card);
   position: relative;
+  box-sizing: border-box;
 }
 
 /* ──────────── DOCUMENT MASTER HEADER ──────────── */
@@ -397,29 +399,31 @@ body{font-family:var(--font-sans);background:var(--bg-page);color:var(--text-mai
 .footer-nav-title{font-weight:700;color:var(--text-main);font-size:.95rem}
 
 /* ──────────── FLOATING TABLE OF CONTENTS (TOC) ──────────── */
-.floating-toc{
-  position:fixed;right:2rem;top:50%;transform:translateY(-50%);
-  display:flex;flex-direction:column;gap:.45rem;
-  z-index:50;background:var(--bg-glass);backdrop-filter:blur(16px);
-  padding:.75rem .6rem;border-radius:999px;border:1px solid var(--border-color);
-  box-shadow:0 8px 30px rgba(0,0,0,0.25);
-  opacity:0;pointer-events:none;transition:opacity .3s;
+.floating-toc {
+  display: none !important;
 }
-.floating-toc.visible{opacity:1;pointer-events:all}
-.toc-dot{
-  width:8px;height:8px;border-radius:50%;background:var(--text-subtle);
-  cursor:pointer;transition:all .2s;
-}
-.toc-dot.active{background:var(--color-coral);transform:scale(1.6);box-shadow:0 0 8px var(--color-coral)}
-.toc-dot:hover{background:var(--text-main)}
 
-@media(max-width:1180px){
-  .floating-toc{display:none}
-}
 @media(max-width:768px){
-  .reader-wrap{margin:1rem .75rem 5rem;padding:1.5rem 1.25rem 5rem;border-radius:var(--radius-lg)}
+  .topbar { padding: 0 .65rem; gap: .4rem; }
+  .reader-wrap{margin:1rem auto 5rem; width:calc(100% - 1.25rem); padding:1.5rem 1rem 5rem;border-radius:var(--radius-lg); box-sizing: border-box;}
   .tb-crumb,.fs-label{display:none}
+  .hide-mobile{display:none}
+  .pdf-btn span{display:none}
+  .tb-btn{padding: 0 .5rem; height: 30px; font-size: .72rem;}
+  .tb-btn.icon-only{width: 30px;}
+  .lang-btn{padding: 0 .4rem; height: 30px; font-size: .68rem;}
+  .fs-btn{width: 26px; height: 30px; font-size: .75rem;}
   .reader-footer{flex-direction:column;padding:0 .75rem}
+  .doc-title{font-size: clamp(1.65rem, 5.5vw, 2.4rem); line-height: 1.2;}
+  .doc-subtitle{font-size: 1rem;}
+  .topic-header{gap: .65rem;}
+  .topic-number{width: 36px; height: 36px; font-size: 1rem;}
+}
+@media(max-width:480px){
+  .topbar { padding: 0 .45rem; }
+  .tb-back-btn span{display: none;}
+  .tb-back-btn{padding: .35rem .5rem;}
+  .reader-wrap{width:calc(100% - 0.75rem); padding:1.25rem .75rem 4.5rem;}
 }
 
 /* ──────────── PRINT / PDF EXPORT MEDIA QUERY ──────────── */
@@ -571,14 +575,43 @@ body{font-family:var(--font-sans);background:var(--bg-page);color:var(--text-mai
   </footer>
 </main>
 
-<script src="/syllabus-data.js"></script>
-<script src="/visuals-engine.js"></script>
+<script src="syllabus-data.js?v=5.0"></script>
+<script src="payment.js?v=5.0"></script>
 <script>
 const FIREBASE_DB = 'https://bca2nd-5c622-default-rtdb.firebaseio.com/bca3';
 let _notes = [];
 let _currentKey = null;
 let _currentSubjectId = null;
 let _mode = 'single'; // 'single' | 'master'
+
+// Load user profile for note access checking
+let currentUserProfile = null;
+try {
+  const saved = localStorage.getItem('studiq_user_profile');
+  if (saved) currentUserProfile = JSON.parse(saved);
+} catch (e) {}
+
+const adminEmails = ['baljotchohan23@gmail.com', 'mehakpreetkaur@gmail.com', 'mehakpreetsaini26@gmail.com'];
+const hasAdminSession = Boolean(
+  localStorage.getItem('bca3_admin_token') ||
+  localStorage.getItem('bca3_admin_user') ||
+  localStorage.getItem('bca_admin_session') === 'authenticated' ||
+  sessionStorage.getItem('bca_admin_session') === 'authenticated' ||
+  (currentUserProfile && adminEmails.includes((currentUserProfile.email || '').toLowerCase()))
+);
+
+if (hasAdminSession) {
+  if (!currentUserProfile) {
+    currentUserProfile = {
+      uid: 'admin_user',
+      name: 'Administrator',
+      email: 'baljotchohan23@gmail.com',
+      isAdmin: true
+    };
+  } else {
+    currentUserProfile.isAdmin = true;
+  }
+}
 
 const FS_STEPS = [0.85, 0.92, 1.0, 1.0625, 1.15, 1.25, 1.4];
 let _fsIdx = 2; // Default: 100%
@@ -608,10 +641,13 @@ function toggleTheme() {
 function changeFs(dir) {
   _fsIdx = Math.max(0, Math.min(FS_STEPS.length - 1, _fsIdx + dir));
   const v = FS_STEPS[_fsIdx];
+  document.documentElement.style.setProperty('--fs-base', v);
   document.querySelectorAll('.prose-content').forEach(el => {
-    el.style.fontSize = (v * 16) + 'px';
+    el.style.fontSize = (v * 1.15) + 'rem';
+    el.style.lineHeight = (1.85 + (v - 1) * 0.2);
   });
-  document.getElementById('fs-label').textContent = Math.round(v * 100) + '%';
+  const label = document.getElementById('fs-label');
+  if (label) label.textContent = Math.round(v * 100) + '%';
 }
 
 // ── Reading Progress Bar ──
@@ -710,14 +746,33 @@ async function init() {
 
     _notes = [...cloudNotes, ...staticNotes];
 
+    // Helper to parse unit order
+    function parseUnitOrder(unitStr) {
+      if (!unitStr) return 1;
+      const s = String(unitStr).toLowerCase().trim();
+      if (s.includes('unit 1') || s.includes('unit i') || s === '1' || s === 'i' || s === 'general') return 1;
+      if (s.includes('unit 2') || s.includes('unit ii') || s === '2' || s === 'ii') return 2;
+      if (s.includes('unit 3') || s.includes('unit iii') || s === '3' || s === 'iii') return 3;
+      if (s.includes('unit 4') || s.includes('unit iv') || s === '4' || s === 'iv') return 4;
+      return 99;
+    }
+
+    // Sort notes logically: Unit I -> Unit II -> Unit III -> Unit IV
+    _notes.sort((a, b) => {
+      const uA = parseUnitOrder(a.unit || a.unitNumber);
+      const uB = parseUnitOrder(b.unit || b.unitNumber);
+      if (uA !== uB) return uA - uB;
+      return (a.timestamp || 0) - (b.timestamp || 0) || (a.title || '').localeCompare(b.title || '');
+    });
+
     // Determine subject metadata
     let activeSubject = null;
     if (_currentSubjectId && typeof BCA_3RD_SEM_DATA !== 'undefined') {
       activeSubject = BCA_3RD_SEM_DATA.subjects.find(s => s.id === _currentSubjectId);
     }
 
-    // If mode=master or (subject provided and no specific note id), render Master Study Guide
-    if (modeParam === 'master' || (!_currentKey && activeSubject)) {
+    // If mode=master explicitly requested, render Master Study Guide
+    if (modeParam === 'master') {
       _mode = 'master';
       const subjNotes = _notes.filter(n => (n.subject === _currentSubjectId || n.subjectId === _currentSubjectId));
       renderMasterGuide(activeSubject || { id: _currentSubjectId, title: 'BCA III Subject', code: 'BCA 301' }, subjNotes);
@@ -725,10 +780,9 @@ async function init() {
       return;
     }
 
-    // Otherwise render Single Note view
+    // Otherwise render Single Note Focus View (Unit 1 Topic 1 by default)
     let targetNote = _notes.find(n => n.fbKey === _currentKey || n.id === _currentKey);
     if (!targetNote && _currentKey) {
-      // Fallback: try fetching lecture log
       try {
         const r2 = await fetch(`${FIREBASE_DB}/lectures/${_currentKey}.json`);
         const lr = await r2.json();
@@ -737,7 +791,12 @@ async function init() {
     }
 
     if (!targetNote) {
-      if (_notes.length > 0) {
+      const subjNotes = _currentSubjectId
+        ? _notes.filter(n => (n.subject === _currentSubjectId || n.subjectId === _currentSubjectId))
+        : _notes;
+      if (subjNotes.length > 0) {
+        targetNote = subjNotes[0];
+      } else if (_notes.length > 0) {
         targetNote = _notes[0];
       } else {
         showErr('Note not found. Please return to dashboard and select a topic.');
@@ -774,6 +833,18 @@ function renderSingleNote(note) {
   ].filter(Boolean).join('<span>•</span>');
 
   const container = document.getElementById('content-container');
+
+  // Verify User Access via Payment Module
+  const noteIndex = _notes.findIndex(n => (n.fbKey === note.fbKey || n.id === note.id));
+  const accessRes = (window.BCA3_PAYMENTS && typeof window.BCA3_PAYMENTS.hasNoteAccess === 'function')
+    ? window.BCA3_PAYMENTS.hasNoteAccess(note, Math.max(0, noteIndex))
+    : { hasAccess: true };
+
+  if (!accessRes.hasAccess) {
+    renderPaywallTeaser(note, accessRes);
+    return;
+  }
+
   const hasPunjabi = !!note.punjabiSummary;
 
   if (hasPunjabi) {
@@ -796,7 +867,7 @@ function renderSingleNote(note) {
     document.getElementById('lang-group').style.display = 'flex';
   } else {
     container.innerHTML = `
-      <div class="prose-content" style="max-width: 820px; margin: 0 auto;">
+      <div class="prose-content" style="max-width: 1000px; margin: 0 auto;">
         ${renderMD(note.content || '')}
       </div>
     `;
@@ -805,6 +876,73 @@ function renderSingleNote(note) {
 
   postRenderMounts(container);
   buildTableOfContents();
+}
+
+// ── Render Paywall Teaser for Locked Notes ──
+function renderPaywallTeaser(note, accessRes) {
+  const isGuest = accessRes.reason === 'requires_signin';
+  const container = document.getElementById('content-container');
+  const noteKey = note.fbKey || note.id;
+
+  container.innerHTML = `
+    <div class="note-paywall-teaser" style="max-width: 1000px; margin: 1rem auto; box-sizing: border-box;">
+      <div class="note-paywall-blur-content">
+        <h2>${esc(note.title)}</h2>
+        <p>${esc((note.content || '').slice(0, 260))}...</p>
+        <p>Detailed architecture, functional diagrams, execution steps, exam tips, and Punjabi bilingual explanations.</p>
+      </div>
+
+      <div class="note-paywall-overlay">
+        <div class="paywall-icon">🔒</div>
+        <h3 class="paywall-title">${isGuest ? 'Sign In to Read Academic Notes' : 'Pro or Max Study Pass Required'}</h3>
+        <p class="paywall-desc">
+          ${isGuest 
+            ? 'Sign in with Google to unlock all Unit 1 digital notes for free across all subjects, or choose a semester study pass.' 
+            : `This note is part of <strong>${esc(note.unit || 'Unit II/III/IV')}</strong>. Free tier includes full access to Unit 1. Upgrade to <strong>Pro (₹19/mo)</strong> or <strong>Max Lifetime (₹49)</strong> to unlock full notes, bilingual cards, and downloads.`}
+        </p>
+
+        <div class="paywall-upi-badge">
+          ⚡ UPI • Google Pay • PhonePe • Paytm • Cards
+        </div>
+
+        <div class="paywall-actions">
+          ${isGuest ? `
+            <button class="paywall-unlock-btn" onclick="window.location.href='/'">
+              🔐 Return to Dashboard &amp; Sign In Free
+            </button>
+            <div style="margin-top: 0.85rem; padding: 0.5rem; background: rgba(194, 94, 62, 0.08); border: 1px dashed rgba(194, 94, 62, 0.4); border-radius: 8px; text-align: center;">
+              <span style="font-size: 0.72rem; color: var(--color-coral); font-weight: 700; display: block; margin-bottom: 0.35rem;">⚡ Dev Mode Instant Test Unlock:</span>
+              <div style="display: flex; gap: 0.35rem; justify-content: center; flex-wrap: wrap;">
+                <button class="tb-btn" style="height: 28px; font-size: 0.72rem; background: rgba(124, 58, 237, 0.15); color: #a78bfa; border-color: rgba(124, 58, 237, 0.3);" onclick="BCA3_PAYMENTS.devQuickUnlock('pro'); location.reload();">⚡ Unlock Pro</button>
+                <button class="tb-btn" style="height: 28px; font-size: 0.72rem; background: rgba(194, 94, 62, 0.15); color: #c25e3e; border-color: rgba(194, 94, 62, 0.3);" onclick="BCA3_PAYMENTS.devQuickUnlock('max'); location.reload();">🌟 Unlock Max</button>
+              </div>
+            </div>
+          ` : `
+            <button class="paywall-subscribe-btn" onclick="BCA3_PAYMENTS.payForSubscription('pro', 'Pro Scholar', 19)">
+              ⭐ Upgrade to Pro (₹19/mo)
+            </button>
+            <button class="paywall-unlock-btn" style="background: linear-gradient(135deg, #c25e3e, #ea580c);" onclick="BCA3_PAYMENTS.payForSubscription('max', 'Max Lifetime', 49)">
+              🌟 Get Lifetime Max Pass (₹49)
+            </button>
+            <button class="tb-btn" style="width: 100%; height: 38px; justify-content: center; font-size: 0.82rem; margin-top: 0.25rem;" onclick="BCA3_PAYMENTS.payForSingleNote('${esc(noteKey)}', '${esc(note.title)}', 15)">
+              📖 Or Unlock This Single Note (₹15)
+            </button>
+            <div style="margin-top: 0.85rem; padding: 0.5rem; background: rgba(194, 94, 62, 0.08); border: 1px dashed rgba(194, 94, 62, 0.4); border-radius: 8px; text-align: center;">
+              <span style="font-size: 0.72rem; color: var(--color-coral); font-weight: 700; display: block; margin-bottom: 0.35rem;">⚡ Dev Mode Instant Test Unlock:</span>
+              <div style="display: flex; gap: 0.35rem; justify-content: center; flex-wrap: wrap;">
+                <button class="tb-btn" style="height: 28px; font-size: 0.72rem; background: rgba(124, 58, 237, 0.15); color: #a78bfa; border-color: rgba(124, 58, 237, 0.3);" onclick="BCA3_PAYMENTS.devQuickUnlock('pro'); location.reload();">⚡ Unlock Pro</button>
+                <button class="tb-btn" style="height: 28px; font-size: 0.72rem; background: rgba(194, 94, 62, 0.15); color: #c25e3e; border-color: rgba(194, 94, 62, 0.3);" onclick="BCA3_PAYMENTS.devQuickUnlock('max'); location.reload();">🌟 Unlock Max</button>
+                <button class="tb-btn" style="height: 28px; font-size: 0.72rem; color: var(--text-muted);" onclick="BCA3_PAYMENTS.devResetToFree(); location.reload();">🔄 Reset Free</button>
+              </div>
+            </div>
+          `}
+        </div>
+      </div>
+    </div>
+  `;
+
+  const langGrp = document.getElementById('lang-group');
+  if (langGrp) langGrp.style.display = 'none';
 }
 
 // ── Render Master Study Guide (BCA 2nd Sem Style) ──
@@ -873,22 +1011,17 @@ function renderMasterGuide(subject, notes) {
   buildTableOfContents();
 }
 
-// ── Post Render Mounts (Visuals, Syntax Highlighting, Mermaid, Math) ──
+// ── Post Render Mounts (Syntax Highlighting, Mermaid, Math) ──
 function postRenderMounts(root) {
-  // 1. Manim / Interactive Visual Engine
-  if (window.ManimVisuals) {
-    setTimeout(() => window.ManimVisuals.mountAll(root), 60);
-  }
-
-  // 2. Syntax Highlighting
+  // 1. Syntax Highlighting
   root.querySelectorAll('pre code').forEach(block => {
     if (window.hljs) hljs.highlightElement(block);
   });
 
-  // 3. Mermaid Diagrams
+  // 2. Mermaid Diagrams
   renderAllMermaid();
 
-  // 4. KaTeX Math rendering
+  // 3. KaTeX Math rendering
   if (typeof renderMathInElement === 'function') initKatex();
 }
 
@@ -970,11 +1103,8 @@ function renderMD(raw) {
   if (!raw) return '';
   let h = raw.replace(/\r\n/g, '\n');
 
-  // Visual engine mounts [visual:xxx] or @[visual:xxx]
-  h = h.replace(/(?:@\[visual:|(?<!!)\[visual:)([a-zA-Z0-9_-]+)\]/g, (m, type) => {
-    const label = type.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-    return `<div class="vis-frame"><div class="vis-head"><span class="vis-head-dot"></span><span class="vis-head-badge">✨ Interactive Visual — ${esc(label)}</span></div><div class="manim-visual-mount" data-manim-visual="${esc(type)}" style="min-height:220px;background:var(--bg-surface)"></div></div>`;
-  });
+  // Strip visual tags completely so note renders clean, beautiful markdown
+  h = h.replace(/(?:@\[visual:|(?<!!)\[visual:)[a-zA-Z0-9_-]+\]/gi, '');
 
   // Mermaid diagrams
   h = h.replace(/```mermaid\s*\n([\s\S]*?)```/gi, (m, c) => {

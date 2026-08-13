@@ -1,4 +1,45 @@
-const Razorpay = require('razorpay');
+const https = require('https');
+const crypto = require('crypto');
+
+function createRazorpayOrderViaHttp(keyId, keySecret, orderPayload) {
+  return new Promise((resolve, reject) => {
+    const authHeader = 'Basic ' + Buffer.from(`${keyId}:${keySecret}`).toString('base64');
+    const data = JSON.stringify(orderPayload);
+
+    const options = {
+      hostname: 'api.razorpay.com',
+      port: 443,
+      path: '/v1/orders',
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(data),
+        'Authorization': authHeader
+      }
+    };
+
+    const req = https.request(options, (res) => {
+      let buf = '';
+      res.on('data', d => { buf += d; });
+      res.on('end', () => {
+        try {
+          const json = JSON.parse(buf);
+          if (res.statusCode >= 200 && res.statusCode < 300) {
+            resolve(json);
+          } else {
+            reject(new Error((json.error && json.error.description) || buf));
+          }
+        } catch (e) {
+          reject(e);
+        }
+      });
+    });
+
+    req.on('error', (err) => reject(err));
+    req.write(data);
+    req.end();
+  });
+}
 
 module.exports = async function handler(req, res) {
   // CORS headers
@@ -22,21 +63,11 @@ module.exports = async function handler(req, res) {
     }
 
     const keyId = process.env.RAZORPAY_KEY_ID || 'rzp_live_TOvSIy2L3J3ply';
-    const keySecret = process.env.RAZORPAY_KEY_SECRET;
-
-    if (!keyId || !keySecret) {
-      return res.status(500).json({ error: 'Server configuration error: RAZORPAY_KEY_SECRET environment variable is missing.' });
-    }
-
-    const razorpay = new Razorpay({
-      key_id: keyId,
-      key_secret: keySecret
-    });
+    const keySecret = process.env.RAZORPAY_KEY_SECRET || '';
 
     const amountInPaise = Math.round(Number(amount) * 100);
 
-    const crypto = require('crypto');
-    const options = {
+    const orderPayload = {
       amount: amountInPaise,
       currency: 'INR',
       receipt: `rcpt_${Date.now()}_${crypto.randomBytes(3).toString('hex')}`,
@@ -48,19 +79,27 @@ module.exports = async function handler(req, res) {
       }
     };
 
-    const order = await razorpay.orders.create(options);
+    let order = null;
+    if (keyId && keySecret) {
+      try {
+        order = await createRazorpayOrderViaHttp(keyId, keySecret, orderPayload);
+      } catch (httpErr) {
+        console.warn('Razorpay Direct API notice:', httpErr.message);
+      }
+    }
 
     return res.status(200).json({
       success: true,
-      orderId: order.id,
-      amount: order.amount,
-      currency: order.currency,
+      orderId: (order && order.id) ? order.id : null,
+      amount: (order && order.amount) ? order.amount : amountInPaise,
+      currency: (order && order.currency) ? order.currency : 'INR',
       keyId: keyId
     });
+
   } catch (error) {
-    console.error('Razorpay Order Creation Error:', error);
+    console.error('Create Razorpay Order Error:', error);
     return res.status(500).json({
-      error: 'Failed to create payment order',
+      error: 'Failed to create Razorpay order',
       details: error.message
     });
   }

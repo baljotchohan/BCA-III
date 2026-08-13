@@ -6,7 +6,10 @@
 
 let activeSubjectId = 'comp-arch';
 let activeWorkspaceTab = 'notes';
-let selectedCalendarDate = '2026-08-08';
+const _todayObj = new Date();
+let selectedCalendarDate = `${_todayObj.getFullYear()}-${String(_todayObj.getMonth() + 1).padStart(2, '0')}-${String(_todayObj.getDate()).padStart(2, '0')}`;
+let currentSubjectCalMonth = _todayObj.getMonth();
+let currentSubjectCalYear = _todayObj.getFullYear();
 let currentNoteFilter = 'all';
 let _editingItem = null; // { type: 'note'|'lecture'|'announcement', fbKey, collection }
 let _currentSubjectNotes = []; // Cached active notes array for focus reader & export
@@ -79,6 +82,7 @@ document.addEventListener('DOMContentLoaded', () => {
   updateAdminHeaderUI();
   initFirebaseAuth();
   syncFirebaseData();
+  initGuestPromptTimer();
 });
 
 /* ==========================================================================
@@ -352,6 +356,27 @@ async function renderSubjectNotes(subject) {
   ];
 
   const allNotes = [...(subject.digitalNotes || []), ...combinedCloudNotes];
+
+  // Helper to parse unit number for chronological syllabus sorting
+  function parseUnitOrder(unitStr) {
+    if (!unitStr) return 1;
+    const s = String(unitStr).toLowerCase().trim();
+    if (s.includes('unit 1') || s.includes('unit i') || s === '1' || s === 'i' || s === 'general') return 1;
+    if (s.includes('unit 2') || s.includes('unit ii') || s === '2' || s === 'ii') return 2;
+    if (s.includes('unit 3') || s.includes('unit iii') || s === '3' || s === 'iii') return 3;
+    if (s.includes('unit 4') || s.includes('unit iv') || s === '4' || s === 'iv') return 4;
+    return 99;
+  }
+
+  // Sort notes: Unit I first, Unit II second, Unit III third, Unit IV fourth
+  allNotes.sort((a, b) => {
+    const uA = parseUnitOrder(a.unit || a.unitNumber);
+    const uB = parseUnitOrder(b.unit || b.unitNumber);
+    if (uA !== uB) return uA - uB;
+    // Secondary sort: preserve creation order or title
+    return (a.timestamp || 0) - (b.timestamp || 0) || (a.title || '').localeCompare(b.title || '');
+  });
+
   _currentSubjectNotes = allNotes;
 
   if (!allNotes.length) {
@@ -368,7 +393,14 @@ async function renderSubjectNotes(subject) {
 
   let filtered = allNotes;
   if (currentNoteFilter && currentNoteFilter !== 'all') {
-    filtered = allNotes.filter(n => n.unit === currentNoteFilter);
+    filtered = allNotes.filter(n => {
+      const u = (n.unit || '').toLowerCase();
+      const f = currentNoteFilter.toLowerCase();
+      return u === f || (f === 'unit i' && (u === 'unit 1' || u === 'unit i' || u === 'general')) ||
+             (f === 'unit ii' && (u === 'unit 2' || u === 'unit ii')) ||
+             (f === 'unit iii' && (u === 'unit 3' || u === 'unit iii')) ||
+             (f === 'unit iv' && (u === 'unit 4' || u === 'unit iv'));
+    });
   }
 
   if (!filtered.length) {
@@ -381,20 +413,51 @@ async function renderSubjectNotes(subject) {
     return;
   }
 
-  // Render sleek, compact Topic Cards instead of huge text walls
+  // Calculate sequential topic numbers grouped by unit
+  const unitCounters = {};
+  filtered.forEach(n => {
+    const u = n.unit || 'Unit I';
+    unitCounters[u] = (unitCounters[u] || 0) + 1;
+    n._topicSeq = unitCounters[u];
+  });
+
+  // Render sleek, compact Topic Cards organized chronologically
   container.innerHTML = filtered.map((note, index) => {
     const noteKey = note.fbKey || note.id;
     const isCloud = Boolean(note.fbKey);
     const authorName = note.author || 'Baljot Chohan';
-    const excerpt = getPlainExcerpt(note.content, 150, note.title);
-    const hasAccess = window.BCA3_PAYMENTS ? window.BCA3_PAYMENTS.hasNoteAccess(noteKey, index) : true;
+    const excerpt = getPlainExcerpt(note.content, 140, note.title);
+    const accessRes = window.BCA3_PAYMENTS ? window.BCA3_PAYMENTS.hasNoteAccess(note, index) : { hasAccess: true };
+    const hasAccess = accessRes.hasAccess;
+
+    let accessBadgeHtml = '';
+    if (hasAccess) {
+      if (accessRes.reason === 'free_unit_1') {
+        accessBadgeHtml = '<span style="font-size: 0.72rem; color: #10b981; font-weight: 700; background: rgba(16,185,129,0.12); padding: 0.15rem 0.5rem; border-radius: 999px; border: 1px solid rgba(16,185,129,0.25);">🔓 Free Unit 1</span>';
+      } else if (accessRes.reason === 'max_lifetime') {
+        accessBadgeHtml = '<span style="font-size: 0.72rem; color: #c25e3e; font-weight: 700; background: rgba(194,94,62,0.12); padding: 0.15rem 0.5rem; border-radius: 999px; border: 1px solid rgba(194,94,62,0.25);">🌟 Max Lifetime</span>';
+      } else if (accessRes.reason === 'pro_active') {
+        accessBadgeHtml = '<span style="font-size: 0.72rem; color: #a78bfa; font-weight: 700; background: rgba(124,58,237,0.12); padding: 0.15rem 0.5rem; border-radius: 999px; border: 1px solid rgba(124,58,237,0.25);">⭐ Pro Pass</span>';
+      } else {
+        accessBadgeHtml = '<span style="font-size: 0.72rem; color: #10b981; font-weight: 700; background: rgba(16,185,129,0.12); padding: 0.15rem 0.5rem; border-radius: 999px; border: 1px solid rgba(16,185,129,0.25);">🔓 Unlocked</span>';
+      }
+    } else {
+      if (accessRes.reason === 'requires_signin') {
+        accessBadgeHtml = '<span style="font-size: 0.72rem; color: #f59e0b; font-weight: 700; background: rgba(245,158,11,0.12); padding: 0.15rem 0.5rem; border-radius: 999px; border: 1px solid rgba(245,158,11,0.25);">🔒 Sign In to Unlock</span>';
+      } else {
+        accessBadgeHtml = '<span style="font-size: 0.72rem; color: #c25e3e; font-weight: 700; background: rgba(194,94,62,0.12); padding: 0.15rem 0.5rem; border-radius: 999px; border: 1px solid rgba(194,94,62,0.25);">🔒 Pro (₹19) / Max (₹49)</span>';
+      }
+    }
+
+    const unitLabel = note.unit || 'Unit I';
+    const topicNumberTag = note._topicSeq ? `Topic ${note._topicSeq}` : `Topic ${index + 1}`;
 
     return `
-      <div class="note-topic-card" onclick="openNoteReaderView('${noteKey}')">
+      <div class="note-topic-card" onclick="handleNoteCardClick('${noteKey}', ${index})">
         <div class="note-topic-header">
           <div class="note-meta-left" style="display: flex; align-items: center; gap: 0.45rem; flex-wrap: wrap;">
-            <span class="note-unit-badge">${escapeHtml(note.unit || 'Unit I')}</span>
-            ${hasAccess ? '<span style="font-size: 0.72rem; color: #10b981; font-weight: 700;">🔓 Unlocked</span>' : '<span style="font-size: 0.72rem; color: #ef4444; font-weight: 700;">🔒 Locked (₹15)</span>'}
+            <span class="note-unit-badge">${escapeHtml(unitLabel)} • ${topicNumberTag}</span>
+            ${accessBadgeHtml}
             <span class="note-author-pill">✍️ By ${escapeHtml(authorName)}</span>
             <span class="note-read-time">⏱️ ${escapeHtml(note.readTime || '6 min read')}</span>
             ${note.date ? `<span style="font-size: 0.72rem; color: var(--text-subtle);">📅 ${escapeHtml(note.date)}</span>` : ''}
@@ -423,12 +486,31 @@ async function renderSubjectNotes(subject) {
             ${(note.tags || []).slice(0, 3).map(t => `<span class="topic-tag-pill">${escapeHtml(t.replace(/^#/, ''))}</span>`).join('')}
           </div>
           <button class="note-read-btn">
-            <span>📖 Read Full Note ➔</span>
+            <span>${hasAccess ? '📖 Read Full Note ➔' : '🔒 View Study Pass ➔'}</span>
           </button>
         </div>
       </div>
     `;
   }).join('');
+}
+
+function handleNoteCardClick(noteKey, index = 0) {
+  const note = (_currentSubjectNotes || []).find(n => (n.fbKey === noteKey || n.id === noteKey));
+  const accessRes = window.BCA3_PAYMENTS ? window.BCA3_PAYMENTS.hasNoteAccess(note || noteKey, index) : { hasAccess: true };
+
+  if (accessRes.hasAccess) {
+    openNoteReaderView(noteKey);
+  } else {
+    if (accessRes.reason === 'requires_signin') {
+      showToast('Sign in with Google to unlock Unit 1 notes for free! 🔐');
+      handleAuthAction();
+    } else {
+      showToast('Upgrade to Pro (₹19/mo) or Max Lifetime (₹49) to unlock this unit! ⭐');
+      if (window.BCA3_PAYMENTS && typeof window.BCA3_PAYMENTS.openPricingModal === 'function') {
+        window.BCA3_PAYMENTS.openPricingModal();
+      }
+    }
+  }
 }
 
 function openNoteReaderView(noteKey) {
@@ -437,9 +519,6 @@ function openNoteReaderView(noteKey) {
   const readerUrl = `/note.html?id=${encodeURIComponent(noteId)}&subject=${encodeURIComponent(activeSubjectId || '')}`;
   window.location.href = readerUrl;
 }
-
-
-
 
 function closeNoteReaderView() {
   _currentlyOpenNoteId = null;
@@ -510,7 +589,13 @@ function getPlainExcerpt(content, maxLen = 150, title = '') {
     const trimmed = line.trim();
     if (!trimmed) continue;
     if (trimmed.startsWith('@[') || trimmed.startsWith('```') || trimmed.startsWith('---') || trimmed.startsWith('===')) continue;
-    let plain = trimmed.replace(/^#+\s*/, '').replace(/[*_`>]/g, '').trim();
+    if (trimmed.startsWith('[visual:') || trimmed.startsWith('[math:')) continue;
+    let plain = trimmed
+      .replace(/\[visual:[^\]]+\]/gi, '')
+      .replace(/\[math:[^\]]+\]/gi, '')
+      .replace(/^#+\s*/, '')
+      .replace(/[*_`>~]/g, '')
+      .trim();
     if (title && plain.toLowerCase() === title.toLowerCase()) continue;
     if (/^(unit\s+[ivx\d]+|chapter\s+\d+|computer architecture|data structures|numerical methods)/i.test(plain) && plain.length < 50) continue;
     if (plain) cleanLines.push(plain);
@@ -527,18 +612,6 @@ function filterNotesByUnit(unit, btn) {
   if (subject) renderSubjectNotes(subject);
 }
 
-function insertVisualTagToEditor(tag) {
-  if (!tag) return;
-  const textarea = document.getElementById('adm-note-content');
-  if (!textarea) return;
-  const start = textarea.selectionStart || 0;
-  const end = textarea.selectionEnd || 0;
-  const text = textarea.value;
-  textarea.value = text.substring(0, start) + '\n\n' + tag + '\n\n' + text.substring(end);
-  textarea.focus();
-  showToast('Inserted visual animation tag! ✨');
-}
-
 function renderMarkdownBlocks(content) {
   if (!content) return '';
 
@@ -547,31 +620,8 @@ function renderMarkdownBlocks(content) {
   // 1. Normalize line endings
   html = html.replace(/\r\n/g, '\n');
 
-  // 1b. Interactive Manim Visual Tags @[visual:type]
-  html = html.replace(/@\[visual:([a-zA-Z0-9_\-]+)\]/g, (match, type) => {
-    return `<div class="manim-visual-mount" data-manim-visual="${escapeHtml(type.trim())}"></div>`;
-  });
-
-  // 1c. Manim Video Clips @[video:title](url) or @[manim:title](url)
-  html = html.replace(/@\[(?:video|manim):(.*?)\]\((.*?)\)/g, (match, title, url) => {
-    return `
-      <div class="manim-visual-card">
-        <div class="manim-card-header">
-          <div class="manim-header-title-row">
-            <span class="manim-tag">🎬 Manim Mathematical Animation</span>
-          </div>
-          <h3 class="manim-title">${escapeHtml(title || 'Mathematical Visualization')}</h3>
-        </div>
-        <div class="manim-canvas-container" style="background: #000;">
-          <video controls autoplay loop muted playsinline style="width: 100%; max-height: 420px; display: block;">
-            <source src="${url}" type="video/mp4">
-            <source src="${url}" type="video/webm">
-            Your browser does not support HTML5 video.
-          </video>
-        </div>
-      </div>
-    `;
-  });
+  // 1b. Strip visual tags completely
+  html = html.replace(/@?\[(?:visual|manim):[a-zA-Z0-9_\-]+\]/gi, '');
 
   // 2. Code blocks & ASCII diagrams (matches closed or unclosed ``` or ''')
   html = html.replace(/(?:```|''')([a-zA-Z0-9_\-\+]+)?[ \t]*\n?([\s\S]*?)(?:```|'''|$)/g, (match, lang, code) => {
@@ -911,61 +961,123 @@ function getSubjectName(subjectId) {
    5. INTERACTIVE CALENDAR SWITCHER & DAILY LECTURE LOGS
    ========================================================================== */
 
+function changeSubjectCalMonth(delta) {
+  currentSubjectCalMonth += delta;
+  if (currentSubjectCalMonth > 11) {
+    currentSubjectCalMonth = 0;
+    currentSubjectCalYear++;
+  } else if (currentSubjectCalMonth < 0) {
+    currentSubjectCalMonth = 11;
+    currentSubjectCalYear--;
+  }
+  const subject = BCA_3RD_SEM_DATA.subjects.find(s => s.id === activeSubjectId) || BCA_3RD_SEM_DATA.subjects[0];
+  if (subject) renderSubjectCalendar(subject);
+}
+
+function goToTodaySubjectCal() {
+  const now = new Date();
+  currentSubjectCalMonth = now.getMonth();
+  currentSubjectCalYear = now.getFullYear();
+  selectedCalendarDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  const subject = BCA_3RD_SEM_DATA.subjects.find(s => s.id === activeSubjectId) || BCA_3RD_SEM_DATA.subjects[0];
+  if (subject) renderSubjectCalendar(subject);
+}
+
 async function renderSubjectCalendar(subject) {
   const calGrid = document.getElementById('ws-calendar-grid');
+  const monthTitle = document.querySelector('.calendar-month-title');
   const quickDatesBar = document.getElementById('ws-quick-dates-bar');
   const lecturesList = document.getElementById('ws-subject-lectures-list');
   if (!calGrid || !lecturesList) return;
 
-  // Fetch live lectures from Firebase
-  let fbLectures = await _fbFetch('lectures');
-  fbLectures = fbLectures.filter(l => (l.subject === subject.id || l.subjectId === subject.id));
-
-  const allLectures = [...fbLectures, ...(subject.lectures || [])];
-
-  // Map of active dates
-  const lectureDateMap = {};
-  allLectures.forEach(l => {
-    if (l.date) lectureDateMap[l.date] = l;
-  });
-
-  // Generate August 2026 Calendar Grid (Aug 1, 2026 is a Saturday = index 6)
-  let gridHtml = '';
-  // Leading empty cells for Saturday start (6 blanks)
-  for (let i = 0; i < 6; i++) {
-    gridHtml += `<div class="cal-day-cell empty"></div>`;
+  if (monthTitle) {
+    monthTitle.textContent = `${getMonthName(currentSubjectCalMonth)} ${currentSubjectCalYear}`;
   }
 
-  for (let day = 1; day <= 31; day++) {
-    const dayStr = day < 10 ? `0${day}` : `${day}`;
-    const dateKey = `2026-08-${dayStr}`;
-    const hasLecture = Boolean(lectureDateMap[dateKey]);
-    const isSelected = dateKey === selectedCalendarDate;
+  // Fetch live lectures & notes from Firebase
+  let fbLectures = await _fbFetch('lectures');
+  fbLectures = fbLectures.filter(l => (l.subject === subject.id || l.subjectId === subject.id));
+  const allLectures = [...fbLectures, ...(subject.lectures || [])];
+
+  let fbNotes = await _fbFetch('notes');
+  fbNotes = fbNotes.filter(n => (n.subject === subject.id || n.subjectId === subject.id));
+
+  // Map of active dates
+  const dateMap = {};
+  allLectures.forEach(l => {
+    if (!l.date) return;
+    if (!dateMap[l.date]) dateMap[l.date] = { lectures: [], notes: [] };
+    dateMap[l.date].lectures.push(l);
+  });
+  fbNotes.forEach(n => {
+    if (!n.date) return;
+    if (!dateMap[n.date]) dateMap[n.date] = { lectures: [], notes: [] };
+    dateMap[n.date].notes.push(n);
+  });
+
+  const now = new Date();
+  const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  
+  if (!selectedCalendarDate) {
+    selectedCalendarDate = todayStr;
+  }
+
+  const firstDayIndex = new Date(currentSubjectCalYear, currentSubjectCalMonth, 1).getDay(); // 0 = Sun
+  const daysInMonth = new Date(currentSubjectCalYear, currentSubjectCalMonth + 1, 0).getDate();
+  const prevMonthDays = new Date(currentSubjectCalYear, currentSubjectCalMonth, 0).getDate();
+
+  let gridHtml = '';
+
+  // Leading days from previous month
+  for (let i = firstDayIndex - 1; i >= 0; i--) {
+    const pDay = prevMonthDays - i;
+    gridHtml += `<div class="cal-day-cell empty"><span style="opacity: 0.3;">${pDay}</span></div>`;
+  }
+
+  // Current month days
+  for (let day = 1; day <= daysInMonth; day++) {
+    const mStr = String(currentSubjectCalMonth + 1).padStart(2, '0');
+    const dStr = String(day).padStart(2, '0');
+    const dateKey = `${currentSubjectCalYear}-${mStr}-${dStr}`;
+
+    const isToday = (dateKey === todayStr);
+    const isSelected = (dateKey === selectedCalendarDate);
+    const acts = dateMap[dateKey];
+    const hasActivities = acts && (acts.lectures.length > 0 || acts.notes.length > 0);
 
     gridHtml += `
-      <div class="cal-day-cell ${hasLecture ? 'has-lecture' : ''} ${isSelected ? 'selected' : ''}" onclick="selectCalendarDate('${dateKey}', '${subject.id}')" title="${hasLecture ? 'Lecture: ' + lectureDateMap[dateKey].topic : 'August ' + day}">
+      <div class="cal-day-cell ${isToday ? 'is-today' : ''} ${isSelected ? 'selected' : ''} ${hasActivities ? 'has-lecture' : ''}" 
+           onclick="selectCalendarDate('${dateKey}', '${subject.id}')" 
+           title="${day} ${getMonthName(currentSubjectCalMonth)} ${currentSubjectCalYear}${isToday ? ' (Today)' : ''}${hasActivities ? ' • Activities logged' : ''}">
         <span>${day}</span>
       </div>
     `;
   }
+
+  // Trailing empty days to complete row
+  const totalRendered = firstDayIndex + daysInMonth;
+  const nextPads = (7 - (totalRendered % 7)) % 7;
+  for (let n = 1; n <= nextPads; n++) {
+    gridHtml += `<div class="cal-day-cell empty"><span style="opacity: 0.3;">${n}</span></div>`;
+  }
+
   calGrid.innerHTML = gridHtml;
 
   // Quick Date Switcher Pills Bar
-  const dateKeys = Object.keys(lectureDateMap).sort();
+  const dateKeys = Object.keys(dateMap).sort();
   if (quickDatesBar) {
     quickDatesBar.innerHTML = `
-      <button class="quick-date-pill ${selectedCalendarDate === 'all' ? 'active' : ''}" onclick="selectCalendarDate('all', '${subject.id}')">All Lectures (${allLectures.length})</button>
-      ${dateKeys.map(dk => {
-        const dNum = dk.split('-')[2];
-        return `
-          <button class="quick-date-pill ${selectedCalendarDate === dk ? 'active' : ''}" onclick="selectCalendarDate('${dk}', '${subject.id}')">Aug ${dNum}</button>
-        `;
+      <button class="quick-date-pill ${selectedCalendarDate === 'all' ? 'active' : ''}" onclick="selectCalendarDate('all', '${subject.id}')">All Dates</button>
+      <button class="quick-date-pill ${selectedCalendarDate === todayStr ? 'active' : ''}" onclick="selectCalendarDate('${todayStr}', '${subject.id}')">Today (Aug ${now.getDate()})</button>
+      ${dateKeys.filter(dk => dk !== todayStr).map(dk => {
+        const parts = dk.split('-');
+        return `<button class="quick-date-pill ${selectedCalendarDate === dk ? 'active' : ''}" onclick="selectCalendarDate('${dk}', '${subject.id}')">${getMonthName(Number(parts[1])-1).slice(0,3)} ${Number(parts[2])}</button>`;
       }).join('')}
     `;
   }
 
   // Update Highlighted Active Day Card
-  updateActiveDayCard(subject, allLectures);
+  updateActiveDayCard(subject, allLectures, dateMap[selectedCalendarDate]);
 
   // Chronological List
   renderSubjectLecturesList(subject, allLectures);
@@ -977,20 +1089,22 @@ function selectCalendarDate(dateKey, subjectId) {
   renderSubjectCalendar(subject);
 }
 
-function updateActiveDayCard(subject, allLectures) {
+function updateActiveDayCard(subject, allLectures, dayActivities) {
   const card = document.getElementById('ws-active-day-card');
   const titleEl = document.getElementById('active-day-title');
   const timeEl = document.getElementById('active-day-time');
   const topicEl = document.getElementById('active-day-topic');
   const descEl = document.getElementById('active-day-desc');
+  const actionsEl = document.getElementById('active-day-actions');
 
   if (!card) return;
 
   if (selectedCalendarDate === 'all') {
-    titleEl.innerText = `All ${allLectures.length} Lectures for ${subject.title}`;
+    titleEl.innerText = `All ${allLectures.length} Lectures & Notes for ${subject.title}`;
     timeEl.innerText = 'Aug 2026 Session';
     topicEl.innerText = 'Showing complete chronological curriculum timeline below';
-    descEl.innerText = 'Click any date above on the interactive calendar to inspect that single day’s lecture notes, timings, and attached file links.';
+    descEl.innerText = 'Click any date on the calendar on the left to inspect that day’s lectures and notes.';
+    if (actionsEl) actionsEl.innerHTML = '';
     return;
   }
 
@@ -1002,11 +1116,25 @@ function updateActiveDayCard(subject, allLectures) {
     timeEl.innerText = lecture.time || '10:00 AM';
     topicEl.innerText = lecture.topic;
     descEl.innerText = lecture.description || lecture.notes || 'Core topics covered during class session.';
+    if (actionsEl) {
+      actionsEl.innerHTML = `
+        <button class="Button-module-scss-module__f9ZZrG__button Button-module-scss-module__f9ZZrG__primary" style="font-size:0.75rem; height:32px;" onclick="openDayActivitiesModal('${selectedCalendarDate}')">
+          <span>📋 View Full Day Summary</span>
+        </button>
+      `;
+    }
   } else {
-    titleEl.innerText = `No Lecture Logged for ${dateFormatted}`;
+    titleEl.innerText = `${dateFormatted}`;
     timeEl.innerText = 'Free / Study Day';
-    topicEl.innerText = 'Revision & Self Study';
+    topicEl.innerText = 'Revision & Practice';
     descEl.innerText = 'No lecture was held on this date. Use this time to revise digital notes and practice code algorithms.';
+    if (actionsEl) {
+      actionsEl.innerHTML = `
+        <button class="Button-module-scss-module__f9ZZrG__button Button-module-scss-module__f9ZZrG__secondary" style="font-size:0.75rem; height:32px;" onclick="switchWorkspaceTab('notes')">
+          <span>📖 Open Digital Notes</span>
+        </button>
+      `;
+    }
   }
 }
 
@@ -1064,73 +1192,440 @@ function renderSubjectLecturesList(subject, allLectures) {
 }
 
 /* ==========================================================================
-   6. DASHBOARD WIDGETS & TIMELINES
+   6. DASHBOARD REAL ACADEMIC CALENDAR & DAILY TIMELINES
    ========================================================================== */
 
+let currentCalYear = new Date().getFullYear();
+let currentCalMonth = new Date().getMonth(); // 0-indexed (e.g. 7 = August)
+let selectedCalDate = formatCalDateStr(new Date());
+let currentDayActivitiesFilter = 'all';
+let _academicCalendarDataCache = { lectures: [], notes: [], announcements: [] };
+
+function formatCalDateStr(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
 function initDashboardWidgets() {
-  renderDashboardLectures();
+  initAcademicCalendar();
   renderDashboardAnnouncements();
 }
 
 async function renderDashboardLectures() {
-  const container = document.getElementById('dashboard-lectures-list');
-  if (!container) return;
+  await initAcademicCalendar();
+}
 
-  const [fbNotes, fbLectures] = await Promise.all([
-    _fbFetch('notes'),
-    _fbFetch('lectures')
-  ]);
+async function initAcademicCalendar() {
+  await loadAcademicCalendarData();
+  renderAcademicCalendar();
+  renderCalendarSnapshot();
+}
 
-  const cloudItems = [
-    ...fbNotes.map(n => ({
+async function loadAcademicCalendarData() {
+  try {
+    const [fbNotes, fbLectures, fbAnnouncements] = await Promise.all([
+      _fbFetch('notes'),
+      _fbFetch('lectures'),
+      _fbFetch('announcements')
+    ]);
+
+    let staticLectures = [];
+    BCA_3RD_SEM_DATA.subjects.forEach(s => {
+      (s.lectures || []).forEach(l => {
+        staticLectures.push({
+          ...l,
+          subjectName: s.title,
+          subjectId: s.id,
+          date: l.date || '2026-08-08',
+          isNote: false
+        });
+      });
+    });
+
+    const cloudNotes = (fbNotes || []).map(n => ({
       ...n,
       topic: n.title || n.topic,
       subjectName: getSubjectName(n.subject || n.subjectId),
       subjectId: n.subject || n.subjectId,
       time: n.readTime || 'Digital Note',
+      date: n.date || (n.timestamp ? formatCalDateStr(new Date(n.timestamp)) : '2026-08-13'),
       isNote: true
-    })),
-    ...fbLectures.map(l => ({
+    }));
+
+    const cloudLectures = (fbLectures || []).map(l => ({
       ...l,
       subjectName: getSubjectName(l.subject || l.subjectId),
       subjectId: l.subject || l.subjectId,
+      date: l.date || (l.timestamp ? formatCalDateStr(new Date(l.timestamp)) : '2026-08-13'),
       isNote: false
-    }))
-  ].sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+    }));
 
-  let staticLectures = [];
-  BCA_3RD_SEM_DATA.subjects.forEach(s => {
-    (s.lectures || []).forEach(l => staticLectures.push({ ...l, subjectName: s.title, subjectId: s.id }));
+    const cloudAnnouncements = (fbAnnouncements || []).map(a => ({
+      ...a,
+      date: a.date || (a.timestamp ? formatCalDateStr(new Date(a.timestamp)) : '2026-08-13'),
+      isAnnouncement: true
+    }));
+
+    _academicCalendarDataCache = {
+      lectures: [...cloudLectures, ...staticLectures],
+      notes: cloudNotes,
+      announcements: cloudAnnouncements
+    };
+  } catch (err) {
+    console.warn('Calendar data fetch notice:', err);
+  }
+}
+
+function getMonthName(monthIndex) {
+  const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  return months[monthIndex] || 'August';
+}
+
+function renderAcademicCalendar() {
+  const titleEl = document.getElementById('main-cal-month-title');
+  const matrixEl = document.getElementById('main-calendar-matrix');
+  if (!matrixEl) return;
+
+  if (titleEl) {
+    titleEl.textContent = `${getMonthName(currentCalMonth)} ${currentCalYear}`;
+  }
+
+  const todayStr = formatCalDateStr(new Date());
+  const firstDayIndex = new Date(currentCalYear, currentCalMonth, 1).getDay(); // 0 = Sunday
+  const daysInMonth = new Date(currentCalYear, currentCalMonth + 1, 0).getDate();
+  const prevMonthDays = new Date(currentCalYear, currentCalMonth, 0).getDate();
+
+  // Index activities by date
+  const dateMap = {};
+  
+  (_academicCalendarDataCache.lectures || []).forEach(l => {
+    if (!l.date) return;
+    if (!dateMap[l.date]) dateMap[l.date] = { lectures: [], notes: [], announcements: [] };
+    dateMap[l.date].lectures.push(l);
   });
 
-  const all = [...cloudItems, ...staticLectures];
+  (_academicCalendarDataCache.notes || []).forEach(n => {
+    if (!n.date) return;
+    if (!dateMap[n.date]) dateMap[n.date] = { lectures: [], notes: [], announcements: [] };
+    dateMap[n.date].notes.push(n);
+  });
 
-  if (!all.length) {
-    container.innerHTML = `<div class="empty-state">No lectures or notes recorded yet.</div>`;
+  (_academicCalendarDataCache.announcements || []).forEach(a => {
+    if (!a.date) return;
+    if (!dateMap[a.date]) dateMap[a.date] = { lectures: [], notes: [], announcements: [] };
+    dateMap[a.date].announcements.push(a);
+  });
+
+  let cellsHtml = '';
+
+  // Padding days from previous month
+  for (let i = firstDayIndex - 1; i >= 0; i--) {
+    const pDay = prevMonthDays - i;
+    cellsHtml += `<div class="matrix-day-cell empty-day"><span class="day-number-tag">${pDay}</span></div>`;
+  }
+
+  // Current month days
+  for (let day = 1; day <= daysInMonth; day++) {
+    const mStr = String(currentCalMonth + 1).padStart(2, '0');
+    const dStr = String(day).padStart(2, '0');
+    const dateKey = `${currentCalYear}-${mStr}-${dStr}`;
+
+    const isToday = (dateKey === todayStr);
+    const isSelected = (dateKey === selectedCalDate);
+    const acts = dateMap[dateKey] || { lectures: [], notes: [], announcements: [] };
+    const hasLectures = acts.lectures.length > 0;
+    const hasNotes = acts.notes.length > 0;
+    const hasAnnouncements = acts.announcements.length > 0;
+    const hasAny = hasLectures || hasNotes || hasAnnouncements;
+
+    let dotsHtml = '';
+    if (hasAny) {
+      dotsHtml = `<div class="day-dots-container">
+        ${hasLectures ? '<span class="cell-dot lecture" title="Lectures"></span>' : ''}
+        ${hasNotes ? '<span class="cell-dot note" title="Digital Notes"></span>' : ''}
+        ${hasAnnouncements ? '<span class="cell-dot announcement" title="Notices"></span>' : ''}
+      </div>`;
+    }
+
+    cellsHtml += `
+      <div class="matrix-day-cell ${isToday ? 'is-today' : ''} ${isSelected ? 'is-selected' : ''} ${hasAny ? 'has-activities' : ''}" 
+           onclick="onCalendarDateClick('${dateKey}')" 
+           title="${day} ${getMonthName(currentCalMonth)} ${currentCalYear}${hasAny ? ' • Academic activities scheduled' : ''}">
+        <span class="day-number-tag">${day}</span>
+        ${dotsHtml}
+      </div>
+    `;
+  }
+
+  // Trailing empty days to fill the 7-col grid
+  const totalRendered = firstDayIndex + daysInMonth;
+  const nextPads = (7 - (totalRendered % 7)) % 7;
+  for (let n = 1; n <= nextPads; n++) {
+    cellsHtml += `<div class="matrix-day-cell empty-day"><span class="day-number-tag">${n}</span></div>`;
+  }
+
+  matrixEl.innerHTML = cellsHtml;
+}
+
+function changeCalMonth(delta) {
+  currentCalMonth += delta;
+  if (currentCalMonth > 11) {
+    currentCalMonth = 0;
+    currentCalYear++;
+  } else if (currentCalMonth < 0) {
+    currentCalMonth = 11;
+    currentCalYear--;
+  }
+  renderAcademicCalendar();
+}
+
+function goToTodayCal() {
+  const now = new Date();
+  currentCalYear = now.getFullYear();
+  currentCalMonth = now.getMonth();
+  selectedCalDate = formatCalDateStr(now);
+  renderAcademicCalendar();
+  renderCalendarSnapshot();
+  showToast(`📅 Current Day: ${now.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}`);
+}
+
+function onCalendarDateClick(dateStr) {
+  selectedCalDate = dateStr;
+  renderAcademicCalendar();
+  renderCalendarSnapshot();
+  openDayActivitiesModal(dateStr);
+}
+
+function getActivitiesForDate(dateStr) {
+  const lectures = (_academicCalendarDataCache.lectures || []).filter(l => l.date === dateStr);
+  const notes = (_academicCalendarDataCache.notes || []).filter(n => n.date === dateStr);
+  const announcements = (_academicCalendarDataCache.announcements || []).filter(a => a.date === dateStr);
+  return { lectures, notes, announcements, total: lectures.length + notes.length + announcements.length };
+}
+
+function renderCalendarSnapshot() {
+  const badgeEl = document.getElementById('snapshot-day-badge');
+  const titleEl = document.getElementById('snapshot-date-title');
+  const countEl = document.getElementById('snapshot-activity-count');
+  const previewEl = document.getElementById('snapshot-items-preview');
+
+  if (!titleEl || !previewEl) return;
+
+  const [y, m, d] = selectedCalDate.split('-').map(Number);
+  const dateObj = new Date(y, m - 1, d);
+  const formatted = dateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'long', day: 'numeric', year: 'numeric' });
+  const isToday = selectedCalDate === formatCalDateStr(new Date());
+
+  if (badgeEl) badgeEl.textContent = isToday ? "TODAY'S SCHEDULE" : "SELECTED DATE";
+  titleEl.textContent = formatted;
+
+  const { lectures, notes, announcements, total } = getActivitiesForDate(selectedCalDate);
+
+  if (countEl) {
+    countEl.textContent = total === 0 ? "No activities scheduled" : `${total} active study item${total > 1 ? 's' : ''} logged`;
+  }
+
+  if (total === 0) {
+    previewEl.innerHTML = `
+      <div style="padding: 1.5rem 1rem; text-align: center; color: var(--text-subtle); background: var(--bg-surface-subtle); border-radius: var(--radius-sm); border: 1px dashed var(--border-color);">
+        <div style="font-size: 1.5rem; margin-bottom: 0.35rem;">☕</div>
+        <div style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted);">Free Study Day</div>
+        <div style="font-size: 0.75rem; margin-top: 0.25rem;">No class lectures or new notes logged for this date.</div>
+      </div>
+    `;
     return;
   }
 
-  container.innerHTML = all.slice(0, 10).map(l => {
-    const clickAction = (l.isNote && (l.fbKey || l.id)) 
-      ? `onclick="navigateAndOpenNote('${l.subjectId}', '${l.fbKey || l.id}')"` 
-      : `onclick="navigateToSubject('${l.subjectId}')"`;
+  const allItems = [
+    ...notes.map(n => ({ ...n, type: 'note' })),
+    ...lectures.map(l => ({ ...l, type: 'lecture' })),
+    ...announcements.map(a => ({ ...a, type: 'announcement' }))
+  ];
 
-    return `
-      <div class="card" ${clickAction} style="cursor: pointer; padding: 1rem; border-radius: 12px; background: var(--bg-surface); border: 1px solid var(--border-color); margin-bottom: 0.75rem; display: flex; align-items: center; gap: 1rem;">
-        <div style="background: var(--bg-surface-subtle); padding: 0.75rem; border-radius: 8px; text-align: center; min-width: 50px;">
-          <div style="font-size: 0.65rem; font-weight: 800; color: var(--color-coral);">AUG</div>
-          <div style="font-size: 1.1rem; font-weight: 700;">${l.date ? l.date.split('-')[2] || '01' : '01'}</div>
-        </div>
-        <div style="flex: 1;">
-          <div style="font-weight: 600; font-size: 0.95rem; margin-bottom: 0.25rem;">${escapeHtml(l.topic || l.title || 'Lecture / Note')}</div>
-          <div style="display: flex; gap: 0.5rem; font-size: 0.75rem; color: var(--text-muted);">
-            <span style="background: var(--color-oat); padding: 2px 6px; border-radius: 4px; color: var(--color-coral);">${escapeHtml(l.subjectName || l.subject || 'General')}</span>
-            <span>⏱️ ${l.time || '10:00 AM'}</span>
+  previewEl.innerHTML = allItems.slice(0, 3).map(item => {
+    if (item.type === 'note') {
+      return `
+        <div class="snapshot-item-card" onclick="openNoteReaderView('${item.fbKey || item.id}')">
+          <div class="snapshot-item-top">
+            <span class="snapshot-type-tag note">📚 Digital Note</span>
+            <span style="font-size: 0.72rem; color: var(--text-subtle);">${escapeHtml(item.subjectName || '')}</span>
           </div>
+          <div class="snapshot-item-title">${escapeHtml(item.title || item.topic || 'Digital Note')}</div>
+          <div class="snapshot-item-meta">⏱️ ${escapeHtml(item.readTime || '8 min read')} • By ${escapeHtml(item.author || 'Baljot Chohan')}</div>
         </div>
-        <div style="color: var(--text-subtle);">➔</div>
+      `;
+    } else if (item.type === 'lecture') {
+      return `
+        <div class="snapshot-item-card" onclick="navigateToSubject('${item.subjectId}')">
+          <div class="snapshot-item-top">
+            <span class="snapshot-type-tag lecture">🎙️ Lecture</span>
+            <span style="font-size: 0.72rem; color: var(--text-subtle);">${escapeHtml(item.subjectName || '')}</span>
+          </div>
+          <div class="snapshot-item-title">${escapeHtml(item.topic || 'Class Lecture')}</div>
+          <div class="snapshot-item-meta">⏱️ ${escapeHtml(item.time || '10:00 AM')}</div>
+        </div>
+      `;
+    } else {
+      return `
+        <div class="snapshot-item-card">
+          <div class="snapshot-item-top">
+            <span class="snapshot-type-tag announcement">📢 Notice</span>
+          </div>
+          <div class="snapshot-item-title">${escapeHtml(item.title || 'Announcement')}</div>
+          <div class="snapshot-item-meta">${escapeHtml(item.message || item.text || '')}</div>
+        </div>
+      `;
+    }
+  }).join('');
+}
+
+function openSelectedDayActivitiesModal() {
+  openDayActivitiesModal(selectedCalDate);
+}
+
+function openDayActivitiesModal(dateStr) {
+  const modal = document.getElementById('day-activities-modal');
+  if (!modal) return;
+
+  selectedCalDate = dateStr;
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const dateObj = new Date(y, m - 1, d);
+  const formatted = dateObj.toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+
+  const titleEl = document.getElementById('day-modal-title');
+  if (titleEl) titleEl.textContent = formatted;
+
+  const { lectures, notes, announcements, total } = getActivitiesForDate(dateStr);
+
+  const countAll = document.getElementById('day-count-all');
+  const countLec = document.getElementById('day-count-lectures');
+  const countNote = document.getElementById('day-count-notes');
+  const countAnn = document.getElementById('day-count-announcements');
+
+  if (countAll) countAll.textContent = total;
+  if (countLec) countLec.textContent = lectures.length;
+  if (countNote) countNote.textContent = notes.length;
+  if (countAnn) countAnn.textContent = announcements.length;
+
+  currentDayActivitiesFilter = 'all';
+  document.querySelectorAll('.day-filter-pill').forEach(btn => {
+    btn.classList.toggle('active', btn.getAttribute('data-dayfilter') === 'all');
+  });
+
+  renderDayActivitiesList();
+
+  modal.style.display = 'flex';
+  lockScroll(true, modal);
+}
+
+function closeDayActivitiesModal() {
+  const modal = document.getElementById('day-activities-modal');
+  if (!modal) return;
+  modal.style.display = 'none';
+  lockScroll(false);
+}
+
+function filterDayActivities(filterType) {
+  currentDayActivitiesFilter = filterType;
+  document.querySelectorAll('.day-filter-pill').forEach(btn => {
+    btn.classList.toggle('active', btn.getAttribute('data-dayfilter') === filterType);
+  });
+  renderDayActivitiesList();
+}
+
+function renderDayActivitiesList() {
+  const container = document.getElementById('day-activities-list');
+  if (!container) return;
+
+  const { lectures, notes, announcements } = getActivitiesForDate(selectedCalDate);
+
+  let items = [];
+  if (currentDayActivitiesFilter === 'all') {
+    items = [
+      ...notes.map(n => ({ ...n, itemType: 'note' })),
+      ...lectures.map(l => ({ ...l, itemType: 'lecture' })),
+      ...announcements.map(a => ({ ...a, itemType: 'announcement' }))
+    ];
+  } else if (currentDayActivitiesFilter === 'lectures') {
+    items = lectures.map(l => ({ ...l, itemType: 'lecture' }));
+  } else if (currentDayActivitiesFilter === 'notes') {
+    items = notes.map(n => ({ ...n, itemType: 'note' }));
+  } else if (currentDayActivitiesFilter === 'announcements') {
+    items = announcements.map(a => ({ ...a, itemType: 'announcement' }));
+  }
+
+  if (!items.length) {
+    container.innerHTML = `
+      <div style="padding: 3rem 1.5rem; text-align: center; color: var(--text-muted); background: var(--bg-surface-subtle); border-radius: var(--radius-md); border: 1px dashed var(--border-color);">
+        <div style="font-size: 2.5rem; margin-bottom: 0.75rem;">📖</div>
+        <h3 class="serif" style="font-size: 1.25rem; color: var(--text-main); margin-bottom: 0.35rem;">No Activities Found</h3>
+        <p style="font-size: 0.85rem; color: var(--text-muted); max-width: 420px; margin: 0 auto 1.25rem;">There are no ${currentDayActivitiesFilter === 'all' ? 'scheduled activities' : currentDayActivitiesFilter} recorded for this date.</p>
+        <div style="display: flex; justify-content: center; gap: 0.75rem; flex-wrap: wrap;">
+          <button class="Button-module-scss-module__f9ZZrG__button Button-module-scss-module__f9ZZrG__primary" onclick="closeDayActivitiesModal(); navigateToSubject('comp-arch');">
+            <span>📚 Browse Subject Workspaces</span>
+          </button>
+          <button class="Button-module-scss-module__f9ZZrG__button Button-module-scss-module__f9ZZrG__secondary" onclick="goToTodayCal(); closeDayActivitiesModal();">
+            <span>📅 Go to Today</span>
+          </button>
+        </div>
       </div>
     `;
+    return;
+  }
+
+  container.innerHTML = items.map(item => {
+    if (item.itemType === 'note') {
+      return `
+        <div class="day-activity-item-card">
+          <div class="day-activity-card-header">
+            <span class="day-activity-type-badge note">📚 Digital Study Note</span>
+            <span class="day-activity-time">⏱️ ${escapeHtml(item.readTime || '8 min read')}</span>
+          </div>
+          <h3 class="day-activity-title">${escapeHtml(item.title || item.topic || 'Digital Study Note')}</h3>
+          <div class="day-activity-desc">${escapeHtml(item.summary || (item.content ? item.content.slice(0, 150) + '...' : 'Structured digital study notes covering core exam topics and concepts.'))}</div>
+          <div class="day-activity-actions">
+            <button class="day-activity-open-btn" onclick="closeDayActivitiesModal(); openNoteReaderView('${item.fbKey || item.id}')">
+              <span>📖 Open Full Screen Note</span>
+            </button>
+            <button class="day-activity-sec-btn" onclick="closeDayActivitiesModal(); navigateToSubject('${item.subjectId}')">
+              <span>Workspace (${escapeHtml(item.subjectName || 'Subject')})</span>
+            </button>
+          </div>
+        </div>
+      `;
+    } else if (item.itemType === 'lecture') {
+      return `
+        <div class="day-activity-item-card">
+          <div class="day-activity-card-header">
+            <span class="day-activity-type-badge lecture">🎙️ Course Lecture</span>
+            <span class="day-activity-time">⏱️ ${escapeHtml(item.time || '10:00 AM')}</span>
+          </div>
+          <h3 class="day-activity-title">${escapeHtml(item.topic || 'Classroom Lecture')}</h3>
+          <div class="day-activity-desc">${escapeHtml(item.desc || item.description || 'Classroom lecture session on core syllabus curriculum and practical problems.')}</div>
+          <div class="day-activity-actions">
+            <button class="day-activity-open-btn" onclick="closeDayActivitiesModal(); navigateToSubject('${item.subjectId}')">
+              <span>↗ Go to Subject (${escapeHtml(item.subjectName || 'Subject')})</span>
+            </button>
+            <a href="./Syllabus.pdf" target="_blank" class="day-activity-sec-btn">
+              <span>📄 Attached Syllabus Material</span>
+            </a>
+          </div>
+        </div>
+      `;
+    } else {
+      return `
+        <div class="day-activity-item-card">
+          <div class="day-activity-card-header">
+            <span class="day-activity-type-badge announcement">📢 Class Notice</span>
+            <span class="day-activity-time">${escapeHtml(item.category || 'Official')}</span>
+          </div>
+          <h3 class="day-activity-title">${escapeHtml(item.title || 'Announcement')}</h3>
+          <div class="day-activity-desc">${escapeHtml(item.message || item.text || '')}</div>
+        </div>
+      `;
+    }
   }).join('');
 }
 
@@ -1720,8 +2215,18 @@ async function syncFirebaseData() {
 function openZenReader() {
   const subject = BCA_3RD_SEM_DATA.subjects.find(s => s.id === activeSubjectId);
   const subjId = subject ? subject.id : (activeSubjectId || 'comp-arch');
-  const readerUrl = `/note.html?subject=${encodeURIComponent(subjId)}&mode=master`;
-  window.location.href = readerUrl;
+
+  // Find first topic note for subject to open in clean focused reading mode
+  const firstNote = (_currentSubjectNotes && _currentSubjectNotes.length > 0)
+    ? _currentSubjectNotes[0]
+    : ((subject && subject.digitalNotes && subject.digitalNotes.length > 0) ? subject.digitalNotes[0] : null);
+
+  if (firstNote) {
+    const noteId = firstNote.fbKey || firstNote.id;
+    window.location.href = `/note.html?id=${encodeURIComponent(noteId)}&subject=${encodeURIComponent(subjId)}`;
+  } else {
+    window.location.href = `/note.html?subject=${encodeURIComponent(subjId)}`;
+  }
 }
 
 function openZenReaderWithNote(noteId) {
@@ -2260,7 +2765,7 @@ let currentUserProfile = null;
 let _userBookmarks = JSON.parse(localStorage.getItem('bca_user_bookmarks') || '[]');
 
 function initFirebaseAuth() {
-  // Try restoring from localStorage (for page refresh)
+  // Try restoring from localStorage (for page refresh & persistent session)
   const savedLocal = localStorage.getItem('studiq_user_profile');
   if (savedLocal) {
     try {
@@ -2268,13 +2773,29 @@ function initFirebaseAuth() {
     } catch (e) {}
   }
 
+  // Restore persistent Admin session
+  const adminSession = localStorage.getItem('bca_admin_session') || sessionStorage.getItem('bca_admin_session');
+  if (adminSession === 'authenticated' && currentUserProfile) {
+    currentUserProfile.isAdmin = true;
+  }
+
+  updateProfileUI();
+  updateAdminHeaderUI();
+
   if (typeof firebase !== 'undefined' && firebase.auth) {
     firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(() => {});
     firebase.auth().onAuthStateChanged((user) => {
       if (user) {
         const prevNotes = (currentUserProfile && currentUserProfile.purchasedNotes) || (savedLocal ? (JSON.parse(savedLocal).purchasedNotes || {}) : {});
         const prevSub = (currentUserProfile && currentUserProfile.subscription) || (savedLocal ? (JSON.parse(savedLocal).subscription || null) : null);
-        const isAdminUser = (FIREBASE.adminEmails || []).includes(user.email);
+        const adminEmailList = (FIREBASE.adminEmails || [
+          'baljotchohan23@gmail.com',
+          'mehakpreetkaur@gmail.com',
+          'mehakpreetsaini26@gmail.com'
+        ]).map(e => e.toLowerCase());
+
+        const userEmail = (user.email || '').toLowerCase();
+        const isAdminUser = adminEmailList.includes(userEmail) || userEmail.includes('baljot');
 
         currentUserProfile = {
           uid: user.uid,
@@ -2286,12 +2807,17 @@ function initFirebaseAuth() {
           subscription: prevSub || (isAdminUser ? { plan: 'max', status: 'active', validUntil: Date.now() + 3650*24*60*60*1000 } : null)
         };
         localStorage.setItem('studiq_user_profile', JSON.stringify(currentUserProfile));
+        if (isAdminUser) {
+          localStorage.setItem('bca_admin_session', 'authenticated');
+          sessionStorage.setItem('bca_admin_session', 'authenticated');
+          localStorage.setItem('bca_hub_admin_session', 'authenticated');
+          sessionStorage.setItem('bca_hub_admin_session', 'authenticated');
+        }
         dismissGuestNudge();
       } else {
-        // Signed out — clear any locally cached profile
-        if (currentUserProfile && currentUserProfile.uid && !currentUserProfile.uid.startsWith('user_')) {
+        // IMPORTANT: Do not wipe cached profile on transient null callback from initial page tick.
+        if (!localStorage.getItem('studiq_user_profile')) {
           currentUserProfile = null;
-          localStorage.removeItem('studiq_user_profile');
         }
       }
       updateProfileUI();
@@ -2301,7 +2827,7 @@ function initFirebaseAuth() {
       if (subject) renderSubjectNotes(subject);
     });
   } else {
-    // Local dev / no Firebase — just update UI from localStorage
+    // Local dev / no Firebase — update UI from localStorage
     updateProfileUI();
   }
 }
@@ -2320,6 +2846,11 @@ function updateProfileUI() {
   const authTriggerBtn = document.getElementById('profile-auth-trigger-btn');
   const adminTabBtn = document.getElementById('profile-admin-tab-btn');
 
+  // Membership Tab elements
+  const planPill = document.getElementById('profile-plan-pill');
+  const planHeading = document.getElementById('profile-plan-name-heading');
+  const planDesc = document.getElementById('profile-plan-desc');
+
   if (currentUserProfile) {
     // Logged in
     const photo = currentUserProfile.photo;
@@ -2336,18 +2867,62 @@ function updateProfileUI() {
     if (userNameEl) userNameEl.textContent = currentUserProfile.name;
     if (userEmailEl) userEmailEl.textContent = currentUserProfile.email;
     
-    if (roleBadge) {
-      if (currentUserProfile.isAdmin) {
+    if (currentUserProfile.isAdmin) {
+      if (roleBadge) {
         roleBadge.className = 'profile-badge admin';
         roleBadge.textContent = '🛡️ Administrator';
+      }
+      if (statusText) statusText.textContent = 'Admin OAuth Verified';
+      if (planPill) {
+        planPill.className = 'profile-badge admin';
+        planPill.textContent = '🛡️ Administrator Pass';
+      }
+      if (planHeading) planHeading.textContent = 'Full Hub Administrator';
+      if (planDesc) planDesc.textContent = 'Full access to all units, notes, admin console, and database publishing.';
+    } else {
+      const sub = currentUserProfile.subscription || { plan: 'free' };
+      const planName = (sub.plan || 'free').toLowerCase();
+
+      if (planName === 'max') {
+        if (roleBadge) {
+          roleBadge.className = 'profile-badge max';
+          roleBadge.textContent = '🌟 Max Lifetime Pass';
+        }
+        if (statusText) statusText.textContent = 'Lifetime Scholar (Permanent)';
+        if (planPill) {
+          planPill.className = 'profile-badge max';
+          planPill.textContent = '🌟 Max Lifetime Pass';
+        }
+        if (planHeading) planHeading.textContent = 'Max Lifetime Pass (Active)';
+        if (planDesc) planDesc.textContent = 'Permanent unlimited access to all notes across Units I, II, III, IV and all future semester updates.';
+      } else if (planName === 'pro' || planName === 'plus') {
+        if (roleBadge) {
+          roleBadge.className = 'profile-badge pro';
+          roleBadge.textContent = '⭐ Pro Scholar';
+        }
+        if (statusText) statusText.textContent = 'Pro Scholar (Active)';
+        if (planPill) {
+          planPill.className = 'profile-badge pro';
+          planPill.textContent = '⭐ Pro Scholar Pass';
+        }
+        if (planHeading) planHeading.textContent = 'Pro Scholar Monthly Pass (Active)';
+        if (planDesc) planDesc.textContent = 'Full access to all 4 units and all 7 subject workspaces.';
       } else {
-        const sub = currentUserProfile.subscription || { plan: 'free' };
-        const planName = sub.plan ? sub.plan.toUpperCase() : 'FREE';
-        roleBadge.className = `profile-badge ${sub.plan || 'free'}`;
-        roleBadge.textContent = `🎓 Plan: ${planName}`;
+        // Free plan
+        if (roleBadge) {
+          roleBadge.className = 'profile-badge free';
+          roleBadge.textContent = '🎓 Free Scholar';
+        }
+        if (statusText) statusText.textContent = 'Verified Student (Free Plan)';
+        if (planPill) {
+          planPill.className = 'profile-badge free';
+          planPill.textContent = '🎓 Free Scholar (Unit 1)';
+        }
+        if (planHeading) planHeading.textContent = 'Free Starter Pass';
+        if (planDesc) planDesc.textContent = 'Access to all Unit 1 digital notes & lectures. Upgrade to Pro (₹19/mo) or Max Lifetime (₹49) to unlock Units II, III, and IV!';
       }
     }
-    if (statusText) statusText.textContent = currentUserProfile.isAdmin ? 'Admin OAuth Verified' : `Verified Student (${currentUserProfile.subscription ? currentUserProfile.subscription.plan.toUpperCase() : 'Free Plan'})`;
+
     if (googleBtnText) googleBtnText.textContent = 'Sign Out Account';
     if (authTriggerBtn) authTriggerBtn.className = 'google-auth-btn signed-in';
     if (adminTabBtn) adminTabBtn.style.display = currentUserProfile.isAdmin ? 'block' : 'none';
@@ -2360,18 +2935,51 @@ function updateProfileUI() {
     }
     if (btnLabel) btnLabel.textContent = 'Profile';
     if (userNameEl) userNameEl.textContent = 'Guest Scholar';
-    if (userEmailEl) userEmailEl.textContent = 'Sign in with Google to sync bookmarks & study progress';
+    if (userEmailEl) userEmailEl.textContent = 'Sign in with Google to unlock Unit 1 notes for free & sync bookmarks';
     if (roleBadge) {
-      roleBadge.className = 'profile-badge';
-      roleBadge.textContent = '🎓 Student Scholar';
+      roleBadge.className = 'profile-badge free';
+      roleBadge.textContent = '👤 Guest Visitor';
     }
     if (statusText) statusText.textContent = 'Guest Mode';
+    if (planPill) {
+      planPill.className = 'profile-badge free';
+      planPill.textContent = '👤 Guest Visitor';
+    }
+    if (planHeading) planHeading.textContent = 'Guest Preview Mode';
+    if (planDesc) planDesc.textContent = 'Sign in with Google to get instant free access to all Unit 1 notes across all subjects!';
     if (googleBtnText) googleBtnText.textContent = 'Sign In with Google';
     if (authTriggerBtn) authTriggerBtn.className = 'google-auth-btn';
     if (adminTabBtn) adminTabBtn.style.display = 'none';
   }
 
   updateProfileStats();
+}
+
+// ── 30-Second Anthropic Guest Visitor Prompt ──
+let _guestPromptTimer = null;
+
+function initGuestPromptTimer() {
+  if (typeof window === 'undefined') return;
+  if (_guestPromptTimer) clearTimeout(_guestPromptTimer);
+
+  _guestPromptTimer = setTimeout(() => {
+    const isGuest = !currentUserProfile || !currentUserProfile.uid || currentUserProfile.uid.startsWith('guest_');
+    const dismissed = sessionStorage.getItem('bca_guest_prompt_dismissed');
+    if (isGuest && dismissed !== 'true') {
+      const banner = document.getElementById('guest-signin-prompt-banner');
+      if (banner) banner.style.display = 'block';
+    }
+  }, 30000); // 30 seconds
+}
+
+function dismissGuestPromptBanner() {
+  const banner = document.getElementById('guest-signin-prompt-banner');
+  if (banner) banner.style.display = 'none';
+  sessionStorage.setItem('bca_guest_prompt_dismissed', 'true');
+}
+
+function dismissGuestNudge() {
+  dismissGuestPromptBanner();
 }
 
 let _selectedAvatarSymbol = '🎓';
@@ -2394,7 +3002,13 @@ function saveStudIQProfile() {
     return;
   }
 
-  const isAdmin = (FIREBASE.adminEmails || []).includes(email.toLowerCase()) || email.toLowerCase().includes('baljot');
+  const adminEmailList = (FIREBASE.adminEmails || [
+    'baljotchohan23@gmail.com',
+    'mehakpreetkaur@gmail.com',
+    'mehakpreetsaini26@gmail.com'
+  ]).map(e => e.toLowerCase());
+
+  const isAdmin = adminEmailList.includes(email.toLowerCase()) || email.toLowerCase().includes('baljot');
 
   currentUserProfile = {
     uid: 'user_' + Date.now(),
@@ -2407,7 +3021,9 @@ function saveStudIQProfile() {
 
   localStorage.setItem('studiq_user_profile', JSON.stringify(currentUserProfile));
   if (isAdmin) {
+    localStorage.setItem('bca_hub_admin_session', 'authenticated');
     sessionStorage.setItem('bca_hub_admin_session', 'authenticated');
+    localStorage.setItem('bca_admin_session', 'authenticated');
     sessionStorage.setItem('bca_admin_session', 'authenticated');
   }
 
@@ -2433,6 +3049,8 @@ function handleAuthAction() {
     }
     sessionStorage.removeItem('bca_hub_admin_session');
     sessionStorage.removeItem('bca_admin_session');
+    localStorage.removeItem('bca_hub_admin_session');
+    localStorage.removeItem('bca_admin_session');
     localStorage.removeItem('studiq_user_profile');
     currentUserProfile = null;
     updateProfileUI();
@@ -2450,15 +3068,26 @@ function handleAuthAction() {
 
       firebase.auth().signInWithPopup(provider).then((result) => {
         const u = result.user;
+        const adminEmailList = (FIREBASE.adminEmails || [
+          'baljotchohan23@gmail.com',
+          'mehakpreetkaur@gmail.com',
+          'mehakpreetsaini26@gmail.com'
+        ]).map(e => e.toLowerCase());
+
+        const isAdmin = adminEmailList.includes((u.email || '').toLowerCase()) || (u.email || '').toLowerCase().includes('baljot');
+
         currentUserProfile = {
           uid: u.uid,
           name: u.displayName || 'BCA Scholar',
           email: u.email || '',
           photo: u.photoURL || '',
-          isAdmin: (FIREBASE.adminEmails || []).includes(u.email)
+          isAdmin: isAdmin
         };
+        localStorage.setItem('studiq_user_profile', JSON.stringify(currentUserProfile));
         if (currentUserProfile.isAdmin) {
+          localStorage.setItem('bca_hub_admin_session', 'authenticated');
           sessionStorage.setItem('bca_hub_admin_session', 'authenticated');
+          localStorage.setItem('bca_admin_session', 'authenticated');
           sessionStorage.setItem('bca_admin_session', 'authenticated');
         }
         updateProfileUI();
@@ -2469,27 +3098,18 @@ function handleAuthAction() {
         if (err.code === 'auth/popup-blocked' || err.code === 'auth/popup-closed-by-user') {
           showToast('Popup blocked by browser. Redirecting to Google Auth... 🔄');
           firebase.auth().signInWithRedirect(provider);
-        } else if (err.code === 'auth/operation-not-allowed') {
-          showToast('⚠️ Enable Google in Firebase Console -> Auth -> Sign-in method!');
-          const box = document.getElementById('studiq-profile-setup-box');
-          if (box) box.style.display = 'block';
-        } else if (err.code === 'auth/unauthorized-domain') {
-          showToast(`⚠️ Domain ${window.location.hostname} not authorized in Firebase Console -> Auth -> Settings!`);
-          const box = document.getElementById('studiq-profile-setup-box');
-          if (box) box.style.display = 'block';
         } else {
-          showToast(`Auth Notice (${err.code || 'Popup'}): Setup profile below ✨`);
-          const box = document.getElementById('studiq-profile-setup-box');
-          if (box) box.style.display = 'block';
+          showToast('Sign-in failed: ' + (err.message || 'Please try again'));
         }
       });
     } else {
-      // Toggle interactive setup box when running locally or disk preview
+      // Offline / local preview mode
       const box = document.getElementById('studiq-profile-setup-box');
       if (box) {
         box.style.display = box.style.display === 'none' ? 'block' : 'none';
+      } else {
+        showToast('Google Sign-In requires an active HTTPS connection.');
       }
-      showToast('Set up your StudIQ Scholar profile below ✨');
     }
   }
 }

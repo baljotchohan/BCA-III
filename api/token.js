@@ -16,7 +16,11 @@ const https = require('https');
 
 const FIREBASE_DB  = 'https://bca2nd-5c622-default-rtdb.firebaseio.com';
 const FIREBASE_KEY = 'AIzaSyAM8tcsYAnJoLzY6ZUxp6M5h2z-M6AJzDI';
-const ADMIN_EMAILS = ['baljotchohan23@gmail.com', 'mehakpreetkaur@gmail.com'];
+const ADMIN_EMAILS = [
+  'baljotchohan23@gmail.com',
+  'mehakpreetkaur@gmail.com',
+  'mehakpreetsaini26@gmail.com'
+];
 const ADMIN_SECRET = process.env.ADMIN_SECRET || '';
 const CODE_TTL_MS  = 5 * 60 * 1000; // 5 minutes
 

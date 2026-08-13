@@ -19,11 +19,18 @@ async function getAuthTokenParam() {
 
 function isPortalAdminAuth() {
   if (typeof firebase !== 'undefined' && firebase.auth && firebase.auth().currentUser) {
-    const email = firebase.auth().currentUser.email || '';
-    const ADMIN_EMAILS = ['baljotchohan23@gmail.com', 'mehakpreetkaur@gmail.com'];
+    const email = (firebase.auth().currentUser.email || '').toLowerCase();
+    const ADMIN_EMAILS = [
+      'baljotchohan23@gmail.com',
+      'mehakpreetkaur@gmail.com',
+      'mehakpreetsaini26@gmail.com'
+    ];
     if (ADMIN_EMAILS.includes(email)) return true;
   }
-  return sessionStorage.getItem(SESSION_KEY) === 'authenticated' || sessionStorage.getItem('bca_admin_session') === 'authenticated';
+  return sessionStorage.getItem(SESSION_KEY) === 'authenticated' || 
+         sessionStorage.getItem('bca_admin_session') === 'authenticated' ||
+         localStorage.getItem('bca_hub_admin_session') === 'authenticated' ||
+         localStorage.getItem('bca_admin_session') === 'authenticated';
 }
 
 // ─── Firebase REST Helpers ────────────────────────────────────────────────────

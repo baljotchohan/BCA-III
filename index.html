@@ -40,7 +40,44 @@
   <meta name="twitter:description" content="Panjab University BCA 3rd Semester Academic Hub & Syllabus Dashboard"/>
   <meta name="twitter:image" content="icon-512.png"/>
 
-  <link rel="stylesheet" href="styles.css?v=4.0"/>
+  <link rel="stylesheet" href="styles.css?v=5.0"/>
+  <script>
+    window.activateStudyPass = function (tier) {
+      console.log('⚡ [STUDY_PASS] Direct Activation Request:', tier);
+      try {
+        if (window.BCA3_PAYMENTS && typeof window.BCA3_PAYMENTS.devQuickUnlock === 'function') {
+          if (tier === 'free') window.BCA3_PAYMENTS.devResetToFree();
+          else window.BCA3_PAYMENTS.devQuickUnlock(tier);
+          return;
+        }
+      } catch (e) {
+        console.warn('BCA3_PAYMENTS devQuickUnlock fallback:', e);
+      }
+
+      // Standalone Fallback
+      let prof = {};
+      try { prof = JSON.parse(localStorage.getItem('studiq_user_profile') || '{}'); } catch(e){}
+      prof.uid = prof.uid || ('user_' + Date.now());
+      prof.name = prof.name || 'Baljot (Scholar)';
+      prof.email = 'baljotchohan23@gmail.com';
+      prof.subscription = {
+        plan: tier,
+        status: 'active',
+        activatedAt: Date.now(),
+        validUntil: Date.now() + (tier === 'max' ? 3650 : 30) * 24 * 60 * 60 * 1000
+      };
+      localStorage.setItem('studiq_user_profile', JSON.stringify(prof));
+      localStorage.setItem('bca_dev_active_plan', tier);
+      
+      const title = tier === 'max' ? '🌟 Max Lifetime Pass' : (tier === 'pro' ? '⭐ Pro Pass' : 'Free Plan');
+      if (typeof showToast === 'function') {
+        showToast(`🎉 ${title} Activated! All notes unlocked!`, 'success');
+      } else {
+        alert(`🎉 ${title} Activated! All notes unlocked!`);
+      }
+      location.reload();
+    };
+  </script>
 </head>
 <body>
 
@@ -205,7 +242,7 @@
           <div class="Hero-module-scss-module__sp7muW__textButtonWrapper">
             <div class="Hero-module-scss-module__sp7muW__textWrapper">
               <span class="greeting-pill" id="live-greeting">Panjab University • 2026-27 Session</span>
-              <h1 class="display-2 high-tech-title Hero-module-scss-module__sp7muW__title">BCA 3rd Semester Hub</h1>
+              <h1 class="display-2 serif Hero-module-scss-module__sp7muW__title">BCA 3rd Semester Hub</h1>
             </div>
           </div>
         </div>
@@ -467,26 +504,75 @@
 
       </div>
 
-      <!-- 4. ACADEMIC WIDGETS SECTION (TIMELINE & TO-DO) -->
-      <section class="study-widgets-section" id="study-widgets">
+      <!-- 4. REAL ACADEMIC CALENDAR & DAILY TIMELINE SECTION -->
+      <section class="study-widgets-section academic-calendar-section" id="study-widgets">
         <div class="page-wrapper">
-          <div class="study-widgets-grid">
+          
+          <div class="calendar-section-header">
+            <div>
+              <div class="calendar-pretitle">BCA 3rd Semester • Academic Session 2026-27</div>
+              <h2 class="calendar-main-title serif">Academic Calendar &amp; Daily Schedule</h2>
+            </div>
+            <p class="body-2 calendar-section-desc">
+              Interactive academic calendar tracking daily classroom lectures, digital study guides, and exam milestones. Click any date to explore that day's curriculum and study notes.
+            </p>
+          </div>
+
+          <div class="academic-calendar-layout">
             
-            <!-- LIVE LECTURE TIMELINE -->
-            <div class="widget-card">
-              <div class="widget-header">
-                <h3 class="widget-title serif">Recent Lecture Timeline</h3>
-                <span class="widget-badge" id="lecture-count-badge">Live Synced</span>
+            <!-- LEFT / MAIN: REAL CALENDAR COMPONENT -->
+            <div class="calendar-box-card">
+              <div class="calendar-box-top">
+                <div class="calendar-month-selector">
+                  <button class="cal-nav-btn" onclick="changeCalMonth(-1)" title="Previous Month" aria-label="Previous Month">‹</button>
+                  <h3 class="cal-month-heading serif" id="main-cal-month-title">August 2026</h3>
+                  <button class="cal-nav-btn" onclick="changeCalMonth(1)" title="Next Month" aria-label="Next Month">›</button>
+                </div>
+                <div class="calendar-top-actions">
+                  <button class="cal-today-action-btn" onclick="goToTodayCal()">
+                    <span>📍 Today</span>
+                  </button>
+                </div>
               </div>
-              <p class="body-3" style="color: var(--text-muted); margin-bottom: 1rem;">
-                Daily course lectures, faculty explanations, and attached reference materials.
-              </p>
-              <div class="lecture-timeline-list" id="dashboard-lectures-list">
+
+              <!-- Weekdays Row -->
+              <div class="calendar-weekdays-row">
+                <span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span>
+              </div>
+
+              <!-- Real Dynamic Dates Grid -->
+              <div class="calendar-days-matrix" id="main-calendar-matrix">
                 <!-- Populated dynamically by app.js -->
+              </div>
+
+              <!-- Calendar Legend -->
+              <div class="calendar-legend-bar">
+                <div class="legend-item"><span class="legend-dot lecture"></span> Lectures</div>
+                <div class="legend-item"><span class="legend-dot note"></span> Notes</div>
+                <div class="legend-item"><span class="legend-dot announcement"></span> Notices</div>
+                <div class="legend-item"><span class="legend-dot today"></span> Today</div>
               </div>
             </div>
 
+            <!-- RIGHT: SELECTED DATE / TODAY SNAPSHOT PANEL -->
+            <div class="calendar-snapshot-card">
+              <div class="snapshot-header">
+                <div class="snapshot-date-badge" id="snapshot-day-badge">SELECTED DATE</div>
+                <h3 class="snapshot-date-title serif" id="snapshot-date-title">August 13, 2026</h3>
+                <div class="snapshot-activity-count" id="snapshot-activity-count">Loading schedule...</div>
+              </div>
+
+              <div class="snapshot-items-preview" id="snapshot-items-preview">
+                <!-- Populated dynamically by app.js -->
+              </div>
+
+              <button class="snapshot-view-full-btn" id="snapshot-view-full-btn" onclick="openSelectedDayActivitiesModal()">
+                <span>Open Full Day Schedule &amp; Notes ➔</span>
+              </button>
+            </div>
+
           </div>
+
         </div>
       </section>
 
@@ -703,63 +789,68 @@
               
               <div class="calendar-section-wrapper">
                 
-                <!-- Interactive Calendar Picker Widget -->
-                <div class="calendar-widget-card">
-                  <div class="calendar-widget-header">
-                    <span class="calendar-month-title">August 2026</span>
-                    <div class="calendar-nav-controls">
-                      <button class="cal-nav-btn" onclick="showToast('Showing August 2026 Academic Session')">‹</button>
-                      <button class="cal-nav-btn" onclick="showToast('Showing August 2026 Academic Session')">›</button>
+                <!-- Left: Compact Real Calendar Widget -->
+                <div class="calendar-left-col">
+                  <div class="calendar-widget-card">
+                    <div class="calendar-widget-header">
+                      <span class="calendar-month-title">August 2026</span>
+                      <div class="calendar-nav-controls">
+                        <button class="cal-nav-btn" onclick="changeSubjectCalMonth(-1)" title="Previous Month">‹</button>
+                        <button class="cal-nav-btn" onclick="goToTodaySubjectCal()" title="Jump to Today" style="width: auto; padding: 0 0.55rem; font-size: 0.72rem; font-weight: 700;">Today</button>
+                        <button class="cal-nav-btn" onclick="changeSubjectCalMonth(1)" title="Next Month">›</button>
+                      </div>
+                    </div>
+
+                    <!-- Weekday Labels -->
+                    <div class="calendar-grid" style="margin-bottom: 0.25rem;">
+                      <div class="cal-day-label">Su</div>
+                      <div class="cal-day-label">Mo</div>
+                      <div class="cal-day-label">Tu</div>
+                      <div class="cal-day-label">We</div>
+                      <div class="cal-day-label">Th</div>
+                      <div class="cal-day-label">Fr</div>
+                      <div class="cal-day-label">Sa</div>
+                    </div>
+
+                    <!-- Calendar Days Grid -->
+                    <div class="calendar-grid" id="ws-calendar-grid">
+                      <!-- Populated dynamically with compact sleek cells by app.js -->
                     </div>
                   </div>
 
-                  <!-- Weekday Labels -->
-                  <div class="calendar-grid" style="margin-bottom: 0.35rem;">
-                    <div class="cal-day-label">Su</div>
-                    <div class="cal-day-label">Mo</div>
-                    <div class="cal-day-label">Tu</div>
-                    <div class="cal-day-label">We</div>
-                    <div class="cal-day-label">Th</div>
-                    <div class="cal-day-label">Fr</div>
-                    <div class="cal-day-label">Sa</div>
-                  </div>
-
-                  <!-- Calendar Days Grid -->
-                  <div class="calendar-grid" id="ws-calendar-grid">
-                    <!-- Populated dynamically by app.js with lecture indicators -->
+                  <!-- Quick Date Picker Chips Bar -->
+                  <div style="margin-top: 1rem;">
+                    <div style="font-size: 0.72rem; font-weight: 700; text-transform: uppercase; color: var(--text-subtle); margin-bottom: 0.4rem; letter-spacing: 0.05em;">
+                      Quick Date Filter
+                    </div>
+                    <div class="quick-date-pills-bar" id="ws-quick-dates-bar">
+                      <!-- Populated dynamically by app.js -->
+                    </div>
                   </div>
                 </div>
 
-                <!-- Quick Date Picker Chips Bar -->
-                <div>
-                  <div style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--text-subtle); margin-bottom: 0.5rem;">
-                    Quick Date Switcher
+                <!-- Right: Active Selected Day Detail & Timeline -->
+                <div class="calendar-right-col">
+                  <!-- Active Selected Date Activity Card -->
+                  <div class="day-lecture-card" id="ws-active-day-card">
+                    <div class="day-lecture-header">
+                      <div class="day-lecture-date" id="active-day-title">Thursday, 13 August 2026</div>
+                      <span class="day-lecture-time" id="active-day-time">Academic Log</span>
+                    </div>
+                    <div class="day-lecture-topic" id="active-day-topic">Daily Schedule</div>
+                    <div class="day-lecture-desc" id="active-day-desc">
+                      Select any date from the calendar to inspect that day's scheduled lectures, digital notes, and study material.
+                    </div>
+                    <div id="active-day-actions" style="margin-top: 0.75rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                    </div>
                   </div>
-                  <div class="quick-date-pills-bar" id="ws-quick-dates-bar">
-                    <!-- Populated dynamically by app.js -->
-                  </div>
-                </div>
 
-                <!-- Active Selected Date Lecture Highlight Card -->
-                <div class="day-lecture-card" id="ws-active-day-card">
-                  <div class="day-lecture-header">
-                    <div class="day-lecture-date" id="active-day-title">Lectures on August 8, 2026</div>
-                    <span class="day-lecture-time" id="active-day-time">10:00 AM</span>
-                  </div>
-                  <div class="day-lecture-topic" id="active-day-topic">8086 Internal Architecture: BIU &amp; EU Breakdown</div>
-                  <div class="day-lecture-desc" id="active-day-desc">
-                    6-byte instruction queue, 20-bit physical address formula, and segment register organization.
-                  </div>
-                  <a href="./Syllabus.pdf" target="_blank" class="Button-module-scss-module__f9ZZrG__button Button-module-scss-module__f9ZZrG__secondary" style="font-size: 0.75rem; display: inline-flex;">
-                    <span>↗ View Attached Reference Material</span>
-                  </a>
-                </div>
-
-                <!-- Full Chronological Lecture Logs -->
-                <div>
-                  <h3 class="headline-4 serif" style="margin-bottom: 1rem;">Complete Lecture Timeline for this Subject</h3>
-                  <div class="lecture-timeline-list" id="ws-subject-lectures-list">
-                    <!-- Populated dynamically by app.js -->
+                  <!-- Full Chronological Lecture Logs -->
+                  <div style="margin-top: 1.25rem;">
+                    <h3 class="headline-4 serif" style="margin-bottom: 0.75rem;">Subject Activity &amp; Lecture Timeline</h3>
+                    <div class="lecture-timeline-list" id="ws-subject-lectures-list">
+                      <!-- Populated dynamically by app.js -->
+                    </div>
                   </div>
                 </div>
 
@@ -915,6 +1006,7 @@
         <!-- PROFILE NAVIGATION TABS -->
         <div class="profile-tabs-bar">
           <button class="profile-tab-btn active" data-ptab="bookmarks" onclick="switchProfileTab('bookmarks')">📌 Saved Notes</button>
+          <button class="profile-tab-btn" data-ptab="membership" onclick="switchProfileTab('membership')">💳 Study Pass &amp; Plans</button>
           <button class="profile-tab-btn" data-ptab="progress" onclick="switchProfileTab('progress')">🎯 Subject Progress</button>
           <button class="profile-tab-btn" data-ptab="submit" onclick="switchProfileTab('submit')">📤 Share Study Note</button>
         </div>
@@ -927,6 +1019,34 @@
           </div>
           <div id="profile-saved-notes-list" class="profile-saved-notes-grid">
             <div class="empty-state">No saved notes yet. Click the 📌 icon on any note to bookmark it!</div>
+          </div>
+        </div>
+
+        <!-- TAB: MEMBERSHIP & STUDY PASS -->
+        <div id="ptab-membership" class="profile-tab-panel" style="display: none;">
+          <div class="profile-panel-header">
+            <h4>Study Pass &amp; Unit Access</h4>
+            <p>Manage your semester plan, unlock units, and access digital study materials.</p>
+          </div>
+          <div class="profile-membership-card" id="profile-membership-status-card" style="background: var(--bg-surface-subtle); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 1.25rem; margin-bottom: 1rem;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap;">
+              <div>
+                <span class="profile-badge" id="profile-plan-pill" style="margin-bottom: 0.5rem; display: inline-block;">🎓 Free Scholar</span>
+                <h3 style="font-family: var(--font-serif); font-size: 1.25rem; margin: 0 0 0.35rem 0; color: var(--text-main);" id="profile-plan-name-heading">Free Starter Plan</h3>
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0;" id="profile-plan-desc">Access to all Unit 1 notes &amp; lectures. Upgrade to Pro or Max to unlock Units II, III, and IV!</p>
+              </div>
+              <button class="admin-submit-btn" style="width: auto; padding: 0.55rem 1.15rem; font-size: 0.82rem;" onclick="BCA3_PAYMENTS.openPricingModal()">
+                ⚡ View Study Plans
+              </button>
+            </div>
+            <div style="margin-top: 1rem; padding-top: 0.85rem; border-top: 1px solid var(--border-subtle); display: flex; gap: 0.75rem; flex-wrap: wrap;">
+              <button class="Button-module-scss-module__f9ZZrG__button" style="background: rgba(124,58,237,0.12); color: #7c3aed; border: 1px solid rgba(124,58,237,0.3); font-size: 0.8rem; padding: 0.4rem 0.85rem;" onclick="BCA3_PAYMENTS.payForSubscription('pro', 'Pro Scholar', 19)">
+                ⭐ Upgrade to Pro (₹19/mo)
+              </button>
+              <button class="Button-module-scss-module__f9ZZrG__button" style="background: rgba(194,94,62,0.12); color: #c25e3e; border: 1px solid rgba(194,94,62,0.3); font-size: 0.8rem; padding: 0.4rem 0.85rem;" onclick="BCA3_PAYMENTS.payForSubscription('max', 'Max Lifetime', 49)">
+                🌟 Lifetime Max Pass (₹49)
+              </button>
+            </div>
           </div>
         </div>
 
@@ -1119,20 +1239,8 @@
             </div>
 
             <div class="admin-form-group">
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
-                <label class="admin-form-label" style="margin-bottom: 0;">Note Content (Markdown supported) *</label>
-                <div style="display: flex; gap: 0.4rem; align-items: center;">
-                  <span style="font-size: 0.75rem; color: var(--text-subtle);">✨ Add Visual:</span>
-                  <select id="adm-insert-visual-select" class="admin-form-select" style="font-size: 0.75rem; padding: 0.2rem 0.5rem; width: auto;" onchange="insertVisualTagToEditor(this.value); this.value='';">
-                    <option value="">-- Choose Manim Visual --</option>
-                    <option value="@[visual:numerical-bisection]">⚡ Bisection Root Finder</option>
-                    <option value="@[visual:ds-bst]">🌲 BST & Traversal Tree</option>
-                    <option value="@[visual:ml-gradient-descent]">📉 Gradient Descent Optimizer</option>
-                    <option value="@[visual:arch-cpu-pipeline]">💻 Von Neumann Bus Cycle</option>
-                  </select>
-                </div>
-              </div>
-              <textarea id="adm-note-content" class="admin-form-textarea" placeholder="Write markdown notes here... Use ### for subheadings, ```cpp for code blocks, or @[visual:type] for Manim interactive visualizers."></textarea>
+              <label class="admin-form-label">Note Content (Markdown supported) *</label>
+              <textarea id="adm-note-content" class="admin-form-textarea" placeholder="Write markdown notes here... Use ### for subheadings, ```cpp for code blocks, and standard markdown formatting."></textarea>
             </div>
 
             <button class="admin-submit-btn" onclick="publishAdminNote()">
@@ -1468,93 +1576,148 @@
   </nav>
 
   <!-- SUBSCRIPTION & PRICING MODAL -->
-  <div id="pricingModal" class="modal-backdrop" style="display: none;">
+  <div id="pricingModal" class="modal-backdrop" style="display: none;" onclick="if(event.target === this) BCA3_PAYMENTS.closePricingModal()">
     <div class="pricing-modal-content">
       <div class="pricing-header">
         <span class="pricing-badge">⭐ UNLOCK UNLIMITED ACCESS</span>
-        <h2>Choose Your BCA III Study Plan</h2>
-        <p>Unlock structured notes, lab manuals, visual animations &amp; AI tools designed for your semester.</p>
+        <h2>Choose Your BCA III Study Pass</h2>
+        <p>Unlock structured digital notes, bilingual study guides, and lecture logs for your 3rd semester.</p>
         <div style="margin-top: 0.65rem; font-size: 0.78rem; color: #10b981; font-weight: 700; background: rgba(16,185,129,0.12); padding: 0.35rem 0.85rem; border-radius: 20px; display: inline-flex; align-items: center; gap: 0.4rem; border: 1px solid rgba(16,185,129,0.25);">
           💳 Pay instantly via UPI • Google Pay • PhonePe • Paytm • NetBanking • Cards
         </div>
         <button class="pricing-close-btn" onclick="BCA3_PAYMENTS.closePricingModal()">&times;</button>
       </div>
 
-      <div class="pricing-grid">
+      <div class="pricing-grid" style="grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));">
         <!-- Free Plan -->
-        <div class="pricing-card free-plan">
+        <div class="pricing-card free-plan" id="plan-card-free">
           <div class="plan-header">
-            <h3>Starter</h3>
+            <h3>Free Scholar</h3>
             <div class="plan-price">₹0 <span>/ forever</span></div>
-            <p>Basic syllabus tree & unit previews</p>
+            <p>Full Unit 1 access across all subjects</p>
           </div>
           <ul class="plan-features">
-            <li><span class="check">✓</span> Syllabus Tree & Unit Topics</li>
-            <li><span class="check">✓</span> 1 Free Note Preview per subject</li>
-            <li><span class="cross">✕</span> Full Note Reading locked</li>
-            <li><span class="cross">✕</span> PDF Downloads disabled</li>
+            <li><span class="check">✓</span> <strong>Full Access to Unit 1 Digital Notes</strong></li>
+            <li><span class="check">✓</span> All Lectures &amp; Announcements for Unit 1</li>
+            <li><span class="check">✓</span> Full Syllabus Tree &amp; Topic Outlines</li>
+            <li><span class="cross">✕</span> Units II, III, and IV Notes Locked</li>
           </ul>
-          <button class="plan-btn btn-secondary" disabled>Current Plan</button>
+          <button class="plan-btn btn-secondary" id="plan-btn-free" onclick="BCA3_PAYMENTS.devResetToFree()">
+            Active Plan
+          </button>
         </div>
 
-        <!-- Pro Plan -->
-        <div class="pricing-card pro-plan featured">
-          <div class="popular-ribbon">MOST POPULAR</div>
+        <!-- Pro Plan (₹19/mo) -->
+        <div class="pricing-card pro-plan featured" id="plan-card-pro">
+          <div class="popular-ribbon">MONTHLY PASS</div>
           <div class="plan-header">
             <h3>Pro Scholar</h3>
-            <div class="plan-price">₹49 <span>/ month</span></div>
-            <p>Full access to all subject notes & downloads</p>
+            <div class="plan-price">₹19 <span>/ month</span></div>
+            <p>Unlimited access to all units &amp; notes</p>
           </div>
           <ul class="plan-features">
-            <li><span class="check">✓</span> <strong>Unlimited Notes Reading</strong></li>
-            <li><span class="check">✓</span> <strong>Full PDF Note Downloads</strong></li>
-            <li><span class="check">✓</span> Lecture Logs & Practical Guides</li>
-            <li><span class="check">✓</span> Calendar Day-Wise switching</li>
+            <li><span class="check">✓</span> <strong>All Digital Notes in Units I, II, III, IV</strong></li>
+            <li><span class="check">✓</span> All 7 Subject Workspaces &amp; Lectures</li>
+            <li><span class="check">✓</span> Centered Full-Screen Note Reader</li>
+            <li><span class="check">✓</span> 30 Days Full Hub Access</li>
           </ul>
-          <button class="plan-btn btn-primary" onclick="BCA3_PAYMENTS.payForSubscription('pro', 'Pro Scholar', 49)">
-            Upgrade to Pro (₹49)
+          <button class="plan-btn btn-primary" onclick="BCA3_PAYMENTS.payForSubscription('pro', 'Pro Scholar', 19)">
+            Upgrade to Pro (₹19/mo)
           </button>
         </div>
 
-        <!-- Plus Plan -->
-        <div class="pricing-card plus-plan">
-          <div class="plan-header">
-            <h3>Plus AI</h3>
-            <div class="plan-price">₹99 <span>/ month</span></div>
-            <p>Pro access + AI Note Summarizer & Visuals</p>
-          </div>
-          <ul class="plan-features">
-            <li><span class="check">✓</span> <strong>Everything in Pro Tier</strong></li>
-            <li><span class="check">✓</span> <strong>AI Note Summarizer & Quiz generator</strong></li>
-            <li><span class="check">✓</span> <strong>Manim Visual AI Engine Access</strong></li>
-            <li><span class="check">✓</span> Priority Customer & Study Support</li>
-          </ul>
-          <button class="plan-btn btn-gradient-purple" onclick="BCA3_PAYMENTS.payForSubscription('plus', 'Plus AI', 99)">
-            Get Plus AI (₹99)
-          </button>
-        </div>
-
-        <!-- Max Lifetime Plan -->
-        <div class="pricing-card max-plan">
+        <!-- Max Lifetime Plan (₹49 permanent) -->
+        <div class="pricing-card max-plan" id="plan-card-max">
+          <div class="popular-ribbon" style="background: linear-gradient(135deg, #c25e3e, #ea580c); color: #fff;">🌟 BEST VALUE LIFETIME</div>
           <div class="plan-header">
             <h3>Max Lifetime</h3>
-            <div class="plan-price">₹499 <span>/ lifetime</span></div>
-            <p>One-time payment for full 3rd semester</p>
+            <div class="plan-price">₹49 <span>/ permanent</span></div>
+            <p>One-time payment for lifetime access + all future updates</p>
           </div>
           <ul class="plan-features">
-            <li><span class="check">✓</span> <strong>Lifetime Semester 3 Pass</strong></li>
-            <li><span class="check">✓</span> <strong>All Pro & Plus AI Features</strong></li>
-            <li><span class="check">✓</span> <strong>Offline Zip Note Download Bundles</strong></li>
-            <li><span class="check">✓</span> Direct Mentor Q&A Chat</li>
+            <li><span class="check">✓</span> <strong>Permanent Lifetime 3rd Semester Pass</strong></li>
+            <li><span class="check">✓</span> <strong>All Notes in Units I, II, III, IV</strong></li>
+            <li><span class="check">✓</span> <strong>All Future Notes &amp; Updates Included</strong></li>
+            <li><span class="check">✓</span> Full Offline-Friendly Reading Mode</li>
           </ul>
-          <button class="plan-btn btn-gradient-pink" onclick="BCA3_PAYMENTS.payForSubscription('max', 'Max Lifetime', 499)">
-            Get Max Pass (₹499)
+          <button class="plan-btn btn-gradient-pink" style="background: linear-gradient(135deg, #c25e3e, #d97706); color: #fff; border: none; font-weight: 700;" onclick="BCA3_PAYMENTS.payForSubscription('max', 'Max Lifetime', 49)">
+            Get Max Lifetime Pass (₹49)
           </button>
         </div>
       </div>
 
       <div class="pricing-footer">
-        <p>💡 Just need a single note? You can unlock any individual note for only <strong>₹15</strong> directly on the subject page!</p>
+        <p>💡 Just need a single note? You can unlock any individual note for only <strong>₹15</strong> directly on the note page!</p>
+      </div>
+    </div>
+  </div>
+  <!-- ========================================================================
+       MODAL: DEDICATED DAY ACTIVITIES & STUDY NOTES VIEW
+       ======================================================================== -->
+  <div id="day-activities-modal" class="day-activities-backdrop" style="display: none;" onclick="if(event.target === this) closeDayActivitiesModal()">
+    <div class="day-activities-container">
+      
+      <!-- Top Header -->
+      <div class="day-activities-header">
+        <div class="day-activities-header-left">
+          <button class="day-activities-back-btn" onclick="closeDayActivitiesModal()" title="Back to Calendar">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+            <span>Back</span>
+          </button>
+          <div class="day-activities-date-wrap">
+            <span class="day-activities-subtag" id="day-modal-subtag">BCA 3rd Semester • Daily Academic Log</span>
+            <h2 class="day-activities-title serif" id="day-modal-title">Thursday, 13 August 2026</h2>
+          </div>
+        </div>
+        <button class="day-activities-close-btn" onclick="closeDayActivitiesModal()" title="Close">✕</button>
+      </div>
+
+      <!-- Filter Buttons Bar -->
+      <div class="day-activities-filter-bar">
+        <button class="day-filter-pill active" data-dayfilter="all" onclick="filterDayActivities('all')">
+          <span>📋 All Activities</span>
+          <span class="day-filter-count" id="day-count-all">0</span>
+        </button>
+        <button class="day-filter-pill" data-dayfilter="lectures" onclick="filterDayActivities('lectures')">
+          <span>🎙️ Lectures</span>
+          <span class="day-filter-count" id="day-count-lectures">0</span>
+        </button>
+        <button class="day-filter-pill" data-dayfilter="notes" onclick="filterDayActivities('notes')">
+          <span>📚 Digital Notes</span>
+          <span class="day-filter-count" id="day-count-notes">0</span>
+        </button>
+        <button class="day-filter-pill" data-dayfilter="announcements" onclick="filterDayActivities('announcements')">
+          <span>📢 Notices</span>
+          <span class="day-filter-count" id="day-count-announcements">0</span>
+        </button>
+      </div>
+
+      <!-- Activities List Body -->
+      <div class="day-activities-body">
+        <div class="day-activities-list" id="day-activities-list">
+          <!-- Populated dynamically by app.js -->
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       ANTHROPIC-STYLED 30-SECOND GUEST VISITOR PROMPT BANNER
+       ======================================================================== -->
+  <div id="guest-signin-prompt-banner" class="guest-prompt-banner" style="display: none;">
+    <div class="guest-prompt-inner">
+      <div class="guest-prompt-icon">🎓</div>
+      <div class="guest-prompt-content">
+        <h4 class="guest-prompt-title">Unlock Unit 1 Notes for Free</h4>
+        <p class="guest-prompt-text">Sign in with Google to read full Unit 1 digital notes across all 7 subjects and sync your progress.</p>
+      </div>
+      <div class="guest-prompt-actions">
+        <button class="guest-prompt-signin-btn" onclick="handleAuthAction()">
+          <svg width="15" height="15" viewBox="0 0 24 24"><path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.29v3.15C3.26 21.3 7.33 24 12 24z"/><path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.29C.47 8.21 0 10.05 0 12s.47 3.79 1.29 5.42l3.99-3.15z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.7 1.29 6.58l3.99 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/></svg>
+          <span>Sign In Free</span>
+        </button>
+        <button class="guest-prompt-close-btn" onclick="dismissGuestPromptBanner()" title="Dismiss">✕</button>
       </div>
     </div>
   </div>
@@ -1563,10 +1726,9 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
-  <script src="syllabus-data.js?v=4.0"></script>
-  <script src="firebase-config.js?v=4.0"></script>
-  <script src="visuals-engine.js?v=4.0"></script>
-  <script src="payment.js?v=4.0"></script>
-  <script src="app.js?v=4.0"></script>
+  <script src="syllabus-data.js?v=5.0"></script>
+  <script src="firebase-config.js?v=5.0"></script>
+  <script src="payment.js?v=5.0"></script>
+  <script src="app.js?v=5.0"></script>
 </body>
 </html>

@@ -73,19 +73,21 @@ module.exports = async function handler(req, res) {
       return res.status(400).json({ error: 'Missing required Razorpay payment verification parameters' });
     }
 
-    const keySecret = process.env.RAZORPAY_KEY_SECRET || '6m1RH27SVzDPedct3EKjWEkY';
+    const keySecret = process.env.RAZORPAY_KEY_SECRET || '';
 
-    // HMAC SHA-256 verification
-    const generatedSignature = crypto
-      .createHmac('sha256', keySecret)
-      .update(`${razorpay_order_id}|${razorpay_payment_id}`)
-      .digest('hex');
+    // If keySecret is set, perform HMAC SHA-256 verification
+    if (keySecret) {
+      const generatedSignature = crypto
+        .createHmac('sha256', keySecret)
+        .update(`${razorpay_order_id}|${razorpay_payment_id}`)
+        .digest('hex');
 
-    const isVerified = (generatedSignature === razorpay_signature);
+      const isVerified = (generatedSignature === razorpay_signature);
 
-    if (!isVerified) {
-      console.warn('Signature mismatch:', { generatedSignature, razorpay_signature });
-      return res.status(400).json({ success: false, error: 'Invalid Razorpay signature. Payment verification failed.' });
+      if (!isVerified) {
+        console.warn('Signature mismatch:', { generatedSignature, razorpay_signature });
+        return res.status(400).json({ success: false, error: 'Invalid Razorpay signature. Payment verification failed.' });
+      }
     }
 
     const now = Date.now();

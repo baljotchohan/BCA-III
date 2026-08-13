@@ -20,7 +20,8 @@ const FIREBASE = {
   // Registered Admin Emails for automatic Admin privilege assignment
   adminEmails: [
     'baljotchohan23@gmail.com',
-    'mehakpreetkaur@gmail.com'
+    'mehakpreetkaur@gmail.com',
+    'mehakpreetsaini26@gmail.com'
   ],
 
   // Full REST API URL builder
