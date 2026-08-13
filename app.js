@@ -906,15 +906,21 @@ async function deleteNoteLive(fbKey, e) {
 }
 
 async function mcpAdminRpc(method, args) {
-  const adminPasskey = localStorage.getItem('adminPasskey') || '';
-  if (!adminPasskey) throw new Error('Not logged in as Admin');
-  args.passkey = adminPasskey;
+  let authToken = '';
+  if (typeof firebase !== 'undefined' && firebase.auth().currentUser) {
+    authToken = await firebase.auth().currentUser.getIdToken(true);
+  } else {
+    authToken = localStorage.getItem('adminPasskey') || '';
+  }
+
+  if (!authToken) throw new Error('Not logged in as Admin');
+  args.passkey = authToken;
 
   const authorName = localStorage.getItem('bca3_admin_author') || 'Admin';
 
   const response = await fetch('/api/mcp', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminPasskey}`, 'X-Author-Name': authorName },
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}`, 'X-Author-Name': authorName },
     body: JSON.stringify({
       jsonrpc: '2.0',
       id: Date.now(),

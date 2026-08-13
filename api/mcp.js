@@ -13,7 +13,8 @@ const https = require('https');
 // Admin access is now purely email-based (no passkeys)
 const ADMIN_EMAILS = [
   'baljotchohan23@gmail.com',
-  'mehakpreetkaur@gmail.com'
+  'mehakpreetkaur@gmail.com',
+  'mehakpreetsaini26@gmail.com'
 ];
 // ADMIN_SECRET is a fallback for AI tool connections (Claude Desktop, Cursor, ChatGPT)
 // Set this in Vercel env vars as ADMIN_SECRET (long random string, not the old passkey)
