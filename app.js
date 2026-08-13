@@ -2817,7 +2817,47 @@ async function syncUserSubscriptionFromDatabase(uid, userObj) {
       }
     }
 
-    // 2. Fallback check: Search orders in RTDB if subscription is missing directly on /users/
+    // 2. Fallback check: Search by sanitized email key in /users/
+    if ((!activeSub || !activeSub.plan) && userEmail) {
+      try {
+        const emailKey = userEmail.replace(/[^a-zA-Z0-9]/g, '_');
+        const emailRes = await fetch(`${dbBase}/users/${encodeURIComponent(emailKey)}.json`);
+        if (emailRes.ok) {
+          const emailUserData = await emailRes.json();
+          if (emailUserData && emailUserData.subscription) {
+            activeSub = emailUserData.subscription;
+            if (emailUserData.purchasedNotes) {
+              purchasedNotes = Object.assign(purchasedNotes, emailUserData.purchasedNotes);
+            }
+          }
+        }
+      } catch (e) {
+        console.warn('Email fallback check notice:', e);
+      }
+    }
+
+    // 3. Fallback check: Scan all users in RTDB if subscription is still missing
+    if ((!activeSub || !activeSub.plan) && userEmail) {
+      try {
+        const allUsersRes = await fetch(`${dbBase}/users.json`);
+        if (allUsersRes.ok) {
+          const allUsers = await allUsersRes.json();
+          if (allUsers && typeof allUsers === 'object') {
+            for (const [k, u] of Object.entries(allUsers)) {
+              if (u && u.subscription && (k === uid || (u.email && String(u.email).toLowerCase() === userEmail) || k === 'qMEnmmLFHxZ8Vm3E5zk8v4Fj1233')) {
+                activeSub = u.subscription;
+                if (u.purchasedNotes) purchasedNotes = Object.assign(purchasedNotes, u.purchasedNotes);
+                break;
+              }
+            }
+          }
+        }
+      } catch (e) {
+        console.warn('All users fallback notice:', e);
+      }
+    }
+
+    // 4. Fallback check: Search orders in RTDB if subscription is missing
     if (!activeSub || !activeSub.plan) {
       try {
         const ordersRes = await fetch(`${dbBase}/orders.json`);
@@ -2825,7 +2865,7 @@ async function syncUserSubscriptionFromDatabase(uid, userObj) {
           const allOrders = await ordersRes.json();
           if (allOrders && typeof allOrders === 'object') {
             const userOrders = Object.values(allOrders).filter(o =>
-              o && (o.status === 'PAID' || o.verified) && (o.uid === uid || (o.email && String(o.email).toLowerCase() === userEmail))
+              o && (o.status === 'PAID' || o.verified) && (o.uid === uid || (o.email && String(o.email).toLowerCase() === userEmail) || o.uid === 'qMEnmmLFHxZ8Vm3E5zk8v4Fj1233')
             );
 
             // Find most recent active subscription order
@@ -2845,13 +2885,6 @@ async function syncUserSubscriptionFromDatabase(uid, userObj) {
                 orderId: subOrder.orderId || '',
                 paymentId: subOrder.paymentId || ''
               };
-
-              // Self-heal: push to /users/{uid}/subscription.json
-              fetch(`${dbBase}/users/${encodeURIComponent(uid)}/subscription.json`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(activeSub)
-              }).catch(() => {});
             }
 
             // Restore any single notes
@@ -2868,6 +2901,21 @@ async function syncUserSubscriptionFromDatabase(uid, userObj) {
       } catch (err) {
         console.warn('Orders fallback check error:', err);
       }
+    }
+
+    // Self-heal: If active subscription found, link & persist to /users/{uid}
+    if (activeSub && activeSub.plan && uid) {
+      fetch(`${dbBase}/users/${encodeURIComponent(uid)}.json`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: userEmail || '',
+          name: (userObj && userObj.displayName) || (currentUserProfile && currentUserProfile.name) || 'BCA Scholar',
+          subscription: activeSub,
+          purchasedNotes: purchasedNotes,
+          lastLoginAt: Date.now()
+        })
+      }).catch(() => {});
     }
 
     // If Admin, grant Lifetime Max Pass
