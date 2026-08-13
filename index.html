@@ -206,78 +206,12 @@
             <div class="Hero-module-scss-module__sp7muW__textWrapper">
               <span class="greeting-pill" id="live-greeting">Panjab University • 2026-27 Session</span>
               <h1 class="display-2 serif Hero-module-scss-module__sp7muW__title">BCA 3rd Semester Hub</h1>
-              <p class="body-large-2 serif tight Hero-module-scss-module__sp7muW__summary">
-                Official curriculum, chapter study notes, and lecture timeline curated by <strong>Baljot Chohan</strong> &amp; <strong>Mehakpreet Kaur</strong>.
-              </p>
-            </div>
-
-            <!-- INTERACTIVE CATEGORY FILTER PILLS -->
-            <div class="academy-filter-bar">
-              <button class="filter-pill active" data-filter="all">All 7 Subjects</button>
-              <button class="filter-pill" data-filter="dsc">DSC Major &amp; Minor (4)</button>
-              <button class="filter-pill" data-filter="electives">AEC &amp; MDC (3)</button>
-              <button class="filter-pill" data-filter="agenda">Lecture Timeline</button>
-              <button class="filter-pill" data-filter="todos">Study Tasks</button>
             </div>
           </div>
         </div>
       </section>
 
-      <!-- 2. FEATURED COURSES / MAJOR TRACKS BANNER (BG-OAT) -->
-      <section class="LandingPageSection-module-scss-module__ZSMdoa__root LandingPageSection-module-scss-module__ZSMdoa__flushBottom LandingPageSection-module-scss-module__ZSMdoa__flushTop" data-theme="ivory">
-        <div class="page-wrapper" data-theme="color-light" data-style="serif">
-          <div class="PackageBanner-module-scss-module__FhS4PW__banner bg-oat">
-            
-            <div class="PackageBanner-module-scss-module__FhS4PW__announcement">
-              <div class="PackageBanner-module-scss-module__FhS4PW__textWrapper">
-                <p class="headline-2 serif PackageBanner-module-scss-module__FhS4PW__title">Dedicated Subject Workspaces</p>
-                <p class="body-2 serif">
-                  Select any subject below to explore its official Unit I–IV curriculum, read digital notes, review daily lecture logs, or track class dates.
-                </p>
-              </div>
-              <div class="PackageBanner-module-scss-module__FhS4PW__metadata">
-                <a href="./Syllabus.pdf" target="_blank" class="Button-module-scss-module__f9ZZrG__button Button-module-scss-module__f9ZZrG__large Button-module-scss-module__f9ZZrG__secondary">
-                  <span class="body-3">Download Official PU Syllabus PDF</span>
-                </a>
-              </div>
-            </div>
 
-            <div class="PackageBanner-module-scss-module__FhS4PW__packages">
-              
-              <!-- FEATURED CARD 1: COMPUTER ARCHITECTURE -->
-              <a href="#/subject/comp-arch" class="PackageBanner-module-scss-module__FhS4PW__packageLink" onclick="navigateToSubject('comp-arch')">
-                <div class="PackageBanner-module-scss-module__FhS4PW__package">
-                  <div class="PackageBanner-module-scss-module__FhS4PW__packageText">
-                    <p class="body-2">BCA-DSC-3(Maj)-301 • 4 Credits</p>
-                    <p class="body-large-1 PackageBanner-module-scss-module__FhS4PW__summary">Computer Architecture</p>
-                  </div>
-                  <div class="PackageBanner-module-scss-module__FhS4PW__arrow">
-                    <svg class="Icon-module-scss-module__lqbdHG__icon" width="22" height="22" viewBox="0 0 21 21">
-                      <path d="M4.14585 9.87492L14.4584 9.87492L9.60419 5.04158L10.5 4.14575L16.8542 10.4999L10.5 16.8541L9.60419 15.9583L14.4584 11.1249L4.14585 11.1249L4.14585 9.87492Z" fill="currentColor"></path>
-                    </svg>
-                  </div>
-                </div>
-              </a>
-
-              <!-- FEATURED CARD 2: DATA STRUCTURES -->
-              <a href="#/subject/data-structures" class="PackageBanner-module-scss-module__FhS4PW__packageLink" onclick="navigateToSubject('data-structures')">
-                <div class="PackageBanner-module-scss-module__FhS4PW__package">
-                  <div class="PackageBanner-module-scss-module__FhS4PW__packageText">
-                    <p class="body-2">BCA-DSC-3(Min)-302 • 4 Credits</p>
-                    <p class="body-large-1 PackageBanner-module-scss-module__FhS4PW__summary">Data Structures &amp; Algorithms</p>
-                  </div>
-                  <div class="PackageBanner-module-scss-module__FhS4PW__arrow">
-                    <svg class="Icon-module-scss-module__lqbdHG__icon" width="22" height="22" viewBox="0 0 21 21">
-                      <path d="M4.14585 9.87492L14.4584 9.87492L9.60419 5.04158L10.5 4.14575L16.8542 10.4999L10.5 16.8541L9.60419 15.9583L14.4584 11.1249L4.14585 11.1249L4.14585 9.87492Z" fill="currentColor"></path>
-                    </svg>
-                  </div>
-                </div>
-              </a>
-
-            </div>
-          </div>
-        </div>
-      </section>
 
       <!-- 3. ALL 7 SUBJECTS WITH ANTHROPIC TONES -->
       <div class="page-wrapper EducationSections-module-scss-module__dxNdua__sectionWrapper" id="subjects-container">
@@ -552,26 +486,6 @@
               </div>
             </div>
 
-            <!-- STUDY TO-DO TRACKER -->
-            <div class="widget-card">
-              <div class="widget-header">
-                <h3 class="widget-title serif">Semester Study Tasks</h3>
-                <span class="widget-badge" id="todo-progress-badge">4 Tasks</span>
-              </div>
-              <p class="body-3" style="color: var(--text-muted); margin-bottom: 1rem;">
-                Track your syllabus milestones, algorithm revisions, and core topic reviews.
-              </p>
-              
-              <div class="todo-add-box">
-                <input type="text" id="new-todo-input" placeholder="Add study target (e.g. Revise 8086 Assembly)..."/>
-                <button onclick="addNewTodo()">Add</button>
-              </div>
-
-              <div class="todo-items-list" id="dashboard-todos-list">
-                <!-- Populated dynamically by app.js -->
-              </div>
-            </div>
-
           </div>
         </div>
       </section>
@@ -584,7 +498,7 @@
               <div class="NewsletterSubscribe-module-scss-module__MOPAja__textWrapper">
                 <h3 class="NewsletterSubscribe-module-scss-module__MOPAja__title serif">Class Announcements &amp; Exam Updates</h3>
                 <p class="body-2 serif NewsletterSubscribe-module-scss-module__MOPAja__summary">
-                  Official notices, assignment deadlines, and exam schedules posted directly by <strong>Baljot Chohan</strong> &amp; <strong>Mehakpreet Kaur</strong>.
+                  Official notices, assignment deadlines, and exam schedules.
                 </p>
               </div>
               <div class="announcements-mini-feed" id="dashboard-announcements-list">
@@ -679,11 +593,7 @@
             
             <!-- Tab Navigation Header -->
             <div class="workspace-tabs-nav">
-              <button class="workspace-tab-btn active" data-tab="units" onclick="switchWorkspaceTab('units')">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
-                <span>Syllabus Units (I–IV)</span>
-              </button>
-              <button class="workspace-tab-btn" data-tab="notes" onclick="switchWorkspaceTab('notes')">
+              <button class="workspace-tab-btn active" data-tab="notes" onclick="switchWorkspaceTab('notes')">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
                 <span>Digital Notes</span>
               </button>
@@ -691,17 +601,21 @@
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
                 <span>Daily Lecture Log &amp; Calendar</span>
               </button>
+              <button class="workspace-tab-btn" data-tab="units" onclick="switchWorkspaceTab('units')">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+                <span>Syllabus Units (I–IV)</span>
+              </button>
             </div>
 
             <!-- TAB 1: UNITS BREAKDOWN -->
-            <div id="ws-tab-units" class="workspace-tab-content active">
+            <div id="ws-tab-units" class="workspace-tab-content" style="display: none;">
               <div class="units-container" id="ws-units-list">
                 <!-- Populated dynamically by app.js -->
               </div>
             </div>
 
             <!-- TAB 2: DIGITAL NOTES REPOSITORY -->
-            <div id="ws-tab-notes" class="workspace-tab-content" style="display: none;">
+            <div id="ws-tab-notes" class="workspace-tab-content active">
               
               <!-- VIEW 2A: TOPIC LIST CARDS -->
               <div id="ws-notes-list-subview">
@@ -1471,296 +1385,36 @@
         </div>
 
         <!-- Universal Live Endpoint Box -->
-        <div class="mcp-endpoint-box">
+        <div class="mcp-endpoint-box" style="margin-bottom: 1.5rem;">
           <div style="display: flex; align-items: center; justify-content: space-between;">
             <span style="font-size: 0.76rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-subtle);">Universal Remote MCP Endpoint</span>
             <span style="font-size: 0.74rem; color: #10b981; font-weight: 600;">● HTTPS / Streamable HTTP</span>
           </div>
-          <div class="mcp-endpoint-url-bar">
+          <div class="mcp-endpoint-url-bar" style="margin-top: 0.5rem; margin-bottom: 0.5rem;">
             <span class="mcp-endpoint-url-text" id="mcp-remote-url-display">https://bca-iii.vercel.app/api/mcp</span>
             <button class="mcp-copy-btn" id="mcp-main-copy-btn" onclick="copyMcpUrl('https://bca-iii.vercel.app/api/mcp', 'mcp-main-copy-btn')">
-              <span>📋 Copy Server URL</span>
+              <span>📋 Copy URL</span>
             </button>
           </div>
+          <p style="margin: 0; font-size: 0.8rem; color: var(--text-subtle); line-height: 1.4;">
+            Use this endpoint URL in your AI IDE's configuration file (such as <code style="background: var(--bg-surface); padding: 0.1rem 0.3rem; border-radius: 3px;">claude_desktop_config.json</code> or Cursor's <code style="background: var(--bg-surface); padding: 0.1rem 0.3rem; border-radius: 3px;">mcp.json</code>) to connect directly to the BCA III Academic Hub.
+          </p>
         </div>
 
-        <!-- Platform Configuration Tabs -->
-        <div class="mcp-tabs-bar">
-          <button class="mcp-tab-btn active" data-mcptab="claude" onclick="switchMcpTab('claude')">
-            <span>🟣 Claude Desktop &amp; Web</span>
-          </button>
-          <button class="mcp-tab-btn" data-mcptab="chatgpt" onclick="switchMcpTab('chatgpt')">
-            <span>🟢 ChatGPT</span>
-          </button>
-          <button class="mcp-tab-btn" data-mcptab="gemini" onclick="switchMcpTab('gemini')">
-            <span>🔵 Gemini &amp; Antigravity</span>
-          </button>
-          <button class="mcp-tab-btn" data-mcptab="cursor" onclick="switchMcpTab('cursor')">
-            <span>⚡ Cursor / IDEs</span>
-          </button>
-          <button class="mcp-tab-btn" data-mcptab="admin" onclick="switchMcpTab('admin')" style="color: #ef4444; font-weight: 700;">
-            <span>🛡️ Admin &amp; Author Mode</span>
-          </button>
-          <button class="mcp-tab-btn" data-mcptab="playground" onclick="switchMcpTab('playground')">
-            <span>🧪 Live Tool Playground</span>
-          </button>
-        </div>
-
-        <!-- 1. CLAUDE TAB -->
-        <div id="mcp-tab-claude" class="mcp-tab-pane" style="display: block;">
-          <div style="display: flex; flex-direction: column; gap: 0.9rem;">
-            <div>
-              <h4 style="margin: 0 0 0.25rem 0; font-size: 0.95rem; color: var(--text-main);">Option 1: Claude Desktop (One-Click JSON Config)</h4>
-              <p style="margin: 0 0 0.5rem 0; font-size: 0.82rem; color: var(--text-subtle);">
-                Add to <code style="font-size: 0.78rem; background: var(--bg-surface-subtle); padding: 0.15rem 0.4rem; border-radius: 4px;">~/Library/Application Support/Claude/claude_desktop_config.json</code>:
-              </p>
-              <div class="mcp-code-block">
-                <button class="mcp-code-copy-floating" onclick="copyMcpCode('claude-desktop-snippet', this)">Copy JSON</button>
-                <pre id="claude-desktop-snippet" style="margin: 0;">{
+        <div style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1rem 1.25rem;">
+          <h4 style="margin: 0 0 0.5rem 0; font-size: 0.95rem; color: var(--text-main);">Quick Setup Template</h4>
+          <p style="margin: 0 0 0.75rem 0; font-size: 0.82rem; color: var(--text-subtle);">
+            Copy and paste this JSON into your AI client's MCP configuration.
+          </p>
+          <div class="mcp-code-block" style="background: var(--bg-surface); padding: 0.75rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); position: relative;">
+            <button class="mcp-code-copy-floating" onclick="copyMcpCode('mcp-config-snippet', this)" style="position: absolute; top: 0.5rem; right: 0.5rem;">Copy Config</button>
+            <pre id="mcp-config-snippet" style="margin: 0; font-size: 0.8rem; overflow-x: auto; color: var(--text-main);">{
   "mcpServers": {
     "bca3-hub": {
       "url": "https://bca-iii.vercel.app/api/mcp"
     }
   }
 }</pre>
-              </div>
-            </div>
-
-            <div style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 0.9rem 1.1rem;">
-              <h4 style="margin: 0 0 0.25rem 0; font-size: 0.95rem; color: var(--text-main);">Option 2: Claude Web &amp; Mobile (Custom Connectors)</h4>
-              <ol style="margin: 0.4rem 0 0 1.25rem; padding: 0; font-size: 0.82rem; color: var(--text-subtle); line-height: 1.6;">
-                <li>Open <strong>Claude.ai</strong> → <strong>Settings</strong> → <strong>Connectors</strong>.</li>
-                <li>Click <strong>Add custom connector</strong>.</li>
-                <li>Paste server URL: <code style="color: var(--text-main); font-weight: 600;">https://bca-iii.vercel.app/api/mcp</code>.</li>
-              </ol>
-            </div>
-          </div>
-        </div>
-
-        <!-- 2. CHATGPT TAB -->
-        <div id="mcp-tab-chatgpt" class="mcp-tab-pane" style="display: none;">
-          <div style="display: flex; flex-direction: column; gap: 0.9rem;">
-            <div>
-              <h4 style="margin: 0 0 0.25rem 0; font-size: 0.95rem; color: var(--text-main);">Option 1: ChatGPT Developer Mode MCP</h4>
-              <p style="margin: 0 0 0.5rem 0; font-size: 0.82rem; color: var(--text-subtle);">
-                In ChatGPT Settings → <strong>Developer Mode</strong> → <strong>Connectors</strong> → Select <strong>Streamable HTTP</strong> and enter:
-              </p>
-              <div class="mcp-endpoint-url-bar">
-                <span class="mcp-endpoint-url-text">https://bca-iii.vercel.app/api/mcp</span>
-                <button class="mcp-copy-btn" onclick="copyMcpUrl('https://bca-iii.vercel.app/api/mcp', this)">Copy</button>
-              </div>
-            </div>
-
-            <div style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 0.9rem 1.1rem;">
-              <h4 style="margin: 0 0 0.25rem 0; font-size: 0.95rem; color: var(--text-main);">Option 2: Custom GPT Actions (OpenAPI 3.0 Schema)</h4>
-              <p style="margin: 0 0 0.5rem 0; font-size: 0.82rem; color: var(--text-subtle);">
-                In GPT Builder → <strong>Actions</strong> → <strong>Import from URL</strong>:
-              </p>
-              <div class="mcp-endpoint-url-bar" style="margin-bottom: 0.6rem;">
-                <span class="mcp-endpoint-url-text">https://bca-iii.vercel.app/api/openapi</span>
-                <button class="mcp-copy-btn" onclick="copyMcpUrl('https://bca-iii.vercel.app/api/openapi', this)">Copy Schema URL</button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 3. GEMINI TAB -->
-        <div id="mcp-tab-gemini" class="mcp-tab-pane" style="display: none;">
-          <div style="display: flex; flex-direction: column; gap: 0.9rem;">
-            <div>
-              <h4 style="margin: 0 0 0.25rem 0; font-size: 0.95rem; color: var(--text-main);">Gemini CLI &amp; Antigravity Tool Setup</h4>
-              <p style="margin: 0 0 0.5rem 0; font-size: 0.82rem; color: var(--text-subtle);">
-                Run this command in your terminal to instantly add BCA III Hub to your Gemini CLI:
-              </p>
-              <div class="mcp-code-block">
-                <button class="mcp-code-copy-floating" onclick="copyMcpCode('gemini-cli-snippet', this)">Copy Command</button>
-                <pre id="gemini-cli-snippet" style="margin: 0;">gemini mcp add bca3 --url "https://bca-iii.vercel.app/api/mcp"</pre>
-              </div>
-            </div>
-
-            <div>
-              <h4 style="margin: 0 0 0.25rem 0; font-size: 0.95rem; color: var(--text-main);">Or Add to <code>~/.gemini/settings.json</code>:</h4>
-              <div class="mcp-code-block">
-                <button class="mcp-code-copy-floating" onclick="copyMcpCode('gemini-json-snippet', this)">Copy JSON</button>
-                <pre id="gemini-json-snippet" style="margin: 0;">{
-  "mcpServers": {
-    "bca3": {
-      "url": "https://bca-iii.vercel.app/api/mcp"
-    }
-  }
-}</pre>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 4. CURSOR / IDES TAB -->
-        <div id="mcp-tab-cursor" class="mcp-tab-pane" style="display: none;">
-          <div style="display: flex; flex-direction: column; gap: 0.9rem;">
-            <div>
-              <h4 style="margin: 0 0 0.25rem 0; font-size: 0.95rem; color: var(--text-main);">Cursor &amp; Windsurf IDE Config</h4>
-              <p style="margin: 0 0 0.5rem 0; font-size: 0.82rem; color: var(--text-subtle);">
-                Paste into your project's <code style="font-size: 0.78rem; background: var(--bg-surface-subtle); padding: 0.15rem 0.4rem; border-radius: 4px;">.cursor/mcp.json</code> or global settings:
-              </p>
-              <div class="mcp-code-block">
-                <button class="mcp-code-copy-floating" onclick="copyMcpCode('cursor-json-snippet', this)">Copy Config</button>
-                <pre id="cursor-json-snippet" style="margin: 0;">{
-  "mcpServers": {
-    "bca3-syllabus-hub": {
-      "url": "https://bca-iii.vercel.app/api/mcp"
-    }
-  }
-}</pre>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 5. ADMIN MODE TAB (UNLOCKED TOOLS FOR BALJOT & MEHAKPREET) -->
-        <div id="mcp-tab-admin" class="mcp-tab-pane" style="display: none;">
-          <div style="display: flex; flex-direction: column; gap: 0.9rem;">
-            <div style="background: rgba(239, 68, 68, 0.06); border: 1px solid rgba(239, 68, 68, 0.25); border-radius: var(--radius-md); padding: 0.9rem 1.1rem;">
-              <div style="display: flex; align-items: center; gap: 0.45rem; margin-bottom: 0.35rem;">
-                <span style="font-size: 1.1rem;">🛡️</span>
-                <span style="font-weight: 700; font-size: 0.92rem; color: #dc2626;">Co-Author &amp; Admin Superpowers via MCP</span>
-              </div>
-              <p style="margin: 0; font-size: 0.82rem; color: var(--text-subtle); line-height: 1.55;">
-                Both <strong>Baljot Chohan</strong> and <strong>Mehakpreet Kaur</strong> are authorized administrators. When you or Mehak ask your respective AIs (Claude, ChatGPT, Gemini, Cursor) to publish notes, the AI attaches your author name and automatically publishes the study guide with diagrams and math formulas.
-              </p>
-            </div>
-
-            <!-- Baljot Config -->
-            <div style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 0.9rem 1.1rem;">
-              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.35rem;">
-                <h4 style="margin: 0; font-size: 0.95rem; color: var(--text-main);">👤 Baljot Chohan's AI Config (Claude Desktop)</h4>
-                <span class="note-unit-badge">Baljot's Device</span>
-              </div>
-              <p style="margin: 0 0 0.5rem 0; font-size: 0.8rem; color: var(--text-subtle);">
-                Paste into <code style="font-size: 0.76rem; background: var(--bg-surface); padding: 0.1rem 0.35rem; border-radius: 4px;">claude_desktop_config.json</code> on Baljot's laptop:
-              </p>
-              <div class="mcp-code-block">
-                <button class="mcp-code-copy-floating" onclick="copyMcpCode('claude-baljot-snippet', this)">Copy Config</button>
-                <pre id="claude-baljot-snippet" style="margin: 0;">{
-  "mcpServers": {
-    "bca3-baljot": {
-      "url": "https://bca-iii.vercel.app/api/mcp",
-      "headers": {
-        "Authorization": "Bearer YOUR_FIREBASE_ID_TOKEN_OR_ADMIN_SECRET",
-        "X-Author-Name": "Baljot Chohan"
-      }
-    }
-  }
-}</pre>
-              </div>
-            </div>
-
-            <!-- Mehakpreet Config -->
-            <div style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 0.9rem 1.1rem;">
-              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.35rem;">
-                <h4 style="margin: 0; font-size: 0.95rem; color: var(--text-main);">👤 Mehakpreet Kaur's AI Config (Claude Desktop)</h4>
-                <span class="note-unit-badge" style="background: rgba(168, 85, 247, 0.12); color: #9333ea;">Mehakpreet's Device</span>
-              </div>
-              <p style="margin: 0 0 0.5rem 0; font-size: 0.8rem; color: var(--text-subtle);">
-                Paste into <code style="font-size: 0.76rem; background: var(--bg-surface); padding: 0.1rem 0.35rem; border-radius: 4px;">claude_desktop_config.json</code> on Mehakpreet's laptop:
-              </p>
-              <div class="mcp-code-block">
-                <button class="mcp-code-copy-floating" onclick="copyMcpCode('claude-mehak-snippet', this)">Copy Config</button>
-                <pre id="claude-mehak-snippet" style="margin: 0;">{
-  "mcpServers": {
-    "bca3-mehak": {
-      "url": "https://bca-iii.vercel.app/api/mcp",
-      "headers": {
-        "Authorization": "Bearer YOUR_FIREBASE_ID_TOKEN_OR_ADMIN_SECRET",
-        "X-Author-Name": "Mehakpreet Kaur"
-      }
-    }
-  }
-}</pre>
-              </div>
-            </div>
-
-            <!-- Prompts -->
-            <div style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 0.9rem 1.1rem;">
-              <h4 style="margin: 0 0 0.35rem 0; font-size: 0.95rem; color: var(--text-main);">Example AI Prompts:</h4>
-              <div style="display: flex; flex-direction: column; gap: 0.45rem; font-size: 0.82rem; color: var(--text-subtle);">
-                <div style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 0.55rem 0.75rem; font-style: italic;">
-                  💬 <strong>Baljot:</strong> "AI, write high-yield digital notes on 8086 Physical Address Calculation with ASCII diagrams and publish it under Computer Architecture Unit III."
-                </div>
-                <div style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 0.55rem 0.75rem; font-style: italic;">
-                  💬 <strong>Mehakpreet:</strong> "AI, create comprehensive notes on Binary Search Tree insertion and deletion algorithms and publish them to Data Structures Unit III."
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 6. LIVE PLAYGROUND TAB -->
-        <div id="mcp-tab-playground" class="mcp-tab-pane" style="display: none;">
-
-          <div class="mcp-playground-container">
-            <div style="display: flex; align-items: center; justify-content: space-between;">
-              <span style="font-weight: 600; font-size: 0.9rem; color: var(--text-main);">🧪 Test Live MCP Tools in Browser</span>
-              <span id="mcp-test-status" style="font-size: 0.75rem; color: var(--text-subtle); font-family: monospace;">● Ready to execute</span>
-            </div>
-
-            <div class="mcp-param-grid">
-              <div>
-                <label style="display: block; font-size: 0.75rem; font-weight: 600; margin-bottom: 0.35rem; color: var(--text-subtle);">Select MCP Tool</label>
-                <select id="mcp-tool-select" class="mcp-input" onchange="handleMcpToolChange()">
-                  <option value="get_syllabus">get_syllabus (Full Subject Curriculum)</option>
-                  <option value="get_unit_details">get_unit_details (Unit I–IV Breakdown)</option>
-                  <option value="get_digital_notes">get_digital_notes (Retrieve All Live Digital Notes)</option>
-                  <option value="search_digital_notes">search_digital_notes (Search Live Notes)</option>
-                  <option value="get_syllabus_structure_for_ai">get_syllabus_structure_for_ai (Curriculum Topic Map)</option>
-                  <option value="get_hub_stats">get_hub_stats (Hub Statistics)</option>
-                  <option value="get_daily_lectures">get_daily_lectures (Daily Lecture Logs)</option>
-                  <option value="get_announcements">get_announcements (PU Notices)</option>
-                </select>
-              </div>
-
-              <div id="mcp-param-subject-wrap">
-                <label style="display: block; font-size: 0.75rem; font-weight: 600; margin-bottom: 0.35rem; color: var(--text-subtle);">Subject ID</label>
-                <select id="mcp-param-subject" class="mcp-input">
-                  <option value="comp-arch">Computer Architecture (comp-arch)</option>
-                  <option value="data-structures">Data Structures (data-structures)</option>
-                  <option value="numerical-methods">Numerical Methods (numerical-methods)</option>
-                  <option value="machine-learning">Machine Learning (machine-learning)</option>
-                  <option value="english-3">English-3 (english-3)</option>
-                  <option value="web-dev">Web Development (web-dev)</option>
-                  <option value="backend-dev">Backend Development (backend-dev)</option>
-                  <option value="all">All Subjects (all)</option>
-                </select>
-              </div>
-
-              <div id="mcp-param-unit-wrap" style="display: none;">
-                <label style="display: block; font-size: 0.75rem; font-weight: 600; margin-bottom: 0.35rem; color: var(--text-subtle);">Unit Number</label>
-                <select id="mcp-param-unit" class="mcp-input">
-                  <option value="Unit I">Unit I</option>
-                  <option value="Unit II">Unit II</option>
-                  <option value="Unit III">Unit III</option>
-                  <option value="Unit IV">Unit IV</option>
-                </select>
-              </div>
-
-              <div id="mcp-param-query-wrap" style="display: none;">
-                <label style="display: block; font-size: 0.75rem; font-weight: 600; margin-bottom: 0.35rem; color: var(--text-subtle);">Search Query</label>
-                <input type="text" id="mcp-param-query" class="mcp-input" placeholder="e.g. 8086, stack, newton..." value="8086"/>
-              </div>
-            </div>
-
-            <div>
-              <button class="mcp-run-btn" onclick="executeMcpPlaygroundTest()">
-                <span>⚡ Send JSON-RPC Request</span>
-              </button>
-            </div>
-
-            <div>
-              <div style="display: flex; justify-content: space-between; margin-bottom: 0.35rem;">
-                <span style="font-size: 0.72rem; font-weight: 700; text-transform: uppercase; color: var(--text-subtle);">JSON-RPC 2.0 Response Output</span>
-                <span id="mcp-latency-tag" style="font-size: 0.72rem; color: #10b981; font-family: monospace;"></span>
-              </div>
-              <pre id="mcp-playground-output" class="mcp-output-box">// Click 'Send JSON-RPC Request' to test tool response</pre>
-            </div>
           </div>
         </div>
 
@@ -1768,136 +1422,6 @@
     </div>
   </div>
 
-  <!-- ========================================================================
-       30-SECOND GUEST SIGN-IN NUDGE (shown to unsigned visitors)
-       ======================================================================== -->
-  <div id="guest-signin-nudge" role="dialog" aria-label="Sign in prompt">
-    <button class="nudge-close" onclick="dismissGuestNudge()" title="Dismiss">✕</button>
-    <div class="nudge-icon">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
-        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-      </svg>
-    </div>
-    <div class="nudge-body">
-      <p class="nudge-title">Sync Your Study Progress 🎓</p>
-      <p class="nudge-desc">Sign in with Google to save bookmarks, track notes, and unlock your personalised scholar hub.</p>
-      <div class="nudge-actions">
-        <button class="nudge-signin-btn" onclick="nudgeSignIn()">
-          Sign In with Google
-        </button>
-        <button class="nudge-later-btn" onclick="dismissGuestNudge()">Maybe Later</button>
-      </div>
-    </div>
-  </div>
-
-  <style>
-    /* ── 30-Second Guest Sign-In Nudge ─────────────────────────────── */
-    #guest-signin-nudge {
-      position: fixed;
-      bottom: 1.5rem;
-      right: 1.5rem;
-      z-index: 9999;
-      display: flex;
-      align-items: flex-start;
-      gap: 0.85rem;
-      background: var(--bg-surface, #1c1c28);
-      border: 1px solid var(--border-subtle, rgba(255,255,255,0.1));
-      border-radius: 16px;
-      padding: 1.1rem 1.3rem;
-      max-width: 320px;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.45), 0 0 0 1px rgba(255,255,255,0.04);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      transform: translateY(120%) scale(0.95);
-      opacity: 0;
-      transition: transform 0.45s cubic-bezier(0.34,1.56,0.64,1), opacity 0.35s ease;
-      pointer-events: none;
-    }
-    #guest-signin-nudge.visible {
-      transform: translateY(0) scale(1);
-      opacity: 1;
-      pointer-events: all;
-    }
-    .nudge-close {
-      position: absolute;
-      top: 0.55rem;
-      right: 0.65rem;
-      background: none;
-      border: none;
-      color: var(--text-subtle, #888);
-      font-size: 0.8rem;
-      cursor: pointer;
-      line-height: 1;
-      padding: 0.2rem 0.3rem;
-      border-radius: 4px;
-      transition: color 0.15s, background 0.15s;
-    }
-    .nudge-close:hover { color: var(--text-main, #fff); background: rgba(255,255,255,0.06); }
-    .nudge-icon {
-      flex-shrink: 0;
-      width: 40px;
-      height: 40px;
-      border-radius: 10px;
-      background: linear-gradient(135deg, #1a1a3e, #0f0f2a);
-      border: 1px solid var(--border-subtle, rgba(255,255,255,0.1));
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-top: 0.1rem;
-    }
-    .nudge-body { flex: 1; min-width: 0; }
-    .nudge-title {
-      font-size: 0.9rem;
-      font-weight: 700;
-      color: var(--text-main, #f0f0f0);
-      margin: 0 0 0.25rem 0;
-      line-height: 1.3;
-    }
-    .nudge-desc {
-      font-size: 0.78rem;
-      color: var(--text-muted, #999);
-      margin: 0 0 0.85rem 0;
-      line-height: 1.5;
-    }
-    .nudge-actions { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
-    .nudge-signin-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.4rem;
-      padding: 0.45rem 0.9rem;
-      border-radius: 8px;
-      font-size: 0.8rem;
-      font-weight: 600;
-      cursor: pointer;
-      background: #4285F4;
-      color: #fff;
-      border: none;
-      transition: background 0.18s, transform 0.15s;
-    }
-    .nudge-signin-btn:hover { background: #3367d6; transform: translateY(-1px); }
-    .nudge-later-btn {
-      background: none;
-      border: none;
-      font-size: 0.78rem;
-      color: var(--text-subtle, #888);
-      cursor: pointer;
-      padding: 0.45rem 0.5rem;
-      border-radius: 6px;
-      transition: color 0.15s;
-    }
-    .nudge-later-btn:hover { color: var(--text-muted, #aaa); }
-
-    @media (max-width: 480px) {
-      #guest-signin-nudge {
-        right: 0.75rem;
-        left: 0.75rem;
-        max-width: none;
-      }
-    }
-  </style>
 
   <!-- MOBILE BOTTOM FLOATING NAVIGATION DOCK -->
   <nav class="mobile-bottom-nav" aria-label="Mobile Navigation">

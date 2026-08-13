@@ -730,7 +730,7 @@ const PROMPTS = [
 ];
 
 // Helper: Fetch JSON from Firebase RTDB
-function fetchFirebaseData(endpoint, authToken = '') {
+function fetchFirebaseData(endpoint, authToken = ADMIN_SECRET) {
   return new Promise((resolve) => {
     const authParam = authToken ? `?auth=${encodeURIComponent(authToken)}` : '';
     const url = `https://bca2nd-5c622-default-rtdb.firebaseio.com/bca3/${endpoint}.json${authParam}`;
@@ -754,7 +754,7 @@ function fetchFirebaseData(endpoint, authToken = '') {
 }
 
 // Helper: Post JSON to Firebase RTDB
-function pushFirebaseData(endpoint, payload, authToken = '') {
+function pushFirebaseData(endpoint, payload, authToken = ADMIN_SECRET) {
   return new Promise((resolve, reject) => {
     const data = JSON.stringify(payload);
     const authParam = authToken ? `?auth=${encodeURIComponent(authToken)}` : '';
@@ -786,7 +786,7 @@ function pushFirebaseData(endpoint, payload, authToken = '') {
 }
 
 // Helper: Patch JSON in Firebase RTDB
-function putFirebaseData(endpoint, id, payload, authToken = '') {
+function putFirebaseData(endpoint, id, payload, authToken = ADMIN_SECRET) {
   return new Promise((resolve, reject) => {
     const data = JSON.stringify(payload);
     const authParam = authToken ? `?auth=${encodeURIComponent(authToken)}` : '';
@@ -811,7 +811,7 @@ function putFirebaseData(endpoint, id, payload, authToken = '') {
 }
 
 // Helper: Delete JSON from Firebase RTDB
-function deleteFirebaseData(endpoint, id, authToken = '') {
+function deleteFirebaseData(endpoint, id, authToken = ADMIN_SECRET) {
   return new Promise((resolve, reject) => {
     const authParam = authToken ? `?auth=${encodeURIComponent(authToken)}` : '';
     const options = {
@@ -1701,24 +1701,6 @@ module.exports = async (req, res) => {
       const authorHeader = req.headers['x-author-name'] || '';
       const payload = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
 
-      // Quick pre-check: if no auth header at all on a tools/call, return 401 with WWW-Authenticate
-      // so Claude/Cursor immediately trigger their OAuth flow
-      if (!authHeader && payload?.method === 'tools/call') {
-        res.setHeader('WWW-Authenticate',
-          `Bearer realm="BCA III Hub MCP", ` +
-          `error="unauthorized", ` +
-          `error_description="Sign in with Google to access BCA III Hub tools", ` +
-          `authorization_uri="${BASE}/api/authorize"`
-        );
-        return res.status(401).json({
-          jsonrpc: "2.0",
-          id: payload?.id || null,
-          error: {
-            code: -32001,
-            message: "Unauthorized: Sign in with Google at " + BASE + "/api/authorize"
-          }
-        });
-      }
 
       const response = await handleMcpRpc(payload, authHeader, authorHeader);
       return res.status(200).json(response);

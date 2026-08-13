@@ -5,7 +5,7 @@
  */
 
 let activeSubjectId = 'comp-arch';
-let activeWorkspaceTab = 'units';
+let activeWorkspaceTab = 'notes';
 let selectedCalendarDate = '2026-08-08';
 let currentNoteFilter = 'all';
 let _editingItem = null; // { type: 'note'|'lecture'|'announcement', fbKey, collection }
@@ -79,12 +79,6 @@ document.addEventListener('DOMContentLoaded', () => {
   updateAdminHeaderUI();
   initFirebaseAuth();
   syncFirebaseData();
-  // 30-second sign-in nudge for unsigned visitors
-  setTimeout(() => {
-    if (!currentUserProfile) {
-      showGuestSignInNudge();
-    }
-  }, 30000);
 });
 
 /* ==========================================================================
@@ -152,7 +146,6 @@ function showDashboardView() {
   if (dashView) dashView.style.display = 'block';
   if (wsView) wsView.style.display = 'none';
   renderDashboardLectures();
-  renderDashboardTodos();
   renderDashboardAnnouncements();
 }
 
@@ -198,7 +191,7 @@ function renderSubjectWorkspace(subjectId) {
   renderSubjectCalendar(subject);
 
   // Switch to active tab
-  switchWorkspaceTab(activeWorkspaceTab || 'units');
+  switchWorkspaceTab(activeWorkspaceTab || 'notes');
 }
 
 function renderSidebarSubjectLinks() {
@@ -938,7 +931,6 @@ async function deleteFirebaseItem(collection, fbKey, e) {
     // Refresh all live views
     renderDashboardLectures();
     renderDashboardAnnouncements();
-    renderDashboardTodos();
     renderAdminManageData();
     const subject = BCA_3RD_SEM_DATA.subjects.find(s => s.id === activeSubjectId) || BCA_3RD_SEM_DATA.subjects[0];
     if (subject) {
@@ -1117,7 +1109,6 @@ function renderSubjectLecturesList(subject, allLectures) {
 
 function initDashboardWidgets() {
   renderDashboardLectures();
-  renderDashboardTodos();
   renderDashboardAnnouncements();
 }
 
@@ -1125,7 +1116,6 @@ async function renderDashboardLectures() {
   const container = document.getElementById('dashboard-lectures-list');
   if (!container) return;
 
-  // Fetch live notes and lectures from Firebase RTDB
   const [fbNotes, fbLectures] = await Promise.all([
     _fbFetch('notes'),
     _fbFetch('lectures')
@@ -1148,7 +1138,6 @@ async function renderDashboardLectures() {
     }))
   ].sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
 
-  // Gather static lectures
   let staticLectures = [];
   BCA_3RD_SEM_DATA.subjects.forEach(s => {
     (s.lectures || []).forEach(l => staticLectures.push({ ...l, subjectName: s.title, subjectId: s.id }));
@@ -1156,117 +1145,40 @@ async function renderDashboardLectures() {
 
   const all = [...cloudItems, ...staticLectures];
 
-  const badge = document.getElementById('lecture-count-badge');
-  if (badge) badge.innerText = `${all.length} Notes/Lectures`;
-
   if (!all.length) {
     container.innerHTML = `<div class="empty-state">No lectures or notes recorded yet.</div>`;
     return;
   }
 
-  container.innerHTML = all.slice(0, 10).map(l => `
-    <div class="lecture-item" onclick="navigateToSubject('${l.subjectId}')" style="cursor: pointer; position: relative;">
-      <div class="lecture-date-box">
-        <span class="lecture-month">AUG</span>
-        <span class="lecture-day">${l.date ? l.date.split('-')[2] || '01' : '01'}</span>
-      </div>
-      <div class="lecture-info" style="flex: 1; min-width: 0;">
-        <div class="lecture-topic-title">${escapeHtml(l.topic || l.title || 'Lecture')}</div>
-        <div class="lecture-meta-row">
-          <span class="lecture-subject-badge">${escapeHtml(l.subjectName || l.subject || 'General')}</span>
-          <span>⏱️ ${l.time || '10:00 AM'}</span>
-          <span>${l.unit || ''}</span>
-        </div>
-      </div>
-      ${isAdminAuthenticated() && l.fbKey ? `
-        <button onclick="deleteNoteLive('${l.fbKey}', event)" title="Admin: Delete Note Live" style="background: rgba(212, 79, 79, 0.12); color: #d44f4f; border: 1px solid rgba(212, 79, 79, 0.35); border-radius: 6px; padding: 0.35rem 0.65rem; font-size: 0.75rem; font-weight: 600; cursor: pointer; flex-shrink: 0; align-self: center;">
-          🛡️ Delete
-        </button>
-      ` : ''}
-    </div>
-  `).join('');
-}
+  container.innerHTML = all.slice(0, 10).map(l => {
+    const clickAction = (l.isNote && (l.fbKey || l.id)) 
+      ? `onclick="navigateAndOpenNote('${l.subjectId}', '${l.fbKey || l.id}')"` 
+      : `onclick="navigateToSubject('${l.subjectId}')"`;
 
-async function renderDashboardTodos() {
-  const container = document.getElementById('dashboard-todos-list');
-  const badge = document.getElementById('todo-progress-badge');
-  if (!container) return;
-
-  const todos = await _fbFetch('todos');
-  const doneCount = todos.filter(t => t.done).length;
-  if (badge) badge.innerText = `${doneCount}/${todos.length} Done`;
-
-  if (!todos.length) {
-    container.innerHTML = `<p style="font-size: 0.85rem; color: var(--text-subtle); padding: 0.75rem 0;">No active study tasks. Add a study target above.</p>`;
-    return;
-  }
-
-  container.innerHTML = todos.map(t => {
-    const key = t.fbKey || t.id;
     return `
-      <div class="todo-item-row ${t.done ? 'done' : ''}">
-        <input type="checkbox" class="todo-checkbox" ${t.done ? 'checked' : ''} onchange="toggleTodoLive('${key}', ${Boolean(t.done)})" id="todo-cb-${key}">
-        <label for="todo-cb-${key}" class="todo-label-text">${escapeHtml(t.text)}</label>
-        ${isAdminAuthenticated() ? `<button class="todo-del-btn" onclick="deleteTodoLive('${key}')" title="Admin: Delete Task">✕</button>` : ''}
+      <div class="card" ${clickAction} style="cursor: pointer; padding: 1rem; border-radius: 12px; background: var(--bg-surface); border: 1px solid var(--border-color); margin-bottom: 0.75rem; display: flex; align-items: center; gap: 1rem;">
+        <div style="background: var(--bg-surface-subtle); padding: 0.75rem; border-radius: 8px; text-align: center; min-width: 50px;">
+          <div style="font-size: 0.65rem; font-weight: 800; color: var(--color-coral);">AUG</div>
+          <div style="font-size: 1.1rem; font-weight: 700;">${l.date ? l.date.split('-')[2] || '01' : '01'}</div>
+        </div>
+        <div style="flex: 1;">
+          <div style="font-weight: 600; font-size: 0.95rem; margin-bottom: 0.25rem;">${escapeHtml(l.topic || l.title || 'Lecture / Note')}</div>
+          <div style="display: flex; gap: 0.5rem; font-size: 0.75rem; color: var(--text-muted);">
+            <span style="background: var(--color-oat); padding: 2px 6px; border-radius: 4px; color: var(--color-coral);">${escapeHtml(l.subjectName || l.subject || 'General')}</span>
+            <span>⏱️ ${l.time || '10:00 AM'}</span>
+          </div>
+        </div>
+        <div style="color: var(--text-subtle);">➔</div>
       </div>
     `;
   }).join('');
 }
 
-async function addNewTodo() {
-  const input = document.getElementById('new-todo-input');
-  if (!input || !input.value.trim()) return;
-
-  const text = input.value.trim();
-  showToast('⏳ Adding study target to cloud...');
-  try {
-    await fetch(`${FIREBASE_DB}/todos.json`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        text,
-        priority: 'medium',
-        due: '',
-        subject: 'General Study',
-        done: false,
-        timestamp: Date.now()
-      })
-    });
-    input.value = '';
-    showToast('New study target live for all students! 🎯');
-    await renderDashboardTodos();
-  } catch (err) {
-    showToast('❌ Failed to add task: ' + err.message);
-  }
-}
-
-async function toggleTodoLive(fbKey, currentDone) {
-  try {
-    await fetch(`${FIREBASE_DB}/todos/${fbKey}.json`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ done: !currentDone })
-    });
-    await renderDashboardTodos();
-  } catch (err) {
-    showToast('❌ Failed to update task status: ' + err.message);
-  }
-}
-
-async function deleteTodoLive(fbKey) {
-  if (!isAdminAuthenticated()) {
-    showToast('🔒 Administrator passkey required to delete shared study targets.');
-    openAdminModal();
-    return;
-  }
-  if (!confirm('Remove this study target from cloud?')) return;
-  try {
-    await fetch(`${FIREBASE_DB}/todos/${fbKey}.json`, { method: 'DELETE' });
-    showToast('Study task removed.');
-    await renderDashboardTodos();
-  } catch (err) {
-    showToast('❌ Failed to remove task: ' + err.message);
-  }
+function navigateAndOpenNote(subjectId, noteKey) {
+  navigateToSubject(subjectId);
+  setTimeout(() => {
+    openNoteReaderView(noteKey);
+  }, 100);
 }
 
 async function renderDashboardAnnouncements() {
@@ -1677,11 +1589,10 @@ async function renderAdminManageData() {
 
   container.innerHTML = `<div style="text-align: center; padding: 2rem; color: var(--text-subtle);">⏳ Loading data from Firebase...</div>`;
 
-  const [fbNotes, fbLectures, fbAnnouncements, fbTodos] = await Promise.all([
+  const [fbNotes, fbLectures, fbAnnouncements] = await Promise.all([
     _fbFetch('notes'),
     _fbFetch('lectures'),
-    _fbFetch('announcements'),
-    _fbFetch('todos')
+    _fbFetch('announcements')
   ]);
 
   let html = '';
@@ -1751,25 +1662,6 @@ async function renderAdminManageData() {
         <div style="display: flex; gap: 0.35rem; flex-shrink: 0; margin-left: 0.5rem;">
           <button class="todo-del-btn" onclick="editAnnouncementFromManage('${a.fbKey}')" title="Edit" style="color: var(--color-coral);">✏️</button>
           <button class="todo-del-btn" onclick="deleteFirebaseItem('announcements', '${a.fbKey}', event)" title="Delete">🗑️</button>
-        </div>
-      </div>
-    `).join('');
-  }
-
-  // --- STUDY TASKS (TODOS) SECTION ---
-  html += `<h4 style="font-size: 0.95rem; margin: 1.25rem 0 0.5rem 0; display: flex; align-items: center; gap: 0.4rem;">🎯 Study Tasks <span style="font-size: 0.75rem; background: var(--bg-surface-subtle); padding: 0.15rem 0.5rem; border-radius: var(--radius-full); color: var(--text-subtle);">${fbTodos.length}</span></h4>`;
-
-  if (!fbTodos.length) {
-    html += `<p style="font-size: 0.8125rem; color: var(--text-subtle);">No study tasks active.</p>`;
-  } else {
-    html += fbTodos.map(t => `
-      <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.55rem 0.75rem; background: var(--bg-surface-subtle); border-radius: var(--radius-sm); margin-bottom: 0.35rem; font-size: 0.85rem; ${t.done ? 'opacity: 0.6;' : ''}">
-        <div style="min-width: 0; flex: 1; overflow: hidden;">
-          <span style="${t.done ? 'text-decoration: line-through;' : ''}">${escapeHtml(t.text)}</span>
-          <div style="font-size: 0.75rem; color: var(--text-subtle); margin-top: 0.15rem;">${t.priority || 'medium'} priority · ${t.done ? '✓ Completed' : 'Pending'} · <span style="color: #2ecc71;">☁️ Public Live</span></div>
-        </div>
-        <div style="display: flex; gap: 0.35rem; flex-shrink: 0; margin-left: 0.5rem;">
-          <button class="todo-del-btn" onclick="deleteFirebaseItem('todos', '${t.fbKey}', event)" title="Delete">🗑️</button>
         </div>
       </div>
     `).join('');
@@ -1882,8 +1774,7 @@ async function syncFirebaseData() {
   try {
     await Promise.all([
       renderDashboardLectures(),
-      renderDashboardAnnouncements(),
-      renderDashboardTodos()
+      renderDashboardAnnouncements()
     ]);
   } catch (err) {
     console.warn('Firebase sync warning:', err);
@@ -2601,28 +2492,6 @@ function initFirebaseAuth() {
   }
 }
 
-// ─── 30-Second Guest Sign-In Nudge ───────────────────────────────────────────
-
-function showGuestSignInNudge() {
-  // Don't show if user already signed in after the timeout was set
-  if (currentUserProfile) return;
-  const nudge = document.getElementById('guest-signin-nudge');
-  if (nudge) {
-    nudge.classList.add('visible');
-  }
-}
-
-function dismissGuestNudge() {
-  const nudge = document.getElementById('guest-signin-nudge');
-  if (nudge) {
-    nudge.classList.remove('visible');
-  }
-}
-
-function nudgeSignIn() {
-  dismissGuestNudge();
-  handleAuthAction();
-}
 
 function updateProfileUI() {
   const avatarPill = document.getElementById('profile-avatar-pill');

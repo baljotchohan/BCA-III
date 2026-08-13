@@ -831,9 +831,9 @@ body.modal-open {
    Education Category Sections (All 7 Subjects)
    ========================================================================== */
 .EducationSections-module-scss-module__dxNdua__sectionWrapper {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
   margin-top: 1.5rem;
   margin-bottom: 3.5rem;
 }
@@ -938,13 +938,7 @@ body.modal-open {
 }
 
 .EducationSections-module-scss-module__dxNdua__illustrationWrapper {
-  flex-shrink: 0;
-  width: 140px;
-  height: 140px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  display: none;
 }
 
 .EducationSections-module-scss-module__dxNdua__section:hover .EducationSections-module-scss-module__dxNdua__illustrationWrapper {
@@ -1183,7 +1177,7 @@ body.modal-open {
    ========================================================================== */
 
 #subject-workspace-view {
-  padding-top: calc(var(--header-height) + env(safe-area-inset-top, 0px) + 0.5rem);
+  padding-top: calc(env(safe-area-inset-top, 0px) + 0.5rem);
   padding-bottom: 4rem;
   scroll-margin-top: calc(var(--header-height) + env(safe-area-inset-top, 0px));
 }
@@ -1806,6 +1800,7 @@ body.modal-open {
   margin: 0;
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -4123,13 +4118,8 @@ body.modal-open {
   gap: 0.4rem;
   border-bottom: 1px solid var(--border-subtle);
   padding-bottom: 0.35rem;
-  overflow-x: auto;
-  scrollbar-width: none;
-  -webkit-overflow-scrolling: touch;
-}
-
-.mcp-tabs-bar::-webkit-scrollbar {
-  display: none;
+  flex-wrap: wrap;
+  justify-content: center;
 }
 
 .mcp-tab-btn {
@@ -4145,7 +4135,7 @@ body.modal-open {
   align-items: center;
   gap: 0.4rem;
   transition: all 0.15s ease;
-  white-space: nowrap;
+  white-space: normal;
   flex-shrink: 0;
 }
 
@@ -4347,8 +4337,16 @@ body.modal-open {
     font-weight: 700 !important;
   }
 
+  /* Calendar Mobile Optimization */
+  .calendar-grid {
+    gap: 0.2rem !important;
+  }
+  .cal-day-cell {
+    font-size: 0.75rem !important;
+    min-height: 28px !important;
+  }
+
   .header-actions-group {
-    display: flex !important;
     align-items: center !important;
     gap: 0.3rem !important;
   }
@@ -4433,21 +4431,30 @@ body.modal-open {
 
   .PackageBanner-module-scss-module__FhS4PW__packages {
     width: 100% !important;
-    display: flex !important;
-    flex-direction: column !important;
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
     gap: 0.5rem !important;
     margin-top: 0.85rem !important;
     box-sizing: border-box !important;
   }
 
   .PackageBanner-module-scss-module__FhS4PW__package {
-    padding: 0.85rem 1rem !important;
+    padding: 0.75rem 0.85rem !important;
     border-radius: var(--radius-sm) !important;
+  }
+  
+  .PackageBanner-module-scss-module__FhS4PW__summary {
+    font-size: 1.05rem !important;
+  }
+  
+  .PackageBanner-module-scss-module__FhS4PW__packageText .body-2 {
+    font-size: 0.65rem !important;
   }
 
   /* All 7 Subject Cards */
   .EducationSections-module-scss-module__dxNdua__sectionWrapper {
-    gap: 1rem !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 0.85rem !important;
     margin-top: 1rem !important;
     margin-bottom: 2.5rem !important;
   }
@@ -4554,7 +4561,7 @@ body.modal-open {
 
   /* Subject Workspace Responsive Overrides */
   #subject-workspace-view {
-    padding-top: calc(var(--header-height) + env(safe-area-inset-top, 0px) + 0.75rem) !important;
+    padding-top: calc(env(safe-area-inset-top, 0px) + 0.75rem) !important;
   }
 
   .subject-breadcrumb-bar {
@@ -4709,6 +4716,7 @@ body.modal-open {
     font-size: 0.85rem !important;
     line-height: 1.45 !important;
     -webkit-line-clamp: 2 !important;
+    line-clamp: 2 !important;
   }
 
   .note-topic-footer {
@@ -5105,6 +5113,7 @@ body.modal-open {
 
 .profile-modal-body {
   padding: 1.5rem;
+  padding-bottom: 3rem;
   flex: 1;
   min-height: 0;
   overflow-y: auto;
@@ -5255,7 +5264,8 @@ body.modal-open {
   gap: 0.5rem;
   border-bottom: 1px solid var(--border-subtle);
   padding-bottom: 0.5rem;
-  overflow-x: auto;
+  flex-wrap: wrap;
+  justify-content: center;
 }
 
 .profile-tab-btn {
@@ -5268,7 +5278,7 @@ body.modal-open {
   border-radius: var(--radius-sm);
   cursor: pointer;
   transition: all 0.15s ease;
-  white-space: nowrap;
+  white-space: normal;
 }
 
 .profile-tab-btn:hover {
@@ -5475,6 +5485,7 @@ body.modal-open {
 .text-ellipsis-2 {
   display: -webkit-box !important;
   -webkit-line-clamp: 2 !important;
+  line-clamp: 2 !important;
   -webkit-box-orient: vertical !important;
   overflow: hidden !important;
 }
