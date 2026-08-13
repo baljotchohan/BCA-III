@@ -87,8 +87,12 @@ function handleLogin(e) {
   if (typeof firebase !== 'undefined' && firebase.auth) {
     const provider = new firebase.auth.GoogleAuthProvider();
     firebase.auth().signInWithPopup(provider).then((result) => {
-      const email = result.user.email;
-      const ADMIN_EMAILS = ['baljotchohan23@gmail.com', 'mehakpreetkaur@gmail.com'];
+      const email = (result.user.email || '').toLowerCase();
+      const ADMIN_EMAILS = [
+        'baljotchohan23@gmail.com',
+        'mehakpreetkaur@gmail.com',
+        'mehakpreetsaini26@gmail.com'
+      ];
       if (ADMIN_EMAILS.includes(email)) {
         sessionStorage.setItem(SESSION_KEY, 'authenticated');
         showDashboard();

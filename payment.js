@@ -37,18 +37,12 @@ window.BCA3_PAYMENTS = {
    * Returns: { hasAccess: boolean, reason: string, message?: string }
    */
   hasNoteAccess: function (noteOrId, indexInSubject = 0) {
-    // 0. Explicit Dev Mode active plan check from localStorage
-    const devPlan = localStorage.getItem('bca_dev_active_plan');
-    if (devPlan === 'max') return { hasAccess: true, reason: 'max_lifetime' };
-    if (devPlan === 'pro' || devPlan === 'plus') return { hasAccess: true, reason: 'pro_active' };
-
-    // 1. Admin always has full access (profile, admin session, or admin email)
+    // 1. Admin always has full access (strictly verified via authenticated admin email)
     const adminEmails = ['baljotchohan23@gmail.com', 'mehakpreetkaur@gmail.com', 'mehakpreetsaini26@gmail.com'];
     const isAdmin = Boolean(
-      (currentUserProfile && (currentUserProfile.isAdmin || adminEmails.includes((currentUserProfile.email || '').toLowerCase()))) ||
-      (typeof isAdminAuthenticated === 'function' && isAdminAuthenticated()) ||
-      localStorage.getItem('bca3_admin_token') ||
-      localStorage.getItem('bca3_admin_user')
+      currentUserProfile &&
+      currentUserProfile.email &&
+      adminEmails.includes(String(currentUserProfile.email).toLowerCase())
     );
     if (isAdmin) {
       return { hasAccess: true, reason: 'admin' };
@@ -188,13 +182,35 @@ window.BCA3_PAYMENTS = {
         },
         handler: async function (paymentResponse) {
           try {
-            if (typeof showToast === 'function') showToast('🎉 Payment complete! Unlocking note...', 'success');
+            if (typeof showToast === 'function') showToast('⏳ Verifying payment with secure server...', 'info');
+
+            const verifyRes = await fetch('/api/verify-payment', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                razorpay_order_id: paymentResponse.razorpay_order_id,
+                razorpay_payment_id: paymentResponse.razorpay_payment_id,
+                razorpay_signature: paymentResponse.razorpay_signature,
+                uid: (currentUserProfile && currentUserProfile.uid) || 'anonymous',
+                itemType: 'single_note',
+                itemId: noteId
+              })
+            });
+
+            const verifyData = await verifyRes.json();
+            if (!verifyRes.ok || !verifyData.success) {
+              throw new Error(verifyData.error || 'Payment signature verification failed');
+            }
+
+            if (typeof showToast === 'function') showToast('🎉 Payment verified! Unlocking note...', 'success');
 
             if (!currentUserProfile) currentUserProfile = { uid: 'user_' + Date.now(), name: 'Student' };
             if (!currentUserProfile.purchasedNotes) currentUserProfile.purchasedNotes = {};
             currentUserProfile.purchasedNotes[noteId] = {
               purchasedAt: Date.now(),
-              paymentId: paymentResponse.razorpay_payment_id || `pay_${Date.now()}`
+              paymentId: paymentResponse.razorpay_payment_id,
+              orderId: paymentResponse.razorpay_order_id,
+              verified: true
             };
             localStorage.setItem('studiq_user_profile', JSON.stringify(currentUserProfile));
 
@@ -208,21 +224,9 @@ window.BCA3_PAYMENTS = {
               openNoteReaderView(noteId);
             }
 
-            fetch('/api/verify-payment', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                razorpay_order_id: paymentResponse.razorpay_order_id || 'direct_client_order',
-                razorpay_payment_id: paymentResponse.razorpay_payment_id || `pay_${Date.now()}`,
-                razorpay_signature: paymentResponse.razorpay_signature || 'direct_sig',
-                uid: currentUserProfile.uid,
-                itemType: 'single_note',
-                itemId: noteId
-              })
-            }).catch(err => console.warn('Background verification note:', err));
-
           } catch (err) {
             console.error('Payment handler error:', err);
+            if (typeof showToast === 'function') showToast('❌ Verification error: ' + err.message, 'error');
           }
         },
         modal: {
@@ -247,7 +251,7 @@ window.BCA3_PAYMENTS = {
 
     } catch (err) {
       console.error('Single note checkout error:', err);
-      if (typeof showToast === 'function') showToast('Error: ' + err.message);
+      if (typeof showToast === 'function') showToast('Checkout error: ' + err.message);
     }
   },
 
@@ -255,18 +259,25 @@ window.BCA3_PAYMENTS = {
    * Subscribe to Pro (₹19 / mo) or Max Lifetime (₹49 permanent)
    */
   payForSubscription: async function (planTier, planName, priceInRs) {
-    if (!currentUserProfile || !currentUserProfile.uid || currentUserProfile.uid.startsWith('guest_')) {
-      if (typeof handleAuthAction === 'function') {
-        if (typeof showToast === 'function') showToast('Please sign in with Google to link your study pass to your student account.', 'info');
-        handleAuthAction();
-      }
-      return;
-    }
-
     try {
-      await this.ensureRazorpaySDK();
+      if (typeof Razorpay === 'undefined') {
+        alert('Razorpay Payment Gateway SDK is loading. Please check your internet connection and try again.');
+        return;
+      }
 
-      if (typeof showToast === 'function') showToast(`Preparing ${planName} checkout...`, 'info');
+      if (!currentUserProfile || !currentUserProfile.uid || String(currentUserProfile.uid).startsWith('guest_')) {
+        if (typeof openProfileModal === 'function') {
+          openProfileModal();
+          if (typeof showToast === 'function') {
+            showToast('Please sign in with Google first before purchasing a study pass', 'info');
+          }
+        }
+        return;
+      }
+
+      if (typeof showToast === 'function') {
+        showToast(`Initiating secure checkout for ${planName} (₹${priceInRs})...`, 'info');
+      }
 
       let orderData = null;
       try {
@@ -293,8 +304,8 @@ window.BCA3_PAYMENTS = {
         key: (orderData && orderData.keyId) || this.testKeyId,
         amount: amountInPaise,
         currency: 'INR',
-        name: 'BCA 3rd Semester Hub',
-        description: `Upgrade to ${planName} (${planTier === 'max' ? 'Lifetime Pass' : 'Monthly Pass'})`,
+        name: 'BCA III Hub Study Pass',
+        description: `${planName} — Full PU Syllabus Unlocked`,
         image: 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png',
         order_id: (orderData && orderData.orderId) ? orderData.orderId : undefined,
         prefill: {
@@ -302,35 +313,49 @@ window.BCA3_PAYMENTS = {
           email: currentUserProfile.email || ''
         },
         theme: {
-          color: planTier === 'max' ? '#c25e3e' : '#7c3aed'
+          color: planTier === 'max' ? '#ea580c' : '#7c3aed'
         },
         handler: async function (paymentResponse) {
           try {
+            if (typeof showToast === 'function') showToast('⏳ Verifying subscription with secure server...', 'info');
+
+            const verifyRes = await fetch('/api/verify-payment', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                razorpay_order_id: paymentResponse.razorpay_order_id,
+                razorpay_payment_id: paymentResponse.razorpay_payment_id,
+                razorpay_signature: paymentResponse.razorpay_signature,
+                uid: (currentUserProfile && currentUserProfile.uid) || 'anonymous',
+                itemType: 'subscription',
+                planTier: planTier
+              })
+            });
+
+            const verifyData = await verifyRes.json();
+            if (!verifyRes.ok || !verifyData.success) {
+              throw new Error(verifyData.error || 'Payment signature verification failed');
+            }
+
             const now = Date.now();
-            const validDays = (planTier === 'max') ? 3650 : 30;
+            let durationDays = 30;
+            if (planTier === 'max') durationDays = 3650; // Lifetime 10 years
+
             const subData = {
               plan: planTier,
               status: 'active',
               activatedAt: now,
-              validUntil: now + validDays * 24 * 60 * 60 * 1000,
-              paymentId: paymentResponse.razorpay_payment_id || `pay_${Date.now()}`,
-              orderId: paymentResponse.razorpay_order_id || 'direct_order'
+              validUntil: now + durationDays * 24 * 60 * 60 * 1000,
+              paymentId: paymentResponse.razorpay_payment_id,
+              orderId: paymentResponse.razorpay_order_id,
+              verified: true
             };
 
+            if (!currentUserProfile) {
+              currentUserProfile = { uid: 'user_' + Date.now(), name: 'Student' };
+            }
             currentUserProfile.subscription = subData;
             localStorage.setItem('studiq_user_profile', JSON.stringify(currentUserProfile));
-            localStorage.setItem('bca_dev_active_plan', planTier);
-
-            // Sync to Firebase RTDB
-            if (currentUserProfile.uid && !currentUserProfile.uid.startsWith('guest_')) {
-              try {
-                fetch(`${FIREBASE_DB}/users/${currentUserProfile.uid}/subscription.json`, {
-                  method: 'PUT',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify(subData)
-                }).catch(e => console.warn('Firebase subscription sync notice:', e));
-              } catch(e) {}
-            }
 
             if (typeof showToast === 'function') {
               showToast(`🎉 ${planName} Activated! All notes & features unlocked!`, 'success');
@@ -347,22 +372,9 @@ window.BCA3_PAYMENTS = {
             if (typeof updateProfileUI === 'function') updateProfileUI();
             if (typeof updateAdminHeaderUI === 'function') updateAdminHeaderUI();
 
-            // Background server verification
-            fetch('/api/verify-payment', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                razorpay_order_id: paymentResponse.razorpay_order_id || 'direct_order',
-                razorpay_payment_id: paymentResponse.razorpay_payment_id || `pay_${Date.now()}`,
-                razorpay_signature: paymentResponse.razorpay_signature || 'direct_sig',
-                uid: currentUserProfile.uid,
-                itemType: 'subscription',
-                planTier: planTier
-              })
-            }).catch(err => console.warn('Background verification notice:', err));
-
           } catch (err) {
             console.error('Subscription payment handler error:', err);
+            if (typeof showToast === 'function') showToast('❌ Verification error: ' + err.message, 'error');
           }
         },
         modal: {
@@ -432,8 +444,12 @@ window.BCA3_PAYMENTS = {
   },
 
   updatePricingModalUI: function () {
-    const activePlan = (currentUserProfile && currentUserProfile.subscription ? currentUserProfile.subscription.plan : null) || localStorage.getItem('bca_dev_active_plan') || 'free';
-    const isAdmin = Boolean(currentUserProfile && currentUserProfile.isAdmin);
+    const activePlan = (currentUserProfile && currentUserProfile.subscription ? currentUserProfile.subscription.plan : 'free');
+    const isAdmin = Boolean(
+      currentUserProfile &&
+      currentUserProfile.email &&
+      ['baljotchohan23@gmail.com', 'mehakpreetkaur@gmail.com', 'mehakpreetsaini26@gmail.com'].includes(String(currentUserProfile.email).toLowerCase())
+    );
 
     const btnFree = document.getElementById('plan-btn-free');
     const cardFree = document.getElementById('plan-card-free');
@@ -447,19 +463,17 @@ window.BCA3_PAYMENTS = {
       cardFree.style.boxShadow = (activePlan === 'free' && !isAdmin) ? '0 0 20px rgba(255,255,255,0.1)' : '';
     }
     if (btnFree) {
-      btnFree.innerHTML = (activePlan === 'free' && !isAdmin) ? '✅ Active Free Plan' : 'Select Free Plan';
-      btnFree.onclick = () => window.BCA3_PAYMENTS.devResetToFree();
+      btnFree.innerHTML = (activePlan === 'free' && !isAdmin) ? '✅ Active Free Plan' : 'Free Tier (Unit 1)';
+      btnFree.onclick = () => this.closePricingModal();
     }
 
     if (cardPro) {
-      const isPro = (activePlan === 'pro' && !isAdmin);
-      cardPro.style.borderColor = isPro ? 'rgba(124, 58, 237, 0.9)' : '';
-      cardPro.style.boxShadow = isPro ? '0 0 30px rgba(124, 58, 237, 0.35)' : '';
+      cardPro.style.borderColor = (activePlan === 'pro' && !isAdmin) ? '#7c3aed' : '';
+      cardPro.style.boxShadow = (activePlan === 'pro' && !isAdmin) ? '0 0 30px rgba(124, 58, 237, 0.4)' : '';
     }
     if (btnPro) {
       const isPro = (activePlan === 'pro' && !isAdmin);
-      btnPro.innerHTML = isPro ? '✅ Active Pro Pass (Unlocked)' : 'Upgrade to Pro (₹19/mo)';
-      btnPro.className = isPro ? 'plan-btn btn-secondary' : 'plan-btn btn-primary';
+      btnPro.innerHTML = isPro ? '⭐ Active Pro Plan' : 'Upgrade to Pro (₹19/mo)';
       btnPro.onclick = () => window.BCA3_PAYMENTS.payForSubscription('pro', 'Pro Scholar', 19);
     }
 
@@ -474,201 +488,5 @@ window.BCA3_PAYMENTS = {
       btnMax.style.background = isMax ? 'rgba(194, 94, 62, 0.25)' : 'linear-gradient(135deg, #c25e3e, #ea580c)';
       btnMax.onclick = () => window.BCA3_PAYMENTS.payForSubscription('max', 'Max Lifetime', 49);
     }
-  },
-
-  /**
-   * ⚡ 1-Click Dev Mode Plan Unlock for instant local testing
-   */
-  devQuickUnlock: function (planTier = 'pro') {
-    let prof = currentUserProfile;
-    if (!prof || !prof.uid) {
-      try {
-        prof = JSON.parse(localStorage.getItem('studiq_user_profile') || 'null');
-      } catch (e) {}
-    }
-    if (!prof) {
-      prof = {
-        uid: 'dev_user_' + Date.now(),
-        name: 'Baljot (Scholar)',
-        email: 'baljotchohan23@gmail.com',
-        isAdmin: false
-      };
-    }
-    const now = Date.now();
-    prof.subscription = {
-      plan: planTier,
-      status: 'active',
-      activatedAt: now,
-      validUntil: now + (planTier === 'max' ? 3650 : 30) * 24 * 60 * 60 * 1000,
-      paymentId: `dev_unlock_${planTier}_${Date.now()}`
-    };
-    currentUserProfile = prof;
-    localStorage.setItem('studiq_user_profile', JSON.stringify(prof));
-    localStorage.setItem('bca_dev_active_plan', planTier);
-
-    if (typeof showToast === 'function') {
-      const tierTitle = planTier === 'max' ? '🌟 Max Lifetime Pass' : '⭐ Pro Scholar Pass';
-      showToast(`🎉 ${tierTitle} Activated! All 7 subjects & all notes are fully unlocked!`, 'success');
-    }
-
-    this.updatePricingModalUI();
-    this.refreshDevBarUI();
-
-    // If inside note reader (note.html), immediately re-render single note
-    if (typeof renderSingleNote === 'function' && typeof _notes !== 'undefined') {
-      const p = new URLSearchParams(location.search);
-      const noteKey = p.get('id');
-      const target = _notes.find(n => (n.fbKey === noteKey || n.id === noteKey)) || _notes[0];
-      if (target) renderSingleNote(target);
-    }
-
-    if (typeof activeSubjectId !== 'undefined' && activeSubjectId && typeof renderSubjectNotes === 'function') {
-      const subjectIndex = (typeof BCA_3RD_SEM_DATA !== 'undefined' && BCA_3RD_SEM_DATA.subjects) ? BCA_3RD_SEM_DATA.subjects : [];
-      const subject = subjectIndex.find(s => s.id === activeSubjectId);
-      if (subject) renderSubjectNotes(subject);
-    }
-
-    if (typeof updateProfileUI === 'function') updateProfileUI();
-    if (typeof updateAdminHeaderUI === 'function') updateAdminHeaderUI();
-  },
-
-  /**
-   * 🛡️ 1-Click Dev Mode Full Administrator Unlock
-   */
-  devQuickUnlockAdmin: function () {
-    let prof = currentUserProfile || {};
-    prof.uid = 'baljot_admin';
-    prof.name = 'Baljot Chohan';
-    prof.email = 'baljotchohan23@gmail.com';
-    prof.isAdmin = true;
-    prof.subscription = { plan: 'max', status: 'active', validUntil: Date.now() + 3650 * 24 * 60 * 60 * 1000 };
-    currentUserProfile = prof;
-    localStorage.setItem('studiq_user_profile', JSON.stringify(prof));
-    localStorage.setItem('bca_dev_active_plan', 'max');
-    localStorage.setItem('bca_admin_session', 'authenticated');
-    localStorage.setItem('bca3_admin_user', JSON.stringify(prof));
-
-    if (typeof showToast === 'function') {
-      showToast('🛡️ Dev Mode: Full Administrator Mode Activated! 🎉');
-    }
-
-    this.closePricingModal();
-    this.refreshDevBarUI();
-
-    if (typeof renderSingleNote === 'function' && typeof _notes !== 'undefined') {
-      const p = new URLSearchParams(location.search);
-      const noteKey = p.get('id');
-      const target = _notes.find(n => (n.fbKey === noteKey || n.id === noteKey)) || _notes[0];
-      if (target) renderSingleNote(target);
-    }
-
-    if (typeof activeSubjectId !== 'undefined' && activeSubjectId && typeof renderSubjectNotes === 'function') {
-      const subjectIndex = (typeof BCA_3RD_SEM_DATA !== 'undefined' && BCA_3RD_SEM_DATA.subjects) ? BCA_3RD_SEM_DATA.subjects : [];
-      const subject = subjectIndex.find(s => s.id === activeSubjectId);
-      if (subject) renderSubjectNotes(subject);
-    }
-
-    if (typeof updateProfileUI === 'function') updateProfileUI();
-    if (typeof updateAdminHeaderUI === 'function') updateAdminHeaderUI();
-  },
-
-  /**
-   * 🔄 Reset profile to Free tier (Unit 1 access only)
-   */
-  devResetToFree: function () {
-    let prof = currentUserProfile;
-    if (!prof) {
-      try { prof = JSON.parse(localStorage.getItem('studiq_user_profile') || 'null'); } catch(e) {}
-    }
-    if (prof) {
-      prof.subscription = { plan: 'free', status: 'active' };
-      prof.purchasedNotes = {};
-      prof.isAdmin = false;
-      currentUserProfile = prof;
-      localStorage.setItem('studiq_user_profile', JSON.stringify(prof));
-    }
-    localStorage.removeItem('bca_dev_active_plan');
-    localStorage.removeItem('bca_admin_session');
-    localStorage.removeItem('bca3_admin_token');
-    localStorage.removeItem('bca3_admin_user');
-
-    if (typeof showToast === 'function') {
-      showToast('🔄 Dev Mode: Reset to Free Tier (Unit 1 access only)');
-    }
-    this.closePricingModal();
-    this.refreshDevBarUI();
-
-    if (typeof renderSingleNote === 'function' && typeof _notes !== 'undefined') {
-      const p = new URLSearchParams(location.search);
-      const noteKey = p.get('id');
-      const target = _notes.find(n => (n.fbKey === noteKey || n.id === noteKey)) || _notes[0];
-      if (target) renderSingleNote(target);
-    }
-
-    if (typeof activeSubjectId !== 'undefined' && activeSubjectId && typeof renderSubjectNotes === 'function') {
-      const subjectIndex = (typeof BCA_3RD_SEM_DATA !== 'undefined' && BCA_3RD_SEM_DATA.subjects) ? BCA_3RD_SEM_DATA.subjects : [];
-      const subject = subjectIndex.find(s => s.id === activeSubjectId);
-      if (subject) renderSubjectNotes(subject);
-    }
-    if (typeof updateProfileUI === 'function') updateProfileUI();
-    if (typeof updateAdminHeaderUI === 'function') updateAdminHeaderUI();
-  },
-
-  refreshDevBarUI: function () {
-    const activeDev = localStorage.getItem('bca_dev_active_plan') || (currentUserProfile && currentUserProfile.subscription ? currentUserProfile.subscription.plan : 'free');
-    const isAdmin = currentUserProfile && currentUserProfile.isAdmin;
-
-    const bFree = document.getElementById('dev-btn-free');
-    const bPro = document.getElementById('dev-btn-pro');
-    const bMax = document.getElementById('dev-btn-max');
-    const bAdmin = document.getElementById('dev-btn-admin');
-
-    if (bFree) bFree.style.background = (!isAdmin && activeDev === 'free') ? 'rgba(255,255,255,0.22)' : 'rgba(255,255,255,0.06)';
-    if (bPro) bPro.style.background = (!isAdmin && activeDev === 'pro') ? 'rgba(124,58,237,0.45)' : 'rgba(124,58,237,0.12)';
-    if (bMax) bMax.style.background = (!isAdmin && activeDev === 'max') ? 'rgba(194,94,62,0.45)' : 'rgba(194,94,62,0.15)';
-    if (bAdmin) bAdmin.style.background = isAdmin ? 'rgba(16,185,129,0.45)' : 'rgba(16,185,129,0.15)';
-  },
-
-  initDevFloatingBar: function () {
-    if (typeof window === 'undefined' || typeof document === 'undefined') return;
-    if (document.getElementById('bca-dev-floating-bar')) return;
-
-    // Only display in developer test mode (e.g. ?dev=1 or localStorage flag)
-    const isDevModeRequested = (typeof location !== 'undefined' && location.search && location.search.includes('dev=1')) || (localStorage.getItem('bca_show_dev_bar') === 'true');
-    if (!isDevModeRequested) return;
-
-    const bar = document.createElement('div');
-    bar.id = 'bca-dev-floating-bar';
-    bar.style.cssText = 'position:fixed;bottom:20px;left:20px;z-index:99999;background:rgba(18,18,20,0.94);backdrop-filter:blur(16px);border:1px solid rgba(194,94,62,0.4);border-radius:999px;padding:0.35rem 0.65rem;display:flex;align-items:center;gap:0.4rem;box-shadow:0 10px 35px rgba(0,0,0,0.6);font-family:system-ui,-apple-system,sans-serif;user-select:none;';
-
-    bar.innerHTML = `
-      <span style="font-size:0.72rem;font-weight:800;color:#c25e3e;letter-spacing:0.06em;display:flex;align-items:center;gap:0.25rem;">
-        ⚡ <span>DEV:</span>
-      </span>
-      <button id="dev-btn-free" onclick="BCA3_PAYMENTS.devResetToFree()" style="background:rgba(255,255,255,0.06);color:#cbd5e1;border:1px solid rgba(255,255,255,0.15);border-radius:999px;padding:0.22rem 0.6rem;font-size:0.72rem;font-weight:700;cursor:pointer;transition:all .15s;">
-        Free (Unit 1)
-      </button>
-      <button id="dev-btn-pro" onclick="BCA3_PAYMENTS.devQuickUnlock('pro')" style="background:rgba(124,58,237,0.12);color:#a78bfa;border:1px solid rgba(124,58,237,0.4);border-radius:999px;padding:0.22rem 0.6rem;font-size:0.72rem;font-weight:700;cursor:pointer;transition:all .15s;">
-        ⭐ Pro (₹19)
-      </button>
-      <button id="dev-btn-max" onclick="BCA3_PAYMENTS.devQuickUnlock('max')" style="background:rgba(194,94,62,0.15);color:#f97316;border:1px solid rgba(194,94,62,0.5);border-radius:999px;padding:0.22rem 0.75rem;font-size:0.72rem;font-weight:800;cursor:pointer;transition:all .15s;box-shadow:0 0 10px rgba(194,94,62,0.3);">
-        🌟 Max (₹49)
-      </button>
-      <button id="dev-btn-admin" onclick="BCA3_PAYMENTS.devQuickUnlockAdmin()" style="background:rgba(16,185,129,0.15);color:#10b981;border:1px solid rgba(16,185,129,0.4);border-radius:999px;padding:0.22rem 0.6rem;font-size:0.72rem;font-weight:700;cursor:pointer;transition:all .15s;">
-        🛡️ Admin
-      </button>
-    `;
-
-    document.body.appendChild(bar);
-    this.refreshDevBarUI();
   }
 };
-
-// Automatically mount the floating Dev Switcher on page load if requested
-if (typeof document !== 'undefined') {
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => window.BCA3_PAYMENTS.initDevFloatingBar());
-  } else {
-    window.BCA3_PAYMENTS.initDevFloatingBar();
-  }
-}

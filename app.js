@@ -1934,8 +1934,7 @@ async function approveStudentSubmission(subKey) {
     localSubms = localSubms.filter(s => s.fbKey !== subKey && s.id !== subKey);
     localStorage.setItem('bca_user_submissions', JSON.stringify(localSubms));
 
-    await renderDashboardNotes();
-    if (activeSubjectId) {
+    if (activeSubjectId && typeof BCA_3RD_SEM_DATA !== 'undefined' && BCA_3RD_SEM_DATA.subjects) {
       const sub = BCA_3RD_SEM_DATA.subjects.find(s => s.id === activeSubjectId);
       if (sub) renderSubjectNotes(sub);
     }
@@ -2734,43 +2733,29 @@ function copyMcpCode(elementId, btnElement) {
 }
 
 function handleMcpToolChange() {
-  const tool = document.getElementById('mcp-tool-select').value;
+  const selectEl = document.getElementById('mcp-tool-select');
+  if (!selectEl) return;
+  const tool = selectEl.value;
   const subjectWrap = document.getElementById('mcp-param-subject-wrap');
   const unitWrap = document.getElementById('mcp-param-unit-wrap');
   const queryWrap = document.getElementById('mcp-param-query-wrap');
 
-  if (tool === 'get_syllabus') {
-    subjectWrap.style.display = 'block';
-    unitWrap.style.display = 'none';
-    queryWrap.style.display = 'none';
-  } else if (tool === 'get_unit_details') {
-    subjectWrap.style.display = 'block';
-    unitWrap.style.display = 'block';
-    queryWrap.style.display = 'none';
-  } else if (tool === 'get_digital_notes') {
-    subjectWrap.style.display = 'block';
-    unitWrap.style.display = 'none';
-    queryWrap.style.display = 'none';
-  } else if (tool === 'search_digital_notes') {
-    subjectWrap.style.display = 'block';
-    unitWrap.style.display = 'none';
-    queryWrap.style.display = 'block';
-  } else if (tool === 'get_syllabus_structure_for_ai') {
-    subjectWrap.style.display = 'block';
-    unitWrap.style.display = 'none';
-    queryWrap.style.display = 'none';
-  } else {
-    subjectWrap.style.display = 'none';
-    unitWrap.style.display = 'none';
-    queryWrap.style.display = 'none';
-  }
+  const showSubject = ['get_syllabus', 'get_unit_details', 'get_digital_notes', 'search_digital_notes', 'get_syllabus_structure_for_ai'].includes(tool);
+  if (subjectWrap) subjectWrap.style.display = showSubject ? 'block' : 'none';
+  if (unitWrap) unitWrap.style.display = (tool === 'get_unit_details') ? 'block' : 'none';
+  if (queryWrap) queryWrap.style.display = (tool === 'search_digital_notes') ? 'block' : 'none';
 }
 
 async function executeMcpPlaygroundTest() {
-  const tool = document.getElementById('mcp-tool-select').value;
-  const subject = document.getElementById('mcp-param-subject').value;
-  const unit = document.getElementById('mcp-param-unit').value;
-  const query = document.getElementById('mcp-param-query').value;
+  const selectEl = document.getElementById('mcp-tool-select');
+  if (!selectEl) return;
+  const tool = selectEl.value;
+  const subjectEl = document.getElementById('mcp-param-subject');
+  const unitEl = document.getElementById('mcp-param-unit');
+  const queryEl = document.getElementById('mcp-param-query');
+  const subject = subjectEl ? subjectEl.value : 'all';
+  const unit = unitEl ? unitEl.value : 'Unit I';
+  const query = queryEl ? queryEl.value : '';
   const outputEl = document.getElementById('mcp-playground-output');
   const statusEl = document.getElementById('mcp-test-status');
   const latencyEl = document.getElementById('mcp-latency-tag');
@@ -2924,7 +2909,7 @@ async function syncUserSubscriptionFromDatabase(uid, userObj) {
     ]).map(e => String(e).toLowerCase());
 
     const userEmail = String((userObj && userObj.email) || (currentUserProfile && currentUserProfile.email) || '').toLowerCase();
-    const isAdmin = adminEmailList.includes(userEmail) || userEmail.includes('baljot');
+    const isAdmin = adminEmailList.includes(userEmail);
     currentUserProfile.isAdmin = isAdmin;
 
     let activeSub = null;
@@ -2958,73 +2943,6 @@ async function syncUserSubscriptionFromDatabase(uid, userObj) {
       }
     }
 
-    // 3. Fallback check: Scan all users in RTDB if subscription is still missing
-    if ((!activeSub || !activeSub.plan) && userEmail) {
-      try {
-        const allUsersRes = await fetch(`${dbBase}/users.json`);
-        if (allUsersRes.ok) {
-          const allUsers = await allUsersRes.json();
-          if (allUsers && typeof allUsers === 'object') {
-            for (const [k, u] of Object.entries(allUsers)) {
-              if (u && u.subscription && (k === uid || (u.email && String(u.email).toLowerCase() === userEmail) || k === 'qMEnmmLFHxZ8Vm3E5zk8v4Fj1233')) {
-                activeSub = u.subscription;
-                if (u.purchasedNotes) purchasedNotes = Object.assign(purchasedNotes, u.purchasedNotes);
-                break;
-              }
-            }
-          }
-        }
-      } catch (e) {
-        console.warn('All users fallback notice:', e);
-      }
-    }
-
-    // 4. Fallback check: Search orders in RTDB if subscription is missing
-    if (!activeSub || !activeSub.plan) {
-      try {
-        const ordersRes = await fetch(`${dbBase}/orders.json`);
-        if (ordersRes.ok) {
-          const allOrders = await ordersRes.json();
-          if (allOrders && typeof allOrders === 'object') {
-            const userOrders = Object.values(allOrders).filter(o =>
-              o && (o.status === 'PAID' || o.verified) && (o.uid === uid || (o.email && String(o.email).toLowerCase() === userEmail) || o.uid === 'qMEnmmLFHxZ8Vm3E5zk8v4Fj1233')
-            );
-
-            // Find most recent active subscription order
-            const subOrder = userOrders
-              .filter(o => o.itemType === 'subscription' && o.planTier)
-              .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0))[0];
-
-            if (subOrder) {
-              const now = Date.now();
-              const validDays = (subOrder.planTier === 'max') ? 3650 : 30;
-              const orderTime = subOrder.timestamp || now;
-              activeSub = {
-                plan: subOrder.planTier,
-                status: 'active',
-                activatedAt: orderTime,
-                validUntil: orderTime + validDays * 24 * 60 * 60 * 1000,
-                orderId: subOrder.orderId || '',
-                paymentId: subOrder.paymentId || ''
-              };
-            }
-
-            // Restore any single notes
-            userOrders.filter(o => o.itemType === 'single_note' && o.itemId).forEach(o => {
-              purchasedNotes[o.itemId] = {
-                purchasedAt: o.timestamp || Date.now(),
-                orderId: o.orderId,
-                paymentId: o.paymentId,
-                verified: true
-              };
-            });
-          }
-        }
-      } catch (err) {
-        console.warn('Orders fallback check error:', err);
-      }
-    }
-
     // Self-heal: If active subscription found, link & persist to /users/{uid}
     if (activeSub && activeSub.plan && uid) {
       fetch(`${dbBase}/users/${encodeURIComponent(uid)}.json`, {
@@ -3054,11 +2972,6 @@ async function syncUserSubscriptionFromDatabase(uid, userObj) {
 
     // Save to localStorage
     localStorage.setItem('studiq_user_profile', JSON.stringify(currentUserProfile));
-    if (activeSub && activeSub.plan) {
-      localStorage.setItem('bca_dev_active_plan', activeSub.plan);
-    } else {
-      localStorage.removeItem('bca_dev_active_plan');
-    }
 
     // Refresh UI & Notes access
     if (typeof updateProfileUI === 'function') updateProfileUI();
@@ -3132,7 +3045,7 @@ function initFirebaseAuth() {
         ]).map(e => e.toLowerCase());
 
         const userEmail = (user.email || '').toLowerCase();
-        const isAdminUser = adminEmailList.includes(userEmail) || userEmail.includes('baljot');
+        const isAdminUser = adminEmailList.includes(userEmail);
 
         currentUserProfile = {
           uid: user.uid,
@@ -3397,7 +3310,7 @@ function saveStudIQProfile() {
     'mehakpreetsaini26@gmail.com'
   ]).map(e => e.toLowerCase());
 
-  const isAdmin = adminEmailList.includes(email.toLowerCase()) || email.toLowerCase().includes('baljot');
+  const isAdmin = adminEmailList.includes(email.toLowerCase());
 
   currentUserProfile = {
     uid: 'user_' + Date.now(),
@@ -3441,7 +3354,6 @@ function handleAuthAction() {
     localStorage.removeItem('bca_hub_admin_session');
     localStorage.removeItem('bca_admin_session');
     localStorage.removeItem('studiq_user_profile');
-    localStorage.removeItem('bca_dev_active_plan');
     currentUserProfile = null;
     updateProfileUI();
     updateAdminHeaderUI();
@@ -3467,7 +3379,7 @@ function handleAuthAction() {
           'mehakpreetsaini26@gmail.com'
         ]).map(e => e.toLowerCase());
 
-        const isAdmin = adminEmailList.includes((u.email || '').toLowerCase()) || (u.email || '').toLowerCase().includes('baljot');
+        const isAdmin = adminEmailList.includes((u.email || '').toLowerCase());
 
         currentUserProfile = {
           uid: u.uid,

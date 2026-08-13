@@ -73,21 +73,28 @@ module.exports = async function handler(req, res) {
       return res.status(400).json({ error: 'Missing required Razorpay payment verification parameters' });
     }
 
-    const keySecret = process.env.RAZORPAY_KEY_SECRET || '';
+    const keySecret = process.env.RAZORPAY_KEY_SECRET;
+    if (!keySecret) {
+      console.error('CRITICAL: RAZORPAY_KEY_SECRET is not configured on the server');
+      return res.status(500).json({ error: 'Payment gateway configuration error. Please contact administrator.' });
+    }
 
-    // If keySecret is set, perform HMAC SHA-256 verification
-    if (keySecret) {
-      const generatedSignature = crypto
-        .createHmac('sha256', keySecret)
-        .update(`${razorpay_order_id}|${razorpay_payment_id}`)
-        .digest('hex');
+    // Perform strict HMAC SHA-256 signature verification
+    const expectedSignature = crypto
+      .createHmac('sha256', keySecret)
+      .update(`${razorpay_order_id}|${razorpay_payment_id}`)
+      .digest('hex');
 
-      const isVerified = (generatedSignature === razorpay_signature);
+    // Use timing-safe comparison to prevent timing attacks
+    const expectedBuffer = Buffer.from(expectedSignature, 'utf8');
+    const providedBuffer = Buffer.from(razorpay_signature, 'utf8');
 
-      if (!isVerified) {
-        console.warn('Signature mismatch:', { generatedSignature, razorpay_signature });
-        return res.status(400).json({ success: false, error: 'Invalid Razorpay signature. Payment verification failed.' });
-      }
+    const isVerified = (expectedBuffer.length === providedBuffer.length) &&
+      crypto.timingSafeEqual(expectedBuffer, providedBuffer);
+
+    if (!isVerified) {
+      console.warn('Payment signature verification failed for order:', razorpay_order_id);
+      return res.status(400).json({ success: false, error: 'Invalid payment signature. Verification failed.' });
     }
 
     const now = Date.now();

@@ -63,19 +63,29 @@ module.exports = async function handler(req, res) {
     }
 
     const keyId = process.env.RAZORPAY_KEY_ID || 'rzp_live_TOvSIy2L3J3ply';
-    const keySecret = process.env.RAZORPAY_KEY_SECRET || '';
+    const keySecret = process.env.RAZORPAY_KEY_SECRET;
 
-    const amountInPaise = Math.round(Number(amount) * 100);
+    // Enforce official pricing catalog to prevent price tampering
+    let expectedAmountRs = 15; // default single note
+    if (itemType === 'subscription') {
+      if (planTier === 'pro') expectedAmountRs = 19;
+      else if (planTier === 'max') expectedAmountRs = 49;
+      else return res.status(400).json({ error: 'Invalid subscription plan tier' });
+    } else if (itemType === 'single_note') {
+      expectedAmountRs = 15;
+    }
+
+    const amountInPaise = expectedAmountRs * 100;
 
     const orderPayload = {
       amount: amountInPaise,
       currency: 'INR',
       receipt: `rcpt_${Date.now()}_${crypto.randomBytes(3).toString('hex')}`,
       notes: {
-        uid: uid || 'anonymous',
-        itemType: itemType || 'single_note',
-        itemId: itemId || '',
-        planTier: planTier || ''
+        uid: String(uid || 'anonymous').slice(0, 100),
+        itemType: String(itemType || 'single_note'),
+        itemId: String(itemId || '').slice(0, 100),
+        planTier: String(planTier || '').slice(0, 50)
       }
     };
 
@@ -84,7 +94,8 @@ module.exports = async function handler(req, res) {
       try {
         order = await createRazorpayOrderViaHttp(keyId, keySecret, orderPayload);
       } catch (httpErr) {
-        console.warn('Razorpay Direct API notice:', httpErr.message);
+        console.error('Razorpay Direct API Error:', httpErr.message);
+        return res.status(502).json({ error: 'Failed to communicate with Razorpay payment gateway', details: httpErr.message });
       }
     }
 

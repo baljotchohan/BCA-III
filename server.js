@@ -3,6 +3,37 @@ const fs = require('fs');
 const path = require('path');
 const url = require('url');
 
+// Load environment variables from .env.local or .env if present
+function loadEnv() {
+  const envPaths = [
+    path.join(__dirname, '.env.local'),
+    path.join(__dirname, '.env'),
+    path.join(__dirname, '..', '.env.local')
+  ];
+  for (const p of envPaths) {
+    if (fs.existsSync(p)) {
+      try {
+        const content = fs.readFileSync(p, 'utf8');
+        content.split('\n').forEach(line => {
+          const trimmed = line.trim();
+          if (trimmed && !trimmed.startsWith('#')) {
+            const idx = trimmed.indexOf('=');
+            if (idx > 0) {
+              const key = trimmed.slice(0, idx).trim();
+              const val = trimmed.slice(idx + 1).trim().replace(/^["']|["']$/g, '');
+              if (!process.env[key]) {
+                process.env[key] = val;
+              }
+            }
+          }
+        });
+        break;
+      } catch (e) {}
+    }
+  }
+}
+loadEnv();
+
 const PORT = 8192;
 const MIME_TYPES = {
   '.html': 'text/html; charset=utf-8',

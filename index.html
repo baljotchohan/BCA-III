@@ -41,43 +41,6 @@
   <meta name="twitter:image" content="icon-512.png"/>
 
   <link rel="stylesheet" href="styles.css?v=5.0"/>
-  <script>
-    window.activateStudyPass = function (tier) {
-      console.log('⚡ [STUDY_PASS] Direct Activation Request:', tier);
-      try {
-        if (window.BCA3_PAYMENTS && typeof window.BCA3_PAYMENTS.devQuickUnlock === 'function') {
-          if (tier === 'free') window.BCA3_PAYMENTS.devResetToFree();
-          else window.BCA3_PAYMENTS.devQuickUnlock(tier);
-          return;
-        }
-      } catch (e) {
-        console.warn('BCA3_PAYMENTS devQuickUnlock fallback:', e);
-      }
-
-      // Standalone Fallback
-      let prof = {};
-      try { prof = JSON.parse(localStorage.getItem('studiq_user_profile') || '{}'); } catch(e){}
-      prof.uid = prof.uid || ('user_' + Date.now());
-      prof.name = prof.name || 'Baljot (Scholar)';
-      prof.email = 'baljotchohan23@gmail.com';
-      prof.subscription = {
-        plan: tier,
-        status: 'active',
-        activatedAt: Date.now(),
-        validUntil: Date.now() + (tier === 'max' ? 3650 : 30) * 24 * 60 * 60 * 1000
-      };
-      localStorage.setItem('studiq_user_profile', JSON.stringify(prof));
-      localStorage.setItem('bca_dev_active_plan', tier);
-      
-      const title = tier === 'max' ? '🌟 Max Lifetime Pass' : (tier === 'pro' ? '⭐ Pro Pass' : 'Free Plan');
-      if (typeof showToast === 'function') {
-        showToast(`🎉 ${title} Activated! All notes unlocked!`, 'success');
-      } else {
-        alert(`🎉 ${title} Activated! All notes unlocked!`);
-      }
-      location.reload();
-    };
-  </script>
 </head>
 <body>
 
@@ -1774,6 +1737,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
   <script src="syllabus-data.js?v=5.0"></script>
+  <script src="visuals-engine.js?v=5.0"></script>
   <script src="firebase-config.js?v=5.0"></script>
   <script src="payment.js?v=5.0"></script>
   <script src="app.js?v=5.0"></script>
