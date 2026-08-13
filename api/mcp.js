@@ -741,6 +741,7 @@ function fetchFirebaseData(endpoint, authToken = ADMIN_SECRET) {
       res.on('end', () => {
         try {
           const parsed = JSON.parse(data);
+          if (parsed && parsed.error) return resolve([]);
           if (!parsed) return resolve([]);
           if (typeof parsed === 'object') {
             return resolve(Object.keys(parsed).map(key => ({ id: key, fbKey: key, ...parsed[key] })));
@@ -774,6 +775,7 @@ function pushFirebaseData(endpoint, payload, authToken = ADMIN_SECRET) {
       res.on('end', () => {
         try {
           const parsed = JSON.parse(body);
+          if (parsed && parsed.error) return reject(new Error(parsed.error));
           resolve(parsed.name || 'success');
         } catch (e) {
           resolve('success');
@@ -803,7 +805,15 @@ function putFirebaseData(endpoint, id, payload, authToken = ADMIN_SECRET) {
     const req = https.request(options, (res) => {
       let body = '';
       res.on('data', chunk => { body += chunk; });
-      res.on('end', () => resolve(true));
+      res.on('end', () => {
+        try {
+          const parsed = JSON.parse(body);
+          if (parsed && parsed.error) return reject(new Error(parsed.error));
+          resolve(true);
+        } catch (e) {
+          resolve(true);
+        }
+      });
     });
     req.on('error', reject);
     req.write(data);
@@ -821,7 +831,17 @@ function deleteFirebaseData(endpoint, id, authToken = ADMIN_SECRET) {
       method: 'DELETE'
     };
     const req = https.request(options, (res) => {
-      resolve(res.statusCode === 200 || res.statusCode === 204);
+      let body = '';
+      res.on('data', chunk => { body += chunk; });
+      res.on('end', () => {
+        try {
+          const parsed = JSON.parse(body);
+          if (parsed && parsed.error) return reject(new Error(parsed.error));
+          resolve(res.statusCode === 200 || res.statusCode === 204);
+        } catch (e) {
+          resolve(res.statusCode === 200 || res.statusCode === 204);
+        }
+      });
     });
     req.on('error', reject);
     req.end();
@@ -888,6 +908,7 @@ async function handleMcpRpc(payload, authHeader = '', authorHeader = '') {
   const method = payload.method;
   const reqId = payload.id;
   const params = payload.params || {};
+  const token = authHeader ? authHeader.replace(/^Bearer\s+/i, '').trim() : '';
 
   // Resolve admin and signed-in status once upfront
   const adminResult = await verifyAdmin(authHeader);
@@ -1254,7 +1275,15 @@ async function handleMcpRpc(payload, authHeader = '', authorHeader = '') {
         timestamp: Date.now()
       };
 
-      const key = await pushFirebaseData('notes', notePayload);
+      let key;
+      try {
+        key = await pushFirebaseData('notes', notePayload, token);
+      } catch (err) {
+        return {
+          jsonrpc: "2.0", id: reqId,
+          result: { content: [{ type: "text", text: `❌ Failed to publish note: ${err.message}. Ensure ADMIN_SECRET is set to the Firebase Database Secret.` }], isError: true }
+        };
+      }
 
       return {
         jsonrpc: "2.0",
@@ -1300,7 +1329,14 @@ async function handleMcpRpc(payload, authHeader = '', authorHeader = '') {
         patchData.tags = Array.isArray(args.tags) ? args.tags : args.tags.split(',').map(t => t.trim()).filter(Boolean);
       }
 
-      await putFirebaseData('notes', args.id, patchData);
+      try {
+        await putFirebaseData('notes', args.id, patchData, token);
+      } catch (err) {
+        return {
+          jsonrpc: "2.0", id: reqId,
+          result: { content: [{ type: "text", text: `❌ Failed to update note: ${err.message}` }], isError: true }
+        };
+      }
 
       return {
         jsonrpc: "2.0",
@@ -1321,7 +1357,15 @@ async function handleMcpRpc(payload, authHeader = '', authorHeader = '') {
         };
       }
       const collection = args.collection || "notes";
-      const success = await deleteFirebaseData(collection, args.id);
+      let success = false;
+      try {
+        success = await deleteFirebaseData(collection, args.id, token);
+      } catch (err) {
+        return {
+          jsonrpc: "2.0", id: reqId,
+          result: { content: [{ type: "text", text: `❌ Failed to delete record: ${err.message}` }], isError: true }
+        };
+      }
       return {
         jsonrpc: "2.0",
         id: reqId,
@@ -1361,8 +1405,16 @@ async function handleMcpRpc(payload, authHeader = '', authorHeader = '') {
         timestamp: Date.now()
       };
       // Write to notes (open write access)
-      const key = await pushFirebaseData('notes', payload);
-      try { await pushFirebaseData('lectures', payload); } catch(e) {}
+      let key;
+      try {
+        key = await pushFirebaseData('notes', payload, token);
+        await pushFirebaseData('lectures', payload, token);
+      } catch (err) {
+        return {
+          jsonrpc: "2.0", id: reqId,
+          result: { content: [{ type: "text", text: `❌ Failed to publish lecture: ${err.message}` }], isError: true }
+        };
+      }
 
       return {
         jsonrpc: "2.0",
@@ -1433,7 +1485,15 @@ async function handleMcpRpc(payload, authHeader = '', authorHeader = '') {
         date: new Date().toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }),
         timestamp: Date.now()
       };
-      const key = await pushFirebaseData('announcements', payload);
+      let key;
+      try {
+        key = await pushFirebaseData('announcements', payload, token);
+      } catch (err) {
+        return {
+          jsonrpc: "2.0", id: reqId,
+          result: { content: [{ type: "text", text: `❌ Failed to publish announcement: ${err.message}` }], isError: true }
+        };
+      }
       return {
         jsonrpc: "2.0",
         id: reqId,
@@ -1470,7 +1530,15 @@ async function handleMcpRpc(payload, authHeader = '', authorHeader = '') {
         done: false,
         timestamp: Date.now()
       };
-      const key = await pushFirebaseData('todos', payload);
+      let key;
+      try {
+        key = await pushFirebaseData('todos', payload, token);
+      } catch (err) {
+        return {
+          jsonrpc: "2.0", id: reqId,
+          result: { content: [{ type: "text", text: `❌ Failed to add study task: ${err.message}` }], isError: true }
+        };
+      }
       return {
         jsonrpc: "2.0",
         id: reqId,
