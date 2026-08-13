@@ -3040,6 +3040,11 @@ function updateProfileUI() {
     if (userNameEl) userNameEl.textContent = currentUserProfile.name;
     if (userEmailEl) userEmailEl.textContent = currentUserProfile.email;
     
+    const subMetaBox = document.getElementById('profile-sub-meta-box');
+    const subValidityText = document.getElementById('sub-validity-text');
+    const subPaymentIdText = document.getElementById('sub-payment-id-text');
+    const subOrderIdText = document.getElementById('sub-order-id-text');
+
     if (currentUserProfile.isAdmin) {
       if (roleBadge) {
         roleBadge.className = 'profile-badge admin';
@@ -3052,9 +3057,16 @@ function updateProfileUI() {
       }
       if (planHeading) planHeading.textContent = 'Full Hub Administrator';
       if (planDesc) planDesc.textContent = 'Full access to all units, notes, admin console, and database publishing.';
+      if (subMetaBox) {
+        subMetaBox.style.display = 'block';
+        if (subValidityText) subValidityText.innerHTML = '<span style="color:#10b981;">Permanent Administrator Access</span>';
+        if (subPaymentIdText) subPaymentIdText.textContent = 'INTERNAL_ADMIN_AUTH';
+        if (subOrderIdText) subOrderIdText.textContent = 'SYSTEM_SUPERUSER';
+      }
     } else {
       const sub = currentUserProfile.subscription || { plan: 'free' };
       const planName = (sub.plan || 'free').toLowerCase();
+      const isExpired = sub.validUntil && sub.validUntil < Date.now() && planName !== 'max';
 
       if (planName === 'max') {
         if (roleBadge) {
@@ -3068,18 +3080,51 @@ function updateProfileUI() {
         }
         if (planHeading) planHeading.textContent = 'Max Lifetime Pass (Active)';
         if (planDesc) planDesc.textContent = 'Permanent unlimited access to all notes across Units I, II, III, IV and all future semester updates.';
+        if (subMetaBox) {
+          subMetaBox.style.display = 'block';
+          if (subValidityText) subValidityText.innerHTML = '<span style="color:#c25e3e; font-weight:700;">🌟 Permanent Lifetime</span>';
+          if (subPaymentIdText) subPaymentIdText.textContent = sub.paymentId || sub.razorpayPaymentId || 'pay_lifetime';
+          if (subOrderIdText) subOrderIdText.textContent = sub.orderId || sub.razorpayOrderId || 'order_max';
+        }
       } else if (planName === 'pro' || planName === 'plus') {
-        if (roleBadge) {
-          roleBadge.className = 'profile-badge pro';
-          roleBadge.textContent = '⭐ Pro Scholar';
+        if (isExpired) {
+          if (roleBadge) {
+            roleBadge.className = 'profile-badge free';
+            roleBadge.textContent = '⚠️ Pro Expired';
+          }
+          if (statusText) statusText.textContent = 'Pro Pass Expired (Unit 1 Free)';
+          if (planPill) {
+            planPill.className = 'profile-badge free';
+            planPill.textContent = '⚠️ Plan Expired';
+          }
+          if (planHeading) planHeading.textContent = 'Pro Pass Expired';
+          if (planDesc) planDesc.textContent = 'Your 30-day Pro Pass has ended. Renew for ₹19/mo or get Max Lifetime (₹49) to restore Units II, III & IV!';
+          if (subMetaBox) {
+            subMetaBox.style.display = 'block';
+            if (subValidityText) subValidityText.innerHTML = `<span style="color:#ef4444;">Expired on ${new Date(sub.validUntil).toLocaleDateString('en-IN')}</span>`;
+            if (subPaymentIdText) subPaymentIdText.textContent = sub.paymentId || sub.razorpayPaymentId || 'N/A';
+            if (subOrderIdText) subOrderIdText.textContent = sub.orderId || sub.razorpayOrderId || 'N/A';
+          }
+        } else {
+          if (roleBadge) {
+            roleBadge.className = 'profile-badge pro';
+            roleBadge.textContent = '⭐ Pro Scholar';
+          }
+          if (statusText) statusText.textContent = 'Pro Scholar (Active)';
+          if (planPill) {
+            planPill.className = 'profile-badge pro';
+            planPill.textContent = '⭐ Pro Scholar Pass';
+          }
+          if (planHeading) planHeading.textContent = 'Pro Scholar Monthly Pass (Active)';
+          if (planDesc) planDesc.textContent = 'Full access to all 4 units and all 7 subject workspaces.';
+          if (subMetaBox) {
+            subMetaBox.style.display = 'block';
+            const validDateStr = sub.validUntil ? new Date(sub.validUntil).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '30 Days Active';
+            if (subValidityText) subValidityText.innerHTML = `<span style="color:#10b981;">Valid until ${validDateStr}</span>`;
+            if (subPaymentIdText) subPaymentIdText.textContent = sub.paymentId || sub.razorpayPaymentId || 'N/A';
+            if (subOrderIdText) subOrderIdText.textContent = sub.orderId || sub.razorpayOrderId || 'N/A';
+          }
         }
-        if (statusText) statusText.textContent = 'Pro Scholar (Active)';
-        if (planPill) {
-          planPill.className = 'profile-badge pro';
-          planPill.textContent = '⭐ Pro Scholar Pass';
-        }
-        if (planHeading) planHeading.textContent = 'Pro Scholar Monthly Pass (Active)';
-        if (planDesc) planDesc.textContent = 'Full access to all 4 units and all 7 subject workspaces.';
       } else {
         // Free plan
         if (roleBadge) {
@@ -3093,6 +3138,7 @@ function updateProfileUI() {
         }
         if (planHeading) planHeading.textContent = 'Free Starter Pass';
         if (planDesc) planDesc.textContent = 'Access to all Unit 1 digital notes & lectures. Upgrade to Pro (₹19/mo) or Max Lifetime (₹49) to unlock Units II, III, and IV!';
+        if (subMetaBox) subMetaBox.style.display = 'none';
       }
     }
 

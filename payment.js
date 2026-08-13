@@ -233,6 +233,16 @@ window.BCA3_PAYMENTS = {
       };
 
       const rzpInstance = new Razorpay(options);
+
+      // Handle failed payment events from Razorpay
+      rzpInstance.on('payment.failed', function (response) {
+        console.warn('Razorpay Single Note Payment Failed:', response.error);
+        const errMsg = response.error ? (response.error.description || response.error.reason || 'Payment failed') : 'Payment declined';
+        if (typeof showToast === 'function') {
+          showToast(`❌ Payment failed: ${errMsg}. No amount was deducted.`, 'error');
+        }
+      });
+
       rzpInstance.open();
 
     } catch (err) {
@@ -363,11 +373,44 @@ window.BCA3_PAYMENTS = {
       };
 
       const rzpInstance = new Razorpay(options);
+
+      // Handle failed payment events from Razorpay
+      rzpInstance.on('payment.failed', function (response) {
+        console.warn('Razorpay Subscription Payment Failed:', response.error);
+        const errMsg = response.error ? (response.error.description || response.error.reason || 'Payment failed') : 'Transaction declined';
+        if (typeof showToast === 'function') {
+          showToast(`❌ Payment failed: ${errMsg}. No money was charged.`, 'error');
+        }
+      });
+
       rzpInstance.open();
 
     } catch (err) {
       console.error('Subscription checkout error:', err);
       if (typeof showToast === 'function') showToast('Checkout error: ' + err.message);
+    }
+  },
+
+  /**
+   * 📧 Request Refund or Billing Assistance
+   */
+  requestRefundOrSupport: function () {
+    const prof = currentUserProfile || {};
+    const sub = prof.subscription || {};
+    const email = prof.email || 'N/A';
+    const uid = prof.uid || 'N/A';
+    const payId = sub.paymentId || 'N/A';
+    const orderId = sub.orderId || 'N/A';
+    const plan = (sub.plan || 'pro').toUpperCase();
+
+    const subject = encodeURIComponent(`[BCA III Hub] Refund / Payment Support Request - ${payId}`);
+    const body = encodeURIComponent(
+      `Hi Baljot / Admin Team,\n\nI need help regarding my BCA III Hub subscription / payment.\n\nDetails:\n- Student Name: ${prof.name || 'Scholar'}\n- Email: ${email}\n- User UID: ${uid}\n- Plan: ${plan}\n- Payment ID: ${payId}\n- Order ID: ${orderId}\n\nReason for refund/query:\n[Please write your reason here]\n\nThank you!`
+    );
+
+    window.open(`mailto:baljotchohan23@gmail.com?cc=chohanjatt07@gmail.com&subject=${subject}&body=${body}`, '_blank');
+    if (typeof showToast === 'function') {
+      showToast('📧 Opening email client with your payment reference pre-filled...', 'info');
     }
   },
 

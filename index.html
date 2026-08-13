@@ -1039,13 +1039,49 @@
                 ⚡ View Study Plans
               </button>
             </div>
-            <div style="margin-top: 1rem; padding-top: 0.85rem; border-top: 1px solid var(--border-subtle); display: flex; gap: 0.75rem; flex-wrap: wrap;">
-              <button class="Button-module-scss-module__f9ZZrG__button" style="background: rgba(124,58,237,0.12); color: #7c3aed; border: 1px solid rgba(124,58,237,0.3); font-size: 0.8rem; padding: 0.4rem 0.85rem;" onclick="BCA3_PAYMENTS.payForSubscription('pro', 'Pro Scholar', 19)">
-                ⭐ Upgrade to Pro (₹19/mo)
+
+            <!-- Dynamic Subscription Meta (Dates, Payment ID, Order ID) -->
+            <div id="profile-sub-meta-box" style="margin-top: 1rem; padding: 0.85rem 1rem; background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); font-size: 0.8rem; display: none;">
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.65rem;">
+                <div>
+                  <span style="color: var(--text-subtle); display: block; font-size: 0.72rem; text-transform: uppercase;">Pass Validity</span>
+                  <strong style="color: var(--text-main);" id="sub-validity-text">Active</strong>
+                </div>
+                <div>
+                  <span style="color: var(--text-subtle); display: block; font-size: 0.72rem; text-transform: uppercase;">Razorpay Payment ID</span>
+                  <code style="color: var(--color-coral); font-size: 0.76rem;" id="sub-payment-id-text">N/A</code>
+                </div>
+                <div>
+                  <span style="color: var(--text-subtle); display: block; font-size: 0.72rem; text-transform: uppercase;">Order Reference</span>
+                  <code style="color: var(--text-muted); font-size: 0.76rem;" id="sub-order-id-text">N/A</code>
+                </div>
+              </div>
+            </div>
+
+            <!-- Upgrade & Action Buttons -->
+            <div style="margin-top: 1rem; padding-top: 0.85rem; border-top: 1px solid var(--border-subtle); display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center; justify-content: space-between;">
+              <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                <button class="Button-module-scss-module__f9ZZrG__button" style="background: rgba(124,58,237,0.12); color: #7c3aed; border: 1px solid rgba(124,58,237,0.3); font-size: 0.8rem; padding: 0.4rem 0.85rem;" onclick="BCA3_PAYMENTS.payForSubscription('pro', 'Pro Scholar', 19)">
+                  ⭐ Pro Pass (₹19/mo)
+                </button>
+                <button class="Button-module-scss-module__f9ZZrG__button" style="background: rgba(194,94,62,0.12); color: #c25e3e; border: 1px solid rgba(194,94,62,0.3); font-size: 0.8rem; padding: 0.4rem 0.85rem;" onclick="BCA3_PAYMENTS.payForSubscription('max', 'Max Lifetime', 49)">
+                  🌟 Lifetime Max Pass (₹49)
+                </button>
+              </div>
+
+              <!-- Refund & Support Button -->
+              <button onclick="BCA3_PAYMENTS.requestRefundOrSupport()" style="background: transparent; border: 1px solid var(--border-subtle); color: var(--text-subtle); font-size: 0.76rem; padding: 0.35rem 0.75rem; border-radius: 999px; cursor: pointer; transition: all 0.2s;" title="Need help with billing or a refund?">
+                💬 Billing / Refund Support
               </button>
-              <button class="Button-module-scss-module__f9ZZrG__button" style="background: rgba(194,94,62,0.12); color: #c25e3e; border: 1px solid rgba(194,94,62,0.3); font-size: 0.8rem; padding: 0.4rem 0.85rem;" onclick="BCA3_PAYMENTS.payForSubscription('max', 'Max Lifetime', 49)">
-                🌟 Lifetime Max Pass (₹49)
-              </button>
+            </div>
+          </div>
+
+          <!-- Refund & Security Policy Notice -->
+          <div style="padding: 0.85rem 1rem; background: rgba(16,185,129,0.06); border: 1px solid rgba(16,185,129,0.2); border-radius: var(--radius-sm); font-size: 0.78rem; color: var(--text-muted); display: flex; gap: 0.75rem; align-items: flex-start;">
+            <span style="font-size: 1.1rem; line-height: 1;">🛡️</span>
+            <div>
+              <strong style="color: #10b981; display: block; margin-bottom: 0.2rem;">Student Purchase Protection &amp; Refund Policy</strong>
+              100% money-back guarantee within 24 hours of purchase if you encounter any technical issues or change your mind. Failed transactions are automatically credited back to your original bank / UPI account within 3–5 business days.
             </div>
           </div>
         </div>
