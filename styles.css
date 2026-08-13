@@ -5753,14 +5753,18 @@ body.modal-open {
   }
 
   .day-activities-filter-bar {
-    padding: 0.65rem 1rem !important;
-    gap: 0.35rem !important;
+    padding: 0.65rem 0.85rem !important;
+    gap: 0.5rem !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
   }
 
   .day-filter-pill {
-    padding: 0.35rem 0.75rem !important;
-    font-size: 0.75rem !important;
+    padding: 0.4rem 0.85rem !important;
+    font-size: 0.78rem !important;
     min-height: 36px !important;
+    flex-shrink: 0 !important;
+    white-space: nowrap !important;
   }
 
   .day-activities-body {
@@ -6680,13 +6684,15 @@ body.modal-open {
 .day-activities-filter-bar {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.85rem 1.75rem;
+  gap: 0.65rem;
+  padding: 0.85rem 1.5rem;
   background: var(--bg-surface-subtle);
   border-bottom: 1px solid var(--border-color);
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
   flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .day-activities-filter-bar::-webkit-scrollbar {
@@ -6696,7 +6702,7 @@ body.modal-open {
 .day-filter-pill {
   display: inline-flex;
   align-items: center;
-  gap: 0.45rem;
+  gap: 0.5rem;
   padding: 0.45rem 0.95rem;
   border-radius: var(--radius-full);
   border: 1px solid var(--border-color);
@@ -6706,7 +6712,9 @@ body.modal-open {
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
+  flex-shrink: 0;
   transition: all 0.15s ease;
+  user-select: none;
 }
 
 .day-filter-pill:hover {
@@ -6724,13 +6732,21 @@ body.modal-open {
 
 .day-filter-count {
   font-size: 0.72rem;
-  background: rgba(0, 0, 0, 0.1);
-  padding: 1px 6px;
-  border-radius: 10px;
+  font-weight: 700;
+  background: rgba(0, 0, 0, 0.12);
+  color: inherit;
+  padding: 0 6px;
+  border-radius: 999px;
+  min-width: 20px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
 }
 
 .day-filter-pill.active .day-filter-count {
-  background: rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.28);
   color: #ffffff;
 }
 

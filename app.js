@@ -429,6 +429,7 @@ async function renderSubjectNotes(subject) {
     const excerpt = getPlainExcerpt(note.content, 140, note.title);
     const accessRes = window.BCA3_PAYMENTS ? window.BCA3_PAYMENTS.hasNoteAccess(note, index) : { hasAccess: true };
     const hasAccess = accessRes.hasAccess;
+    const isPinned = _userBookmarks.includes(noteKey);
 
     let accessBadgeHtml = '';
     if (hasAccess) {
@@ -463,6 +464,9 @@ async function renderSubjectNotes(subject) {
             ${note.date ? `<span style="font-size: 0.72rem; color: var(--text-subtle);">📅 ${escapeHtml(note.date)}</span>` : ''}
           </div>
           <div class="note-actions-bar" onclick="event.stopPropagation()">
+            <button class="note-tool-btn ${isPinned ? 'active pinned' : ''}" onclick="toggleBookmark('${noteKey}'); event.stopPropagation();" title="${isPinned ? 'Unpin from Profile' : 'Pin / Save Note to Profile'}">
+              <span>${isPinned ? '📌 Pinned' : '📌 Save'}</span>
+            </button>
             ${isAdminAuthenticated() && isCloud ? `
               <button class="note-tool-btn" onclick="deleteNoteLive('${note.fbKey}', event)" title="Admin: Delete Note" style="color: #d44f4f; border-color: rgba(212,79,79,0.3); background: rgba(212,79,79,0.06);">
                 <span>🗑️ Delete</span>
@@ -499,7 +503,7 @@ function handleNoteCardClick(noteKey, index = 0) {
   const accessRes = window.BCA3_PAYMENTS ? window.BCA3_PAYMENTS.hasNoteAccess(note || noteKey, index) : { hasAccess: true };
 
   if (accessRes.hasAccess) {
-    openNoteReaderView(noteKey);
+    openNoteReaderView(noteKey, activeSubjectId);
   } else {
     if (accessRes.reason === 'requires_signin') {
       showToast('Sign in with Google to unlock Unit 1 notes for free! 🔐');
@@ -513,10 +517,11 @@ function handleNoteCardClick(noteKey, index = 0) {
   }
 }
 
-function openNoteReaderView(noteKey) {
+function openNoteReaderView(noteKey, subjectId = null) {
   const note = (_currentSubjectNotes || []).find(n => (n.fbKey === noteKey || n.id === noteKey));
   const noteId = note ? (note.fbKey || note.id || noteKey) : noteKey;
-  const readerUrl = `/note.html?id=${encodeURIComponent(noteId)}&subject=${encodeURIComponent(activeSubjectId || '')}`;
+  const targetSubjId = subjectId || (note && (note.subject || note.subjectId)) || activeSubjectId || '';
+  const readerUrl = `/note.html?id=${encodeURIComponent(noteId)}&subject=${encodeURIComponent(targetSubjId)}`;
   window.location.href = readerUrl;
 }
 
@@ -581,27 +586,27 @@ function copyCurrentOpenNote() {
   }
 }
 
-function getPlainExcerpt(content, maxLen = 150, title = '') {
+function getPlainExcerpt(content, maxLen = 140, title = '') {
   if (!content) return '';
-  const lines = content.split('\n');
-  let cleanLines = [];
-  for (let line of lines) {
-    const trimmed = line.trim();
-    if (!trimmed) continue;
-    if (trimmed.startsWith('@[') || trimmed.startsWith('```') || trimmed.startsWith('---') || trimmed.startsWith('===')) continue;
-    if (trimmed.startsWith('[visual:') || trimmed.startsWith('[math:')) continue;
-    let plain = trimmed
-      .replace(/\[visual:[^\]]+\]/gi, '')
-      .replace(/\[math:[^\]]+\]/gi, '')
-      .replace(/^#+\s*/, '')
-      .replace(/[*_`>~]/g, '')
-      .trim();
-    if (title && plain.toLowerCase() === title.toLowerCase()) continue;
-    if (/^(unit\s+[ivx\d]+|chapter\s+\d+|computer architecture|data structures|numerical methods)/i.test(plain) && plain.length < 50) continue;
-    if (plain) cleanLines.push(plain);
+  let clean = String(content)
+    .replace(/@?\[(?:visual|manim|math):[^\]]+\]/gi, '')
+    .replace(/```[\s\S]*?```/g, '')
+    .replace(/`([^`]+)`/g, '$1')
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+    .replace(/^#+\s+/gm, '')
+    .replace(/#+/g, '')
+    .replace(/[*_>~|=]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  
+  if (title) {
+    const tLower = title.toLowerCase().trim();
+    if (clean.toLowerCase().startsWith(tLower)) {
+      clean = clean.slice(title.length).trim();
+    }
   }
-  const text = cleanLines.join(' ').replace(/\s+/g, ' ').trim();
-  return text.length > maxLen ? text.substring(0, maxLen).trim() + '...' : text;
+  clean = clean.replace(/^(unit\s+[ivx\d]+|chapter\s+\d+|topic\s+\d+|definition)\s*[:—–-]?\s*/i, '');
+  return clean.length > maxLen ? clean.substring(0, maxLen).trim() + '...' : clean;
 }
 
 function filterNotesByUnit(unit, btn) {
@@ -1447,7 +1452,7 @@ function renderCalendarSnapshot() {
   previewEl.innerHTML = allItems.slice(0, 3).map(item => {
     if (item.type === 'note') {
       return `
-        <div class="snapshot-item-card" onclick="openNoteReaderView('${item.fbKey || item.id}')">
+        <div class="snapshot-item-card" onclick="handleDayNoteClick('${item.fbKey || item.id}', '${item.subjectId || item.subject || ''}', '${item.unit || ''}')">
           <div class="snapshot-item-top">
             <span class="snapshot-type-tag note">📚 Digital Note</span>
             <span style="font-size: 0.72rem; color: var(--text-subtle);">${escapeHtml(item.subjectName || '')}</span>
@@ -1535,6 +1540,41 @@ function filterDayActivities(filterType) {
   renderDayActivitiesList();
 }
 
+function handleDayNoteClick(noteKey, subjectId, unit) {
+  let note = null;
+  if (_globalCloudData && _globalCloudData.notes) {
+    note = _globalCloudData.notes.find(n => n.fbKey === noteKey || n.id === noteKey);
+  }
+  if (!note && typeof BCA_3RD_SEM_DATA !== 'undefined') {
+    BCA_3RD_SEM_DATA.subjects.forEach(s => {
+      (s.digitalNotes || []).forEach(n => {
+        if (n.id === noteKey || n.fbKey === noteKey) note = n;
+      });
+    });
+  }
+  if (!note) {
+    note = { id: noteKey, fbKey: noteKey, subject: subjectId, unit: unit || 'Unit I' };
+  }
+
+  const accessRes = window.BCA3_PAYMENTS ? window.BCA3_PAYMENTS.hasNoteAccess(note, 0) : { hasAccess: true };
+  if (accessRes.hasAccess) {
+    closeDayActivitiesModal();
+    openNoteReaderView(noteKey, subjectId);
+  } else {
+    if (accessRes.reason === 'requires_signin') {
+      showToast('Sign in with Google to unlock Unit 1 notes for free! 🔐');
+      closeDayActivitiesModal();
+      handleAuthAction();
+    } else {
+      showToast('Upgrade to Pro (₹19/mo) or Max Lifetime (₹49) to unlock this unit! ⭐');
+      closeDayActivitiesModal();
+      if (window.BCA3_PAYMENTS && typeof window.BCA3_PAYMENTS.openPricingModal === 'function') {
+        window.BCA3_PAYMENTS.openPricingModal();
+      }
+    }
+  }
+}
+
 function renderDayActivitiesList() {
   const container = document.getElementById('day-activities-list');
   if (!container) return;
@@ -1577,20 +1617,41 @@ function renderDayActivitiesList() {
 
   container.innerHTML = items.map(item => {
     if (item.itemType === 'note') {
+      const noteKey = item.fbKey || item.id;
+      const isPinned = _userBookmarks.includes(noteKey);
+      const accessRes = window.BCA3_PAYMENTS ? window.BCA3_PAYMENTS.hasNoteAccess(item, 0) : { hasAccess: true };
+      const hasAccess = accessRes.hasAccess;
+      const excerpt = getPlainExcerpt(item.content || item.summary || item.notes || '', 140, item.title || item.topic);
+
+      let accessBadge = '<span style="font-size: 0.72rem; color: #10b981; font-weight: 700; background: rgba(16,185,129,0.12); padding: 0.15rem 0.5rem; border-radius: 999px; border: 1px solid rgba(16,185,129,0.25);">🔓 Free Unit 1</span>';
+      if (!hasAccess) {
+        if (accessRes.reason === 'requires_signin') {
+          accessBadge = '<span style="font-size: 0.72rem; color: #f59e0b; font-weight: 700; background: rgba(245,158,11,0.12); padding: 0.15rem 0.5rem; border-radius: 999px; border: 1px solid rgba(245,158,11,0.25);">🔒 Sign In</span>';
+        } else {
+          accessBadge = '<span style="font-size: 0.72rem; color: #c25e3e; font-weight: 700; background: rgba(194,94,62,0.12); padding: 0.15rem 0.5rem; border-radius: 999px; border: 1px solid rgba(194,94,62,0.25);">🔒 Pro/Max</span>';
+        }
+      }
+
       return `
         <div class="day-activity-item-card">
           <div class="day-activity-card-header">
-            <span class="day-activity-type-badge note">📚 Digital Study Note</span>
-            <span class="day-activity-time">⏱️ ${escapeHtml(item.readTime || '8 min read')}</span>
+            <div style="display: flex; align-items: center; gap: 0.45rem; flex-wrap: wrap;">
+              <span class="day-activity-type-badge note">📚 Digital Study Note</span>
+              ${accessBadge}
+              <span class="day-activity-time">⏱️ ${escapeHtml(item.readTime || '6 min read')}</span>
+            </div>
+            <button class="note-tool-btn ${isPinned ? 'active pinned' : ''}" onclick="toggleBookmark('${noteKey}'); event.stopPropagation();" title="${isPinned ? 'Unpin' : 'Pin note'}" style="padding: 0.25rem 0.55rem; font-size: 0.75rem;">
+              <span>${isPinned ? '📌 Pinned' : '📌 Save'}</span>
+            </button>
           </div>
           <h3 class="day-activity-title">${escapeHtml(item.title || item.topic || 'Digital Study Note')}</h3>
-          <div class="day-activity-desc">${escapeHtml(item.summary || (item.content ? item.content.slice(0, 150) + '...' : 'Structured digital study notes covering core exam topics and concepts.'))}</div>
+          <div class="day-activity-desc">${escapeHtml(excerpt || 'Structured digital study notes covering core exam topics and concepts.')}</div>
           <div class="day-activity-actions">
-            <button class="day-activity-open-btn" onclick="closeDayActivitiesModal(); openNoteReaderView('${item.fbKey || item.id}')">
-              <span>📖 Open Full Screen Note</span>
+            <button class="day-activity-open-btn" onclick="handleDayNoteClick('${noteKey}', '${item.subjectId || item.subject || ''}', '${item.unit || ''}')">
+              <span>${hasAccess ? '📖 Open Full Screen Note' : (accessRes.reason === 'requires_signin' ? '🔒 Sign In to Unlock' : '🔒 View Study Pass')}</span>
             </button>
-            <button class="day-activity-sec-btn" onclick="closeDayActivitiesModal(); navigateToSubject('${item.subjectId}')">
-              <span>Workspace (${escapeHtml(item.subjectName || 'Subject')})</span>
+            <button class="day-activity-sec-btn" onclick="closeDayActivitiesModal(); navigateToSubject('${item.subjectId || item.subject || 'comp-arch'}')">
+              <span>Workspace (${escapeHtml(item.subjectName || getSubjectName(item.subject) || 'Subject')})</span>
             </button>
           </div>
         </div>
@@ -1603,10 +1664,10 @@ function renderDayActivitiesList() {
             <span class="day-activity-time">⏱️ ${escapeHtml(item.time || '10:00 AM')}</span>
           </div>
           <h3 class="day-activity-title">${escapeHtml(item.topic || 'Classroom Lecture')}</h3>
-          <div class="day-activity-desc">${escapeHtml(item.desc || item.description || 'Classroom lecture session on core syllabus curriculum and practical problems.')}</div>
+          <div class="day-activity-desc">${escapeHtml(getPlainExcerpt(item.desc || item.description || item.notes || '', 140, item.topic) || 'Classroom lecture session on core syllabus curriculum.')}</div>
           <div class="day-activity-actions">
-            <button class="day-activity-open-btn" onclick="closeDayActivitiesModal(); navigateToSubject('${item.subjectId}')">
-              <span>↗ Go to Subject (${escapeHtml(item.subjectName || 'Subject')})</span>
+            <button class="day-activity-open-btn" onclick="closeDayActivitiesModal(); navigateToSubject('${item.subjectId || item.subject || 'comp-arch'}')">
+              <span>↗ Go to Subject (${escapeHtml(item.subjectName || getSubjectName(item.subject) || 'Subject')})</span>
             </button>
             <a href="./Syllabus.pdf" target="_blank" class="day-activity-sec-btn">
               <span>📄 Attached Syllabus Material</span>
@@ -1622,7 +1683,7 @@ function renderDayActivitiesList() {
             <span class="day-activity-time">${escapeHtml(item.category || 'Official')}</span>
           </div>
           <h3 class="day-activity-title">${escapeHtml(item.title || 'Announcement')}</h3>
-          <div class="day-activity-desc">${escapeHtml(item.message || item.text || '')}</div>
+          <div class="day-activity-desc">${escapeHtml(getPlainExcerpt(item.message || item.text || item.desc || '', 140, item.title))}</div>
         </div>
       `;
     }
@@ -1787,59 +1848,123 @@ function switchAdminTab(tabName) {
   }
 }
 
-function renderAdminSubmissionsQueue() {
+async function renderAdminSubmissionsQueue() {
   const container = document.getElementById('admin-submissions-queue-list');
   if (!container) return;
-  const submissions = JSON.parse(localStorage.getItem('bca_student_submissions') || '[]');
+
+  let submissions = [];
+  try {
+    submissions = await _fbFetch('submissions');
+  } catch (e) {
+    submissions = [];
+  }
+  if (!submissions.length) {
+    const local = JSON.parse(localStorage.getItem('bca_user_submissions') || '[]');
+    submissions = local;
+  }
+
   const countBadge = document.getElementById('admin-subm-badge-count');
   if (countBadge) countBadge.textContent = submissions.length;
 
   if (!submissions.length) {
-    container.innerHTML = `<div class="admin-empty-state"><p>No student submissions in queue.</p></div>`;
+    container.innerHTML = `<div class="admin-empty-state"><p>No pending student submissions in queue.</p></div>`;
     return;
   }
 
-  container.innerHTML = submissions.map((s, idx) => `
-    <div style="background: var(--bg-surface); padding: 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color); margin-bottom: 0.75rem;">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-        <span class="dropdown-badge">${escapeHtml(s.subject)} • ${escapeHtml(s.unit)}</span>
-        <span style="font-size: 0.75rem; color: var(--text-subtle);">${escapeHtml(s.date || 'Recent')}</span>
+  container.innerHTML = submissions.map((s) => `
+    <div style="background: var(--bg-surface); padding: 1.1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color); margin-bottom: 0.85rem;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem; margin-bottom: 0.5rem; flex-wrap: wrap;">
+        <div>
+          <span class="dropdown-badge">${escapeHtml(getSubjectName(s.subject) || s.subject)} • ${escapeHtml(s.unit || 'Unit I')}</span>
+          <span style="font-size: 0.78rem; color: var(--color-coral); font-weight: 600; margin-left: 0.5rem;">✍️ ${escapeHtml(s.author || 'Student')} (${escapeHtml(s.email || 'No email')})</span>
+        </div>
+        <span style="font-size: 0.72rem; color: var(--text-subtle);">${s.submittedAt ? new Date(s.submittedAt).toLocaleDateString() : 'Recent'}</span>
       </div>
-      <h4 style="margin: 0.25rem 0 0.5rem 0; font-size: 1rem; color: var(--text-main);">${escapeHtml(s.title)}</h4>
-      <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.4; margin-bottom: 0.75rem;">${escapeHtml(s.content ? s.content.substring(0, 150) + '...' : '')}</p>
-      <div style="display: flex; gap: 0.5rem;">
-        <button class="admin-submit-btn" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;" onclick="approveStudentSubmission(${idx})">Approve & Publish</button>
-        <button class="admin-item-btn delete" style="width: auto; padding: 0.35rem 0.75rem; font-size: 0.8rem;" onclick="rejectStudentSubmission(${idx})">Reject</button>
+      <h4 style="margin: 0.25rem 0 0.5rem 0; font-size: 1.05rem; font-family: var(--font-serif); color: var(--text-main);">${escapeHtml(s.title)}</h4>
+      <div style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 0.85rem; background: var(--bg-surface-subtle); padding: 0.75rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); max-height: 160px; overflow-y: auto;">
+        ${escapeHtml(s.content || '')}
+      </div>
+      <div style="display: flex; gap: 0.65rem; flex-wrap: wrap;">
+        <button class="admin-submit-btn" style="width: auto; padding: 0.4rem 0.95rem; font-size: 0.82rem;" onclick="approveStudentSubmission('${s.fbKey || s.id}')">✅ Approve &amp; Publish Live</button>
+        <button class="admin-item-btn delete" style="width: auto; padding: 0.4rem 0.95rem; font-size: 0.82rem;" onclick="rejectStudentSubmission('${s.fbKey || s.id}')">❌ Reject</button>
       </div>
     </div>
   `).join('');
 }
 
-function approveStudentSubmission(idx) {
-  const submissions = JSON.parse(localStorage.getItem('bca_student_submissions') || '[]');
-  if (!submissions[idx]) return;
-  const item = submissions[idx];
-  // Add to local cloud cache
-  _globalCloudData.notes.unshift({
-    title: item.title,
-    content: item.content,
-    subject: item.subject,
-    unit: item.unit,
-    author: item.author || 'Student Contributor',
-    timestamp: Date.now()
-  });
-  submissions.splice(idx, 1);
-  localStorage.setItem('bca_student_submissions', JSON.stringify(submissions));
-  renderAdminSubmissionsQueue();
-  showToast('Approved & published student note! 🚀');
+async function approveStudentSubmission(subKey) {
+  try {
+    let submissions = await _fbFetch('submissions');
+    let item = submissions.find(s => s.fbKey === subKey || s.id === subKey);
+    if (!item) {
+      const local = JSON.parse(localStorage.getItem('bca_user_submissions') || '[]');
+      item = local.find(s => s.fbKey === subKey || s.id === subKey);
+    }
+    if (!item) {
+      showToast('Submission not found.');
+      return;
+    }
+
+    const notePayload = {
+      title: item.title,
+      content: item.content,
+      subject: item.subject,
+      subjectId: item.subject,
+      unit: item.unit || 'Unit I',
+      author: item.author || 'Student Contributor',
+      readTime: '6 min read',
+      tags: ['#student_submission', `#${item.subject}`],
+      date: new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }),
+      timestamp: Date.now()
+    };
+
+    // 1. Publish to notes in Firebase
+    if (typeof firebase !== 'undefined' && firebase.database) {
+      await firebase.database().ref('/bca3/notes').push(notePayload);
+      if (item.fbKey) {
+        await firebase.database().ref(`/bca3/submissions/${item.fbKey}`).remove();
+      }
+    } else {
+      await mcpAdminRpc('publish_digital_note', notePayload);
+      await mcpAdminRpc('delete_hub_record', { collection: 'submissions', id: item.fbKey || subKey });
+    }
+
+    // Update local submissions list
+    let localSubms = JSON.parse(localStorage.getItem('bca_user_submissions') || '[]');
+    localSubms = localSubms.filter(s => s.fbKey !== subKey && s.id !== subKey);
+    localStorage.setItem('bca_user_submissions', JSON.stringify(localSubms));
+
+    await renderDashboardNotes();
+    if (activeSubjectId) {
+      const sub = BCA_3RD_SEM_DATA.subjects.find(s => s.id === activeSubjectId);
+      if (sub) renderSubjectNotes(sub);
+    }
+
+    renderAdminSubmissionsQueue();
+    showToast('🎉 Approved & published note live to hub!');
+  } catch (err) {
+    console.error('Approve error:', err);
+    showToast('Failed to publish note: ' + err.message);
+  }
 }
 
-function rejectStudentSubmission(idx) {
-  const submissions = JSON.parse(localStorage.getItem('bca_student_submissions') || '[]');
-  submissions.splice(idx, 1);
-  localStorage.setItem('bca_student_submissions', JSON.stringify(submissions));
-  renderAdminSubmissionsQueue();
-  showToast('Submission removed.');
+async function rejectStudentSubmission(subKey) {
+  try {
+    if (typeof firebase !== 'undefined' && firebase.database) {
+      await firebase.database().ref(`/bca3/submissions/${subKey}`).remove();
+    } else {
+      await mcpAdminRpc('delete_hub_record', { collection: 'submissions', id: subKey });
+    }
+    let localSubms = JSON.parse(localStorage.getItem('bca_user_submissions') || '[]');
+    localSubms = localSubms.filter(s => s.fbKey !== subKey && s.id !== subKey);
+    localStorage.setItem('bca_user_submissions', JSON.stringify(localSubms));
+
+    renderAdminSubmissionsQueue();
+    showToast('Submission removed.');
+  } catch (err) {
+    console.error('Reject error:', err);
+    showToast('Error removing submission: ' + err.message);
+  }
 }
 
 // 1. Publish Note (supports create + edit) - 100% Cloud Firebase RTDB
@@ -3400,6 +3525,8 @@ function openProfileModal() {
   if (!modal) return;
   renderSavedNotesList();
   renderSubjectProgressList();
+  renderUserSubmissionsList();
+  updateProfileStats();
   modal.style.display = 'flex';
   lockScroll(true);
 }
@@ -3423,6 +3550,7 @@ function switchProfileTab(tabName) {
 
   if (tabName === 'bookmarks') renderSavedNotesList();
   if (tabName === 'progress') renderSubjectProgressList();
+  if (tabName === 'submit') renderUserSubmissionsList();
 }
 
 function toggleBookmark(noteId) {
@@ -3437,12 +3565,25 @@ function toggleBookmark(noteId) {
   localStorage.setItem('bca_user_bookmarks', JSON.stringify(_userBookmarks));
   updateProfileStats();
 
-  // Update bookmark button icons live if note is open
-  const bmBtn = document.getElementById(`bm-btn-${noteId}`);
-  if (bmBtn) {
-    const isSaved = _userBookmarks.includes(noteId);
-    bmBtn.innerHTML = isSaved ? '📌 Saved' : '📌 Bookmark';
-    bmBtn.classList.toggle('active', isSaved);
+  if (currentUserProfile && currentUserProfile.uid && typeof firebase !== 'undefined' && firebase.database) {
+    firebase.database().ref(`/bca3/users/${currentUserProfile.uid}/bookmarks`).set(_userBookmarks).catch(() => {});
+  }
+
+  // Update bookmark button icons live across the UI
+  document.querySelectorAll(`.note-tool-btn`).forEach(btn => {
+    if (btn.getAttribute('onclick')?.includes(`'${noteId}'`)) {
+      const isSaved = _userBookmarks.includes(noteId);
+      btn.classList.toggle('active', isSaved);
+      btn.classList.toggle('pinned', isSaved);
+      const span = btn.querySelector('span');
+      if (span && (span.textContent.includes('Save') || span.textContent.includes('Pinned') || span.textContent.includes('Bookmark'))) {
+        span.textContent = isSaved ? '📌 Pinned' : '📌 Save';
+      }
+    }
+  });
+
+  if (document.getElementById('ptab-bookmarks')?.style.display !== 'none') {
+    renderSavedNotesList();
   }
 }
 
@@ -3476,35 +3617,77 @@ function renderSavedNotesList() {
   BCA_3RD_SEM_DATA.subjects.forEach(s => {
     (s.digitalNotes || []).forEach(n => {
       allNotesMap[n.id || n.title] = { ...n, subjectId: s.id, subjectTitle: s.title };
+      if (n.fbKey) allNotesMap[n.fbKey] = { ...n, subjectId: s.id, subjectTitle: s.title };
     });
   });
   (_globalCloudData.notes || []).forEach(n => {
     allNotesMap[n.fbKey || n.id || n.title] = { ...n, subjectId: n.subject || 'comp-arch', subjectTitle: getSubjectName(n.subject) };
   });
 
-  const savedItems = _userBookmarks.map(id => allNotesMap[id]).filter(Boolean);
+  const savedItems = _userBookmarks.map(id => allNotesMap[id] || { id, title: 'Academic Study Note', subjectId: 'comp-arch', subjectTitle: 'BCA III Subject', unit: 'Unit I' });
 
   if (!savedItems.length) {
     container.innerHTML = `<div class="empty-state">Your saved notes will appear here.</div>`;
     return;
   }
 
-  container.innerHTML = savedItems.map(item => `
-    <div class="saved-note-item-card" onclick="openZenReaderForSavedNote('${item.id || item.fbKey}', '${item.subjectId}')">
-      <div>
-        <span class="dropdown-badge" style="margin-bottom: 0.25rem;">${escapeHtml(item.subjectTitle)}</span>
-        <h5 style="font-family: var(--font-serif); font-size: 0.95rem; margin: 0.2rem 0; color: var(--text-main);">${escapeHtml(item.title)}</h5>
-        <span style="font-size: 0.75rem; color: var(--text-subtle);">${escapeHtml(item.unit || 'Unit I')} • ${escapeHtml(item.readTime || '5 min read')}</span>
+  container.innerHTML = savedItems.map(item => {
+    const noteKey = item.fbKey || item.id;
+    const accessRes = window.BCA3_PAYMENTS ? window.BCA3_PAYMENTS.hasNoteAccess(item, 0) : { hasAccess: true };
+    const hasAccess = accessRes.hasAccess;
+    const excerpt = getPlainExcerpt(item.content || item.summary || '', 120, item.title);
+
+    return `
+      <div class="saved-note-item-card" onclick="openZenReaderForSavedNote('${noteKey}', '${item.subjectId || ''}')" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; background: var(--bg-surface); padding: 0.85rem 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color); margin-bottom: 0.65rem;">
+        <div style="flex: 1; min-width: 0;">
+          <div style="display: flex; align-items: center; gap: 0.45rem; margin-bottom: 0.25rem; flex-wrap: wrap;">
+            <span class="dropdown-badge">${escapeHtml(item.subjectTitle || 'Subject')}</span>
+            <span style="font-size: 0.72rem; color: var(--text-subtle);">${escapeHtml(item.unit || 'Unit I')} • ${escapeHtml(item.readTime || '5 min read')}</span>
+            ${hasAccess ? '<span style="font-size: 0.7rem; color: #10b981; font-weight: 700;">🔓 Unlocked</span>' : '<span style="font-size: 0.7rem; color: #c25e3e; font-weight: 700;">🔒 Locked</span>'}
+          </div>
+          <h5 style="font-family: var(--font-serif); font-size: 0.95rem; margin: 0.2rem 0; color: var(--text-main); line-height: 1.3;">${escapeHtml(item.title)}</h5>
+          ${excerpt ? `<p style="font-size: 0.8rem; color: var(--text-muted); margin: 0; line-height: 1.4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtml(excerpt)}</p>` : ''}
+        </div>
+        <div style="display: flex; gap: 0.4rem; align-items: center; flex-shrink: 0;" onclick="event.stopPropagation()">
+          <button class="note-tool-btn" style="padding: 0.35rem 0.65rem; font-size: 0.78rem;" onclick="openZenReaderForSavedNote('${noteKey}', '${item.subjectId || ''}')">📖 Read</button>
+          <button class="note-tool-btn" style="padding: 0.35rem 0.65rem; font-size: 0.78rem; color: #ef4444;" onclick="toggleBookmark('${noteKey}')">✕ Remove</button>
+        </div>
       </div>
-      <button class="note-tool-btn" style="padding: 0.35rem 0.65rem;" onclick="event.stopPropagation(); toggleBookmark('${item.id || item.fbKey}')">Remove ✕</button>
-    </div>
-  `).join('');
+    `;
+  }).join('');
 }
 
 function openZenReaderForSavedNote(noteId, subjectId) {
-  closeProfileModal();
-  const readerUrl = `/note.html?id=${encodeURIComponent(noteId)}&subject=${encodeURIComponent(subjectId || activeSubjectId || '')}`;
-  window.location.href = readerUrl;
+  let note = null;
+  if (_globalCloudData && _globalCloudData.notes) {
+    note = _globalCloudData.notes.find(n => n.fbKey === noteId || n.id === noteId);
+  }
+  if (!note && typeof BCA_3RD_SEM_DATA !== 'undefined') {
+    BCA_3RD_SEM_DATA.subjects.forEach(s => {
+      (s.digitalNotes || []).forEach(n => {
+        if (n.id === noteId || n.fbKey === noteId) note = n;
+      });
+    });
+  }
+
+  const accessRes = window.BCA3_PAYMENTS ? window.BCA3_PAYMENTS.hasNoteAccess(note || noteId, 0) : { hasAccess: true };
+  if (accessRes.hasAccess) {
+    closeProfileModal();
+    const readerUrl = `/note.html?id=${encodeURIComponent(noteId)}&subject=${encodeURIComponent(subjectId || (note && (note.subject || note.subjectId)) || activeSubjectId || '')}`;
+    window.location.href = readerUrl;
+  } else {
+    if (accessRes.reason === 'requires_signin') {
+      showToast('Sign in with Google to unlock Unit 1 notes for free! 🔐');
+      closeProfileModal();
+      handleAuthAction();
+    } else {
+      showToast('Upgrade to Pro (₹19/mo) or Max Lifetime (₹49) to unlock this unit! ⭐');
+      closeProfileModal();
+      if (window.BCA3_PAYMENTS && typeof window.BCA3_PAYMENTS.openPricingModal === 'function') {
+        window.BCA3_PAYMENTS.openPricingModal();
+      }
+    }
+  }
 }
 
 function renderSubjectProgressList() {
@@ -3541,6 +3724,54 @@ function renderSubjectProgressList() {
   }).join('');
 }
 
+async function renderUserSubmissionsList() {
+  const container = document.getElementById('user-submissions-list');
+  const countEl = document.getElementById('user-subm-status-count');
+  if (!container) return;
+
+  let submissions = JSON.parse(localStorage.getItem('bca_user_submissions') || '[]');
+
+  if (currentUserProfile && currentUserProfile.uid && typeof firebase !== 'undefined' && firebase.database) {
+    try {
+      const snap = await firebase.database().ref(`/bca3/users/${currentUserProfile.uid}/submissions`).once('value');
+      const val = snap.val();
+      if (val) {
+        submissions = Object.keys(val).map(k => ({ fbKey: k, ...val[k] }));
+        localStorage.setItem('bca_user_submissions', JSON.stringify(submissions));
+      }
+    } catch (e) {}
+  }
+
+  if (countEl) countEl.textContent = `${submissions.length} submitted`;
+
+  if (!submissions.length) {
+    container.innerHTML = `<div class="empty-state" style="padding: 1.25rem 1rem; font-size: 0.825rem;">No submissions yet. Share your study notes or practicals above!</div>`;
+    return;
+  }
+
+  container.innerHTML = submissions.map(item => {
+    const isApproved = item.status === 'approved';
+    const isRejected = item.status === 'rejected';
+    const statusBadge = isApproved
+      ? '<span style="font-size: 0.72rem; color: #10b981; font-weight: 700; background: rgba(16,185,129,0.12); padding: 0.15rem 0.5rem; border-radius: 999px; border: 1px solid rgba(16,185,129,0.25);">✅ Published Live</span>'
+      : isRejected
+        ? '<span style="font-size: 0.72rem; color: #ef4444; font-weight: 700; background: rgba(239,68,68,0.12); padding: 0.15rem 0.5rem; border-radius: 999px; border: 1px solid rgba(239,68,68,0.25);">❌ Declined</span>'
+        : '<span style="font-size: 0.72rem; color: #f59e0b; font-weight: 700; background: rgba(245,158,11,0.12); padding: 0.15rem 0.5rem; border-radius: 999px; border: 1px solid rgba(245,158,11,0.25);">⏳ Pending Admin Review</span>';
+
+    return `
+      <div style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 0.85rem 1rem; margin-bottom: 0.65rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem; flex-wrap: wrap; gap: 0.35rem;">
+          <span class="dropdown-badge">${escapeHtml(getSubjectName(item.subject) || item.subject)} • ${escapeHtml(item.unit || 'Unit I')}</span>
+          ${statusBadge}
+        </div>
+        <h5 style="font-family: var(--font-serif); font-size: 0.95rem; margin: 0.2rem 0; color: var(--text-main);">${escapeHtml(item.title)}</h5>
+        <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0; line-height: 1.4;">${escapeHtml(getPlainExcerpt(item.content, 120, item.title))}</p>
+        <span style="font-size: 0.7rem; color: var(--text-subtle); display: block; margin-top: 0.35rem;">Submitted on ${item.submittedAt ? new Date(item.submittedAt).toLocaleDateString() : 'Recently'}</span>
+      </div>
+    `;
+  }).join('');
+}
+
 /* STUDENT SUBMISSION HANDLER */
 async function handleStudentNoteSubmit(e) {
   e.preventDefault();
@@ -3554,10 +3785,12 @@ async function handleStudentNoteSubmit(e) {
     return;
   }
 
-  const authorName = currentUserProfile ? currentUserProfile.name : 'Anonymous Scholar';
+  const authorName = currentUserProfile ? currentUserProfile.name : 'Student Scholar';
   const authorEmail = currentUserProfile ? currentUserProfile.email : '';
+  const subId = `subm_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
 
   const payload = {
+    id: subId,
     subject,
     unit,
     title,
@@ -3569,16 +3802,23 @@ async function handleStudentNoteSubmit(e) {
   };
 
   try {
+    let pushedKey = subId;
     if (typeof firebase !== 'undefined' && firebase.database) {
-      await firebase.database().ref('/bca3/submissions').push(payload);
-    } else {
-      let localSubms = JSON.parse(localStorage.getItem('bca_pending_submissions') || '[]');
-      localSubms.push(payload);
-      localStorage.setItem('bca_pending_submissions', JSON.stringify(localSubms));
+      const ref = await firebase.database().ref('/bca3/submissions').push(payload);
+      pushedKey = ref.key || subId;
     }
+
+    let localSubms = JSON.parse(localStorage.getItem('bca_user_submissions') || '[]');
+    localSubms.unshift({ ...payload, fbKey: pushedKey });
+    localStorage.setItem('bca_user_submissions', JSON.stringify(localSubms));
+
+    if (currentUserProfile && currentUserProfile.uid && typeof firebase !== 'undefined' && firebase.database) {
+      firebase.database().ref(`/bca3/users/${currentUserProfile.uid}/submissions/${pushedKey}`).set(payload).catch(() => {});
+    }
+
     showToast('🚀 Note submitted successfully for Admin review!');
     e.target.reset();
-    switchProfileTab('bookmarks');
+    renderUserSubmissionsList();
   } catch (err) {
     console.error('Submission error:', err);
     showToast('Submitted locally for review.');

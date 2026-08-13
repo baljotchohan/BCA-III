@@ -536,6 +536,11 @@ body{font-family:var(--font-sans);background:var(--bg-page);color:var(--text-mai
       📥 <span>Download PDF</span>
     </button>
 
+    <!-- Bookmark / Pin Button -->
+    <button class="tb-btn" id="tb-bookmark-btn" onclick="toggleReaderBookmark()" title="Pin / Save Note to Profile">
+      <span id="tb-bookmark-icon">📌</span> <span id="tb-bookmark-text" class="hide-mobile">Pin Note</span>
+    </button>
+
     <!-- Copy Note Text -->
     <button class="tb-btn" id="copy-btn" onclick="copyNoteContent()" title="Copy Markdown & Notes">
       📋 <span class="hide-mobile">Copy</span>
@@ -894,6 +899,7 @@ function renderSingleNote(note) {
 
   postRenderMounts(container);
   buildTableOfContents();
+  updateBookmarkButtonState();
 }
 
 // ── Render Paywall Teaser for Locked Notes ──
@@ -925,8 +931,17 @@ function renderPaywallTeaser(note, accessRes) {
 
         <div class="paywall-actions">
           ${isGuest ? `
-            <button class="paywall-unlock-btn" onclick="window.location.href='/'">
-              🔐 Return to Dashboard &amp; Sign In Free
+            <button class="paywall-unlock-btn" style="display: inline-flex; align-items: center; justify-content: center; gap: 0.65rem;" onclick="handleReaderGoogleSignIn()">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+              </svg>
+              <span>Sign In with Google (Unlock Unit 1 Free)</span>
+            </button>
+            <button class="tb-btn" style="width: 100%; height: 38px; justify-content: center; font-size: 0.82rem; margin-top: 0.35rem;" onclick="handleBackNavigation()">
+              ← Return to Dashboard
             </button>
             <div style="margin-top: 0.85rem; padding: 0.5rem; background: rgba(194, 94, 62, 0.08); border: 1px dashed rgba(194, 94, 62, 0.4); border-radius: 8px; text-align: center;">
               <span style="font-size: 0.72rem; color: var(--color-coral); font-weight: 700; display: block; margin-bottom: 0.35rem;">⚡ Dev Mode Instant Test Unlock:</span>
@@ -1242,12 +1257,61 @@ function showErr(msg) {
   `;
 }
 
-function hideLoading() {
-  document.getElementById('ls').style.display = 'none';
-  document.getElementById('topbar').style.display = 'flex';
-  document.getElementById('main').style.display = 'block';
-  const btn = document.getElementById('theme-btn');
-  if (btn) btn.textContent = savedTheme === 'dark' ? '☀️' : '🌙';
+function toggleReaderBookmark() {
+  const noteId = _currentKey || (new URLSearchParams(window.location.search).get('id'));
+  if (!noteId) return;
+  let bookmarks = JSON.parse(localStorage.getItem('bca_user_bookmarks') || '[]');
+  const idx = bookmarks.indexOf(noteId);
+  if (idx >= 0) {
+    bookmarks.splice(idx, 1);
+  } else {
+    bookmarks.push(noteId);
+  }
+  localStorage.setItem('bca_user_bookmarks', JSON.stringify(bookmarks));
+  
+  if (typeof currentUserProfile !== 'undefined' && currentUserProfile && currentUserProfile.uid && typeof firebase !== 'undefined' && firebase.database) {
+    firebase.database().ref(`/bca3/users/${currentUserProfile.uid}/bookmarks`).set(bookmarks).catch(()=>{});
+  }
+  updateBookmarkButtonState();
+}
+
+function updateBookmarkButtonState() {
+  const noteId = _currentKey || (new URLSearchParams(window.location.search).get('id'));
+  const bmBtn = document.getElementById('tb-bookmark-btn');
+  const bmIcon = document.getElementById('tb-bookmark-icon');
+  const bmText = document.getElementById('tb-bookmark-text');
+  if (!bmBtn || !noteId) return;
+  let bookmarks = JSON.parse(localStorage.getItem('bca_user_bookmarks') || '[]');
+  const isSaved = bookmarks.includes(noteId);
+  bmBtn.classList.toggle('active', isSaved);
+  if (bmIcon) bmIcon.textContent = isSaved ? '📌' : '📌';
+  if (bmText) bmText.textContent = isSaved ? 'Pinned' : 'Pin Note';
+  bmBtn.title = isSaved ? 'Unpin from Profile' : 'Pin / Save Note to Profile';
+}
+
+async function handleReaderGoogleSignIn() {
+  if (typeof firebase === 'undefined' || !firebase.auth) {
+    window.location.href = '/?action=signin';
+    return;
+  }
+  try {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    const res = await firebase.auth().signInWithPopup(provider);
+    if (res && res.user) {
+      const profile = {
+        uid: res.user.uid,
+        email: res.user.email,
+        name: res.user.displayName || 'BCA Scholar',
+        photo: res.user.photoURL,
+        isAdmin: ['baljotchohan23@gmail.com', 'mehakpreetkaur@gmail.com', 'mehakpreetsaini26@gmail.com'].includes((res.user.email || '').toLowerCase())
+      };
+      localStorage.setItem('bca_user_profile', JSON.stringify(profile));
+      location.reload();
+    }
+  } catch (err) {
+    console.error('Reader Google sign in error:', err);
+    window.location.href = '/?action=signin';
+  }
 }
 
 init();

@@ -730,10 +730,19 @@ const PROMPTS = [
   }
 ];
 
+// Helper: Format Firebase REST auth parameter safely
+function formatAuthParam(authToken) {
+  if (!authToken) return '';
+  if (typeof authToken === 'string' && (authToken.startsWith('mcp_sk_') || authToken.startsWith('mcp_rf_'))) {
+    return ''; // Internal session token, do not forward to Firebase RTDB query
+  }
+  return `?auth=${encodeURIComponent(authToken)}`;
+}
+
 // Helper: Fetch JSON from Firebase RTDB
-function fetchFirebaseData(endpoint, authToken = ADMIN_SECRET) {
+function fetchFirebaseData(endpoint, authToken = '') {
   return new Promise((resolve) => {
-    const authParam = authToken ? `?auth=${encodeURIComponent(authToken)}` : '';
+    const authParam = formatAuthParam(authToken);
     const url = `https://bca2nd-5c622-default-rtdb.firebaseio.com/bca3/${endpoint}.json${authParam}`;
     https.get(url, (res) => {
       let data = '';
@@ -756,10 +765,10 @@ function fetchFirebaseData(endpoint, authToken = ADMIN_SECRET) {
 }
 
 // Helper: Post JSON to Firebase RTDB
-function pushFirebaseData(endpoint, payload, authToken = ADMIN_SECRET) {
+function pushFirebaseData(endpoint, payload, authToken = '') {
   return new Promise((resolve, reject) => {
     const data = JSON.stringify(payload);
-    const authParam = authToken ? `?auth=${encodeURIComponent(authToken)}` : '';
+    const authParam = formatAuthParam(authToken);
     const options = {
       hostname: 'bca2nd-5c622-default-rtdb.firebaseio.com',
       path: `/bca3/${endpoint}.json${authParam}`,
@@ -789,10 +798,10 @@ function pushFirebaseData(endpoint, payload, authToken = ADMIN_SECRET) {
 }
 
 // Helper: Patch JSON in Firebase RTDB
-function putFirebaseData(endpoint, id, payload, authToken = ADMIN_SECRET) {
+function putFirebaseData(endpoint, id, payload, authToken = '') {
   return new Promise((resolve, reject) => {
     const data = JSON.stringify(payload);
-    const authParam = authToken ? `?auth=${encodeURIComponent(authToken)}` : '';
+    const authParam = formatAuthParam(authToken);
     const options = {
       hostname: 'bca2nd-5c622-default-rtdb.firebaseio.com',
       path: `/bca3/${endpoint}/${id}.json${authParam}`,
@@ -822,9 +831,9 @@ function putFirebaseData(endpoint, id, payload, authToken = ADMIN_SECRET) {
 }
 
 // Helper: Delete JSON from Firebase RTDB
-function deleteFirebaseData(endpoint, id, authToken = ADMIN_SECRET) {
+function deleteFirebaseData(endpoint, id, authToken = '') {
   return new Promise((resolve, reject) => {
-    const authParam = authToken ? `?auth=${encodeURIComponent(authToken)}` : '';
+    const authParam = formatAuthParam(authToken);
     const options = {
       hostname: 'bca2nd-5c622-default-rtdb.firebaseio.com',
       path: `/bca3/${endpoint}/${id}.json${authParam}`,
@@ -909,12 +918,16 @@ async function verifyAdmin(authHeader) {
   const token = authHeader.replace(/^Bearer\s+/i, '').trim();
   // Env-secret fallback (for Cursor / Claude Desktop / ChatGPT integrations)
   if (ADMIN_SECRET && token === ADMIN_SECRET) {
-    return { ok: true, user: { uid: 'ai-tool', email: ADMIN_EMAILS[0], name: DEFAULT_AUTHOR } };
+    return { ok: true, user: { uid: 'ai-tool', email: ADMIN_EMAILS[0], name: DEFAULT_AUTHOR, isAdmin: true } };
   }
-  // Firebase ID Token path
+  // Firebase ID Token / Session Token path
   const user = await verifyFirebaseToken(token);
-  if (user && ADMIN_EMAILS.includes(user.email)) {
-    return { ok: true, user };
+  if (user) {
+    const emailLower = (user.email || '').toLowerCase();
+    const isAdminEmail = ADMIN_EMAILS.some(e => e.toLowerCase() === emailLower);
+    if (user.isAdmin || isAdminEmail) {
+      return { ok: true, user: { ...user, isAdmin: true } };
+    }
   }
   return { ok: false, user: user || null };
 }
@@ -1810,3 +1823,6 @@ module.exports = async (req, res) => {
 
   return res.status(405).json({ error: "Method not allowed" });
 };
+
+module.exports.handleMcpRpc = handleMcpRpc;
+module.exports.formatAuthParam = formatAuthParam;
