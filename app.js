@@ -435,95 +435,14 @@ function openNoteReaderView(noteKey) {
   const note = (_currentSubjectNotes || []).find(n => (n.fbKey === noteKey || n.id === noteKey));
   if (!note) return;
 
-  _currentlyOpenNoteId = noteKey;
-
-  const listSubView = document.getElementById('ws-notes-list-subview');
-  const readerSubView = document.getElementById('ws-notes-reader-subview');
-  if (listSubView) listSubView.style.display = 'none';
-  if (readerSubView) readerSubView.style.display = 'block';
-
-  const authorName = note.author || 'Baljot Chohan';
-  const subject = BCA_3RD_SEM_DATA.subjects.find(s => s.id === activeSubjectId);
-  const subjectTitle = subject ? subject.title : 'Subject';
-
-  // Breadcrumbs
-  const crumbsEl = document.getElementById('note-reader-crumbs');
-  if (crumbsEl) {
-    crumbsEl.innerHTML = `${escapeHtml(subjectTitle)} › <strong style="color: var(--text-main);">${escapeHtml(note.unit || 'Unit')}</strong> › ${escapeHtml(note.title)}`;
-  }
-
-  // Header metadata
-  const unitEl = document.getElementById('note-reader-unit');
-  if (unitEl) unitEl.textContent = note.unit || 'Unit I';
-
-  const authorEl = document.getElementById('note-reader-author');
-  if (authorEl) authorEl.textContent = `✍️ By ${authorName}`;
-
-  const timeEl = document.getElementById('note-reader-time');
-  if (timeEl) timeEl.textContent = note.readTime || '6 min read';
-
-  const dateEl = document.getElementById('note-reader-date');
-  if (dateEl) dateEl.textContent = note.date ? `📅 ${note.date}` : 'August 2026';
-
-  const titleEl = document.getElementById('note-reader-title');
-  if (titleEl) titleEl.textContent = note.title;
-
-  const tagsEl = document.getElementById('note-reader-tags');
-  if (tagsEl) {
-    tagsEl.innerHTML = (note.tags || []).map(t => `<span class="topic-tag-pill">${escapeHtml(t.replace(/^#/, ''))}</span>`).join('');
-  }
-
-  // Check Paywall Access
-  const noteIndex = (_currentSubjectNotes || []).findIndex(n => (n.fbKey === noteKey || n.id === noteKey));
-  const hasAccess = window.BCA3_PAYMENTS ? window.BCA3_PAYMENTS.hasNoteAccess(noteKey, noteIndex) : true;
-
-  // Render markdown body with diagrams & LaTeX
-  const bodyEl = document.getElementById('note-reader-body');
-  if (bodyEl) {
-    if (hasAccess) {
-      bodyEl.innerHTML = renderMarkdownBlocks(note.content);
-      if (window.ManimVisuals) {
-        setTimeout(() => window.ManimVisuals.mountAll(bodyEl), 40);
-      }
-    } else {
-      const excerptHtml = renderMarkdownBlocks(getPlainExcerpt(note.content, 220, note.title));
-      const safeTitle = escapeHtml(note.title).replace(/'/g, "\\'");
-      bodyEl.innerHTML = `
-        <div class="note-paywall-teaser">
-          <div class="note-paywall-blur-content">
-            ${excerptHtml}
-            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Core algorithms, proof statements, unit summary, and examination points continue below...</p>
-          </div>
-          <div class="note-paywall-overlay">
-            <div class="paywall-icon">🔒</div>
-            <h3 class="paywall-title">Digital Note Locked</h3>
-            <p class="paywall-desc">Unlock this note permanently for <strong>₹15</strong> or subscribe to <strong>Pro Scholar Pass (₹49/mo)</strong> for unlimited full notes &amp; PDF downloads.</p>
-            <div class="paywall-upi-badge">
-              <span>💳 UPI • Google Pay • PhonePe • Paytm • Cards Supported</span>
-            </div>
-            <div class="paywall-actions">
-              <button class="paywall-unlock-btn" onclick="BCA3_PAYMENTS.payForSingleNote('${noteKey}', '${safeTitle}', 15)">
-                ⚡ Pay ₹15 via UPI / Card
-              </button>
-              <button class="paywall-subscribe-btn" onclick="BCA3_PAYMENTS.openPricingModal()">
-                ⭐ Pro Pass (₹49/mo)
-              </button>
-            </div>
-          </div>
-        </div>
-      `;
-    }
-  }
-
-  // Update previous/next topic buttons
-  updateReaderNavButtons(noteKey);
-
-  // Smooth scroll to top of workspace
-  const workspaceView = document.getElementById('subject-workspace-view');
-  if (workspaceView) {
-    workspaceView.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }
+  // Open in full-screen note reader page
+  const noteId = note.fbKey || note.id || noteKey;
+  const readerUrl = `/note.html?id=${encodeURIComponent(noteId)}&subject=${encodeURIComponent(activeSubjectId || '')}`;
+  window.open(readerUrl, '_blank', 'noopener');
 }
+
+
+
 
 function closeNoteReaderView() {
   _currentlyOpenNoteId = null;
@@ -661,11 +580,28 @@ function renderMarkdownBlocks(content) {
   html = html.replace(/(?:```|''')([a-zA-Z0-9_\-\+]+)?[ \t]*\n?([\s\S]*?)(?:```|'''|$)/g, (match, lang, code) => {
     if (!code || !code.trim()) return '';
     const cleanCode = escapeHtml(code.trim());
-    const language = lang ? lang.trim() : 'DIAGRAM / ARCHITECTURE';
+    const language = lang ? lang.trim().toLowerCase() : '';
+
+    // Mermaid blocks get a styled visual badge (actual rendering happens in note.html)
+    if (language === 'mermaid') {
+      return `
+        <div class="notion-code-container" style="border-color: rgba(165,180,252,0.2); background: rgba(165,180,252,0.04);">
+          <div class="notion-code-header" style="color: var(--color-accent); border-color: rgba(165,180,252,0.15);">
+            <span style="display:flex; align-items:center; gap:0.4rem;">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2M9 9h.01M15 9h.01"/></svg>
+              DIAGRAM (Mermaid)
+            </span>
+            <span style="font-size:0.65rem; opacity:0.7;">Renders in full reader →</span>
+          </div>
+          <pre class="notion-code-block"><code>${cleanCode}</code></pre>
+        </div>
+      `;
+    }
+
     return `
       <div class="notion-code-container">
         <div class="notion-code-header">
-          <span>${escapeHtml(language.toUpperCase())}</span>
+          <span>${escapeHtml(language.toUpperCase() || 'DIAGRAM / ARCHITECTURE')}</span>
           <button class="copy-code-btn" onclick="copySnippet(this)">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
             <span>Copy Code</span>
@@ -675,6 +611,7 @@ function renderMarkdownBlocks(content) {
       </div>
     `;
   });
+
 
   // Helper: Format common LaTeX expressions into clean Unicode math
   function formatMathSymbols(text) {
