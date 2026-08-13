@@ -1,414 +1,548 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Note Reader — BCA III Hub</title>
-  <meta name="robots" content="noindex" />
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,300..700;1,6..72,300..700&display=swap" rel="stylesheet" />
-  <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" />
-  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
-  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" onload="initKatex()"></script>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github-dark.min.css" />
-  <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/core.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/languages/c.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/languages/cpp.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/languages/python.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/languages/javascript.min.js"></script>
-  <style>
-    :root {
-      --font-serif: 'Newsreader','Instrument Serif',Georgia,serif;
-      --font-sans: 'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
-      --font-mono: 'JetBrains Mono',SFMono-Regular,Menlo,monospace;
-      --bg-page: #111110;
-      --bg-surface: #18181a;
-      --bg-glass: rgba(24,24,26,0.9);
-      --border-color: rgba(255,255,255,0.09);
-      --border-subtle: rgba(255,255,255,0.05);
-      --text-main: #f4f3ee;
-      --text-muted: #b4b2aa;
-      --text-subtle: #7a7872;
-      --color-coral: #cc785c;
-      --color-coral-light: rgba(204,120,92,0.1);
-      --color-accent: #a5b4fc;
-    }
-    [data-theme="light"] {
-      --bg-page: #faf9f5; --bg-surface: #ffffff; --bg-glass: rgba(255,255,255,0.92);
-      --border-color: rgba(20,20,19,0.1); --border-subtle: rgba(20,20,19,0.05);
-      --text-main: #141413; --text-muted: #575653; --text-subtle: #85837d;
-      --color-accent: #4338ca;
-    }
-    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-    html{font-size:16px;scroll-behavior:smooth}
-    body{font-family:var(--font-sans);background:var(--bg-page);color:var(--text-main);min-height:100vh;line-height:1.6}
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Note Reader — BCA III Hub</title>
+<meta name="robots" content="noindex"/>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,300..700;1,6..72,300..700&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css"/>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" onload="initKatex()"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/tokyo-night-dark.min.css"/>
+<script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/core.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/languages/c.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/languages/cpp.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/languages/python.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/languages/javascript.min.js"></script>
+<style>
+:root{
+  --fs-base: 1.0625;
+  --font-serif:'Newsreader','Instrument Serif',Georgia,serif;
+  --font-sans:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  --font-mono:'JetBrains Mono',SFMono-Regular,Menlo,monospace;
+  --bg-page:#0e0e0d;
+  --bg-surface:#161615;
+  --bg-card:#1c1c1a;
+  --bg-glass:rgba(14,14,13,0.92);
+  --border-color:rgba(255,255,255,0.08);
+  --border-strong:rgba(255,255,255,0.14);
+  --text-main:#f0ede6;
+  --text-muted:#a09d96;
+  --text-subtle:#5c5a55;
+  --color-coral:#cc785c;
+  --color-coral-dim:rgba(204,120,92,0.12);
+  --color-coral-border:rgba(204,120,92,0.3);
+  --color-indigo:#818cf8;
+  --color-indigo-dim:rgba(129,140,248,0.08);
+  --color-indigo-border:rgba(129,140,248,0.25);
+  --color-emerald:#34d399;
+  --color-amber:#fbbf24;
+  --radius-sm:8px;
+  --radius-md:12px;
+  --radius-lg:18px;
+  --radius-xl:24px;
+}
+[data-theme="light"]{
+  --bg-page:#faf8f3;
+  --bg-surface:#ffffff;
+  --bg-card:#f4f2ec;
+  --bg-glass:rgba(250,248,243,0.95);
+  --border-color:rgba(20,20,19,0.09);
+  --border-strong:rgba(20,20,19,0.16);
+  --text-main:#1a1916;
+  --text-muted:#5e5c57;
+  --text-subtle:#9e9c97;
+  --color-indigo:#4338ca;
+  --color-indigo-dim:rgba(67,56,202,0.06);
+  --color-indigo-border:rgba(67,56,202,0.2);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:16px;scroll-behavior:smooth;-webkit-text-size-adjust:none}
+body{font-family:var(--font-sans);background:var(--bg-page);color:var(--text-main);min-height:100vh;line-height:1.6;transition:background .25s,color .25s}
 
-    .reader-topbar{position:sticky;top:0;z-index:100;height:52px;background:var(--bg-glass);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid var(--border-color);display:flex;align-items:center;justify-content:space-between;padding:0 1.5rem;gap:1rem}
-    .topbar-left{display:flex;align-items:center;gap:.75rem}
-    .topbar-logo{font-family:var(--font-mono);font-size:.82rem;font-weight:700;color:var(--color-coral);letter-spacing:.04em}
-    .topbar-crumb{font-size:.8rem;color:var(--text-muted);max-width:380px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .topbar-crumb strong{color:var(--text-main)}
-    .topbar-right{display:flex;align-items:center;gap:.5rem}
-    .topbar-btn{display:flex;align-items:center;gap:.35rem;padding:.35rem .75rem;border:1px solid var(--border-color);border-radius:8px;background:transparent;color:var(--text-muted);font-size:.78rem;font-family:var(--font-sans);font-weight:500;cursor:pointer;transition:all .15s}
-    .topbar-btn:hover{border-color:var(--color-coral);color:var(--color-coral);background:var(--color-coral-light)}
-    .theme-btn{border-radius:50%;width:32px;height:32px;padding:0;justify-content:center}
+/* ──────────── READING PROGRESS ──────────── */
+#rp{position:fixed;top:0;left:0;height:2.5px;width:0;z-index:200;background:linear-gradient(90deg,var(--color-coral),var(--color-indigo));border-radius:0 2px 2px 0;transition:width .06s linear}
 
-    #reading-progress{position:fixed;top:52px;left:0;height:3px;width:0%;background:linear-gradient(90deg,var(--color-coral),var(--color-accent));z-index:99;transition:width .08s linear;border-radius:0 2px 2px 0}
+/* ──────────── TOP NAV ──────────── */
+.topbar{
+  position:sticky;top:0;z-index:100;
+  display:flex;align-items:center;justify-content:space-between;
+  height:50px;padding:0 1.5rem;gap:1rem;
+  background:var(--bg-glass);
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border-color);
+}
+.tb-left{display:flex;align-items:center;gap:.6rem;min-width:0;flex:1}
+.tb-logo{font-family:var(--font-mono);font-size:.78rem;font-weight:700;color:var(--color-coral);letter-spacing:.06em;flex-shrink:0}
+.tb-sep{color:var(--text-subtle);font-size:.72rem;flex-shrink:0}
+.tb-crumb{font-size:.78rem;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.tb-crumb strong{color:var(--text-main);font-weight:600}
+.tb-right{display:flex;align-items:center;gap:.35rem;flex-shrink:0}
 
-    #loading-screen{position:fixed;inset:0;background:var(--bg-page);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1rem;z-index:999}
-    .loading-spinner{width:40px;height:40px;border:3px solid var(--border-color);border-top-color:var(--color-coral);border-radius:50%;animation:spin .8s linear infinite}
-    @keyframes spin{to{transform:rotate(360deg)}}
-    .loading-text{color:var(--text-muted);font-size:.88rem;font-family:var(--font-mono)}
+/* Toolbar buttons */
+.tb-btn{
+  display:flex;align-items:center;justify-content:center;gap:.3rem;
+  height:30px;padding:0 .7rem;
+  border:1px solid var(--border-color);border-radius:var(--radius-sm);
+  background:transparent;color:var(--text-muted);
+  font-size:.72rem;font-family:var(--font-sans);font-weight:500;
+  cursor:pointer;transition:all .15s;white-space:nowrap;
+}
+.tb-btn:hover{border-color:var(--color-coral);color:var(--color-coral);background:var(--color-coral-dim)}
+.tb-btn.icon-only{width:30px;padding:0;border-radius:var(--radius-sm)}
+.tb-btn.active{border-color:var(--color-indigo);color:var(--color-indigo);background:var(--color-indigo-dim)}
 
-    .note-article{padding:3.5rem 2rem 5rem;max-width:780px;margin:0 auto}
-    .note-meta-row{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;margin-bottom:1.5rem}
-    .meta-pill{display:inline-flex;align-items:center;gap:.3rem;padding:.22rem .65rem;border-radius:999px;font-size:.72rem;font-weight:600;border:1px solid var(--border-color);color:var(--text-muted);background:var(--bg-surface)}
-    .meta-pill.unit{color:var(--color-coral);border-color:rgba(204,120,92,.3);background:rgba(204,120,92,.08)}
-    .meta-pill.author{color:var(--color-accent);border-color:rgba(165,180,252,.25);background:rgba(165,180,252,.06)}
+/* Font size control */
+.fs-control{display:flex;align-items:center;border:1px solid var(--border-color);border-radius:var(--radius-sm);overflow:hidden}
+.fs-btn{width:28px;height:30px;background:transparent;border:none;border-radius:0;color:var(--text-muted);font-size:.85rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.fs-btn:hover{background:var(--color-coral-dim);color:var(--color-coral)}
+.fs-btn:first-child{border-right:1px solid var(--border-color)}
+.fs-btn:last-child{border-left:1px solid var(--border-color)}
+.fs-label{padding:0 .4rem;font-size:.7rem;font-family:var(--font-mono);color:var(--text-subtle);min-width:28px;text-align:center;line-height:30px}
 
-    .note-title{font-family:var(--font-serif);font-size:clamp(2rem,5vw,2.85rem);font-weight:700;line-height:1.2;letter-spacing:-.025em;margin-bottom:1.25rem;color:var(--text-main)}
-    .note-tags{display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:2rem}
-    .note-tag{font-family:var(--font-mono);font-size:.68rem;font-weight:600;padding:.22rem .6rem;border-radius:6px;background:var(--bg-surface);border:1px solid var(--border-color);color:var(--text-subtle);letter-spacing:.03em}
-    .note-divider{border:none;border-top:1px solid var(--border-color);margin-bottom:2.5rem}
+/* ──────────── LOADING ──────────── */
+#ls{position:fixed;inset:0;background:var(--bg-page);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.25rem;z-index:999}
+.ls-ring{width:44px;height:44px;border:2.5px solid var(--border-color);border-top-color:var(--color-coral);border-radius:50%;animation:spin .75s linear infinite}
+.ls-text{font-family:var(--font-mono);font-size:.8rem;color:var(--text-subtle);letter-spacing:.04em}
+@keyframes spin{to{transform:rotate(360deg)}}
 
-    .note-body{font-family:var(--font-serif);font-size:1.0625rem;line-height:1.85;color:var(--text-muted)}
-    .note-body p{margin-bottom:1.25rem}
-    .note-body h1{font-size:1.85rem;font-weight:700;color:var(--text-main);margin:2.5rem 0 .75rem;line-height:1.2;letter-spacing:-.025em}
-    .note-body h2{font-size:1.4rem;font-weight:600;color:var(--text-main);margin:2rem 0 .6rem;letter-spacing:-.015em}
-    .note-body h3{font-size:1.15rem;font-weight:600;color:var(--text-main);margin:1.5rem 0 .45rem;font-family:var(--font-sans)}
-    .note-body h4{font-size:.82rem;font-weight:700;color:var(--text-subtle);margin:1.25rem 0 .35rem;font-family:var(--font-sans);text-transform:uppercase;letter-spacing:.06em}
-    .note-body strong{color:var(--text-main);font-weight:700}
-    .note-body em{font-style:italic}
-    .note-body a{color:var(--color-coral);text-decoration:underline;text-underline-offset:3px}
-    .note-body hr{border:none;border-top:1px solid var(--border-color);margin:2rem 0}
-    .note-body ul,.note-body ol{margin:.75rem 0 1.25rem 1.5rem}
-    .note-body li{margin-bottom:.45rem}
-    .note-body blockquote{border-left:3px solid var(--color-coral);padding:.5rem 1.25rem;margin:1.5rem 0;background:var(--color-coral-light);border-radius:0 10px 10px 0;color:var(--text-muted)}
-    .note-body code{font-family:var(--font-mono);background:rgba(165,180,252,.08);border:1px solid rgba(165,180,252,.15);padding:.12rem .4rem;border-radius:5px;font-size:.83em;color:var(--color-accent)}
+/* ──────────── LAYOUT ──────────── */
+.reader-wrap{max-width:760px;margin:0 auto;padding:3rem 2rem 8rem}
 
-    .code-block-wrapper{margin:1.75rem 0;border-radius:14px;overflow:hidden;border:1px solid var(--border-color);background:#0d1117}
-    .code-block-header{display:flex;align-items:center;justify-content:space-between;padding:.55rem 1rem;background:rgba(255,255,255,.04);border-bottom:1px solid var(--border-color)}
-    .code-lang-badge{font-family:var(--font-mono);font-size:.68rem;font-weight:700;color:var(--color-accent);letter-spacing:.06em;text-transform:uppercase}
-    .copy-code-btn{display:flex;align-items:center;gap:.3rem;padding:.22rem .6rem;border-radius:6px;background:transparent;border:1px solid var(--border-color);color:var(--text-muted);font-size:.72rem;font-family:var(--font-sans);cursor:pointer;transition:all .15s}
-    .copy-code-btn:hover{border-color:var(--color-accent);color:var(--color-accent)}
-    .code-block-wrapper pre{padding:1.25rem;overflow-x:auto;font-family:var(--font-mono);font-size:.875rem;line-height:1.65;background:transparent;margin:0}
-    .code-block-wrapper code{background:transparent;padding:0;border-radius:0;font-size:inherit;color:inherit;border:none}
+/* ──────────── HERO HEADER ──────────── */
+.note-hero{margin-bottom:2.75rem}
+.hero-badge-row{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;margin-bottom:1.25rem}
+.badge{display:inline-flex;align-items:center;gap:.3rem;padding:.24rem .7rem;border-radius:999px;font-size:.7rem;font-weight:700;letter-spacing:.03em;border:1px solid}
+.badge-unit{color:var(--color-coral);border-color:var(--color-coral-border);background:var(--color-coral-dim)}
+.badge-author{color:var(--color-indigo);border-color:var(--color-indigo-border);background:var(--color-indigo-dim)}
+.badge-meta{color:var(--text-subtle);border-color:var(--border-color);background:var(--bg-card)}
 
-    .mermaid-diagram-wrapper{margin:2rem 0;border-radius:18px;border:1px solid var(--border-color);overflow:hidden;background:var(--bg-surface)}
-    .mermaid-diagram-header{display:flex;align-items:center;gap:.5rem;padding:.65rem 1.15rem;background:linear-gradient(90deg,rgba(165,180,252,.07),transparent);border-bottom:1px solid var(--border-color);font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--color-accent)}
-    .mermaid-diagram-body{padding:1.5rem;overflow-x:auto;min-height:80px;display:flex;align-items:center;justify-content:center}
-    .mermaid-diagram-body svg{max-width:100%;height:auto;display:block;margin:0 auto}
+.note-title{
+  font-family:var(--font-serif);
+  font-size:clamp(2.25rem,6vw,3.25rem);
+  font-weight:700;line-height:1.15;
+  letter-spacing:-.03em;
+  color:var(--text-main);
+  margin-bottom:1.25rem;
+}
+.note-tags-row{display:flex;gap:.35rem;flex-wrap:wrap;margin-bottom:2rem}
+.note-tag{
+  font-family:var(--font-mono);
+  font-size:.65rem;font-weight:600;letter-spacing:.04em;
+  padding:.2rem .55rem;border-radius:5px;
+  background:var(--bg-card);border:1px solid var(--border-color);color:var(--text-subtle);
+}
+.hero-divider{height:1px;background:linear-gradient(90deg,var(--color-coral-border),transparent);margin-bottom:2.5rem;border:none}
 
-    .callout-block{display:flex;align-items:flex-start;gap:.75rem;padding:1rem 1.25rem;margin:1.5rem 0;border-radius:12px;border:1px solid;font-family:var(--font-sans);font-size:.9rem;line-height:1.6}
-    .callout-block.tip{border-color:rgba(52,211,153,.25);background:rgba(52,211,153,.05);color:#6ee7b7}
-    .callout-block.warn{border-color:rgba(251,191,36,.25);background:rgba(251,191,36,.05);color:#fde68a}
-    .callout-block.info{border-color:rgba(96,165,250,.25);background:rgba(96,165,250,.05);color:#93c5fd}
-    .callout-block.note{border-color:var(--border-color);background:var(--bg-surface);color:var(--text-muted)}
-    .callout-icon{font-size:1.1rem;flex-shrink:0;margin-top:.1rem}
+/* ──────────── BODY TEXT ──────────── */
+.note-body{
+  font-family:var(--font-serif);
+  font-size:calc(var(--fs-base) * 1rem);
+  line-height:1.85;color:var(--text-muted);
+  transition:font-size .2s;
+}
+.note-body > p{margin-bottom:1.4rem}
+.note-body h1{font-family:var(--font-serif);font-size:2rem;font-weight:700;color:var(--text-main);margin:2.75rem 0 .8rem;line-height:1.2;letter-spacing:-.025em;border-bottom:1px solid var(--border-color);padding-bottom:.6rem}
+.note-body h2{font-family:var(--font-serif);font-size:1.5rem;font-weight:600;color:var(--text-main);margin:2.25rem 0 .65rem;letter-spacing:-.02em}
+.note-body h3{font-family:var(--font-sans);font-size:1.1rem;font-weight:700;color:var(--text-main);margin:1.75rem 0 .45rem}
+.note-body h4{font-family:var(--font-sans);font-size:.75rem;font-weight:800;color:var(--color-coral);margin:1.5rem 0 .4rem;text-transform:uppercase;letter-spacing:.1em}
+.note-body strong{color:var(--text-main);font-weight:700}
+.note-body em{color:var(--text-main);font-style:italic}
+.note-body a{color:var(--color-coral);text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px}
+.note-body a:hover{text-decoration-thickness:2px}
+.note-body hr{border:none;border-top:1px solid var(--border-color);margin:2.25rem 0}
+.note-body ul{margin:.6rem 0 1.25rem 1.6rem;list-style:disc}
+.note-body ol{margin:.6rem 0 1.25rem 1.6rem;list-style:decimal}
+.note-body li{margin-bottom:.45rem;color:var(--text-muted)}
+.note-body blockquote{border-left:3px solid var(--color-coral);padding:.65rem 1.25rem;margin:1.75rem 0;background:var(--color-coral-dim);border-radius:0 var(--radius-md) var(--radius-md) 0}
+.note-body code{font-family:var(--font-mono);background:var(--color-indigo-dim);border:1px solid var(--color-indigo-border);padding:.12rem .4rem;border-radius:5px;font-size:.82em;color:var(--color-indigo)}
 
-    .table-wrapper{overflow-x:auto;margin:1.75rem 0;border-radius:12px;border:1px solid var(--border-color)}
-    .note-table{width:100%;border-collapse:collapse;font-family:var(--font-sans);font-size:.875rem}
-    .note-table thead th{padding:.7rem 1rem;text-align:left;background:var(--bg-surface);border-bottom:1px solid var(--border-color);font-weight:700;color:var(--text-main);font-size:.75rem;text-transform:uppercase;letter-spacing:.05em}
-    .note-table tbody td{padding:.65rem 1rem;border-bottom:1px solid var(--border-subtle);color:var(--text-muted)}
-    .note-table tbody tr:last-child td{border-bottom:none}
-    .note-table tbody tr:hover td{background:rgba(255,255,255,.02)}
+/* ──────────── CODE BLOCKS ──────────── */
+.code-wrap{margin:2rem 0;border-radius:var(--radius-lg);overflow:hidden;border:1px solid var(--border-color)}
+.code-head{display:flex;align-items:center;justify-content:space-between;padding:.55rem 1rem;background:#0d1117;border-bottom:1px solid rgba(255,255,255,0.06)}
+.code-lang{font-family:var(--font-mono);font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;display:flex;align-items:center;gap:.4rem}
+.code-lang .dot{width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.7}
+.code-copy-btn{display:flex;align-items:center;gap:.3rem;padding:.2rem .55rem;border-radius:5px;background:transparent;border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.4);font-size:.68rem;font-family:var(--font-sans);cursor:pointer;transition:all .15s}
+.code-copy-btn:hover{border-color:var(--color-indigo);color:var(--color-indigo)}
+.code-wrap pre{margin:0;padding:1.25rem;overflow-x:auto;font-family:var(--font-mono);font-size:.875rem;line-height:1.7;background:#0d1117}
+.code-wrap code{background:transparent;border:none;padding:0;border-radius:0;font-size:inherit;color:inherit}
 
-    .visual-engine-frame{margin:2rem 0;border-radius:18px;border:1px solid var(--border-color);overflow:hidden}
-    .visual-engine-header{display:flex;align-items:center;gap:.5rem;padding:.65rem 1.15rem;background:linear-gradient(90deg,rgba(204,120,92,.08),transparent);border-bottom:1px solid var(--border-color);font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--color-coral)}
+/* ──────────── MERMAID DIAGRAMS ──────────── */
+.mermaid-wrap{margin:2.25rem 0;border-radius:var(--radius-xl);border:1px solid var(--color-indigo-border);overflow:hidden;background:var(--bg-surface)}
+.mermaid-head{display:flex;align-items:center;gap:.5rem;padding:.7rem 1.2rem;background:linear-gradient(90deg,var(--color-indigo-dim),transparent);border-bottom:1px solid var(--color-indigo-border)}
+.mermaid-head-label{font-size:.68rem;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--color-indigo);font-family:var(--font-sans)}
+.mermaid-body{padding:1.75rem;overflow-x:auto;min-height:100px;display:flex;align-items:center;justify-content:center;background:var(--bg-surface)}
+.mermaid-body svg{max-width:100%;height:auto;display:block;margin:0 auto}
+.mermaid-rendering{display:flex;align-items:center;gap:.5rem;font-size:.78rem;color:var(--text-subtle);font-family:var(--font-mono)}
+.mermaid-dot{width:6px;height:6px;border-radius:50%;background:var(--color-indigo);animation:pulse 1s ease infinite alternate}
+@keyframes pulse{to{opacity:.25}}
 
-    .reader-footer{max-width:780px;margin:0 auto;display:flex;gap:1rem;padding:2rem 2rem 4rem;border-top:1px solid var(--border-color)}
-    .reader-footer-btn{flex:1;padding:.85rem 1.25rem;border:1px solid var(--border-color);border-radius:14px;background:var(--bg-surface);color:var(--text-muted);cursor:pointer;font-family:var(--font-sans);font-size:.85rem;text-align:left;transition:all .2s;display:flex;flex-direction:column;gap:.2rem}
-    .reader-footer-btn:hover{border-color:var(--color-coral);color:var(--text-main);background:var(--color-coral-light)}
-    .reader-footer-btn .btn-dir{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--color-coral)}
-    .reader-footer-btn.next{text-align:right}
+/* ──────────── CALLOUT BLOCKS ──────────── */
+.callout{display:flex;align-items:flex-start;gap:.75rem;padding:1rem 1.25rem;margin:1.75rem 0;border-radius:var(--radius-md);border:1px solid;font-family:var(--font-sans);font-size:.88rem;line-height:1.65}
+.callout.tip{border-color:rgba(52,211,153,.2);background:rgba(52,211,153,.04);color:#6ee7b7}
+.callout.warn{border-color:rgba(251,191,36,.2);background:rgba(251,191,36,.04);color:#fde68a}
+.callout.info{border-color:var(--color-indigo-border);background:var(--color-indigo-dim);color:var(--color-indigo)}
+.callout.note{border-color:var(--border-color);background:var(--bg-card);color:var(--text-muted)}
+.callout-icon{font-size:1rem;flex-shrink:0;margin-top:.1rem}
 
-    @media(max-width:640px){.note-article{padding:1.5rem 1rem 4rem}.topbar-crumb{display:none}}
-  </style>
+/* ──────────── TABLES ──────────── */
+.table-wrap{overflow-x:auto;margin:2rem 0;border-radius:var(--radius-lg);border:1px solid var(--border-color)}
+.note-table{width:100%;border-collapse:collapse;font-family:var(--font-sans);font-size:.875rem}
+.note-table thead th{padding:.75rem 1rem;text-align:left;background:var(--bg-card);border-bottom:1px solid var(--border-strong);font-weight:700;color:var(--text-main);font-size:.7rem;text-transform:uppercase;letter-spacing:.07em}
+.note-table tbody td{padding:.7rem 1rem;border-bottom:1px solid var(--border-color);color:var(--text-muted)}
+.note-table tbody tr:last-child td{border-bottom:none}
+.note-table tbody tr:hover td{background:rgba(255,255,255,0.02)}
+
+/* ──────────── VISUAL ENGINE FRAME ──────────── */
+.vis-frame{margin:2.25rem 0;border-radius:var(--radius-xl);border:1px solid var(--color-coral-border);overflow:hidden}
+.vis-head{display:flex;align-items:center;gap:.5rem;padding:.7rem 1.2rem;background:linear-gradient(90deg,var(--color-coral-dim),transparent);border-bottom:1px solid var(--color-coral-border)}
+.vis-head-badge{font-size:.65rem;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--color-coral);font-family:var(--font-sans)}
+.vis-head-dot{width:5px;height:5px;border-radius:50%;background:var(--color-coral);animation:pulse 1s ease infinite alternate}
+
+/* ──────────── FOOTER NAV ──────────── */
+.reader-footer{max-width:760px;margin:0 auto;padding:0 2rem 5rem;display:flex;gap:1rem}
+.footer-btn{flex:1;padding:.9rem 1.25rem;border:1px solid var(--border-color);border-radius:var(--radius-lg);background:var(--bg-card);cursor:pointer;font-family:var(--font-sans);font-size:.85rem;text-align:left;transition:all .2s;display:flex;flex-direction:column;gap:.22rem}
+.footer-btn:hover{border-color:var(--color-coral-border);background:var(--color-coral-dim)}
+.footer-btn .dir{font-size:.65rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--color-coral)}
+.footer-btn .title{font-weight:600;color:var(--text-muted);font-size:.88rem}
+.footer-btn.next{text-align:right}
+
+/* ──────────── FLOAT TOC ──────────── */
+.float-toc{position:fixed;right:1.5rem;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:.3rem;z-index:50;opacity:0;pointer-events:none;transition:opacity .3s}
+.float-toc.visible{opacity:1;pointer-events:all}
+.toc-dot{width:6px;height:6px;border-radius:50%;background:var(--border-color);cursor:pointer;transition:all .2s}
+.toc-dot.active{background:var(--color-coral);transform:scale(1.5)}
+.toc-dot:hover{background:var(--text-subtle)}
+
+@media(max-width:640px){
+  .reader-wrap{padding:1.5rem 1rem 6rem}
+  .tb-crumb,.fs-label{display:none}
+  .reader-footer{flex-direction:column}
+  .float-toc{display:none}
+}
+</style>
 </head>
 <body>
-  <div id="loading-screen">
-    <div class="loading-spinner"></div>
-    <div class="loading-text">Loading note...</div>
+
+<div id="rp"></div>
+
+<div id="ls"><div class="ls-ring"></div><div class="ls-text">Loading note...</div></div>
+
+<nav class="topbar" id="topbar" style="display:none">
+  <div class="tb-left">
+    <span class="tb-logo">BCA///</span>
+    <span class="tb-sep">›</span>
+    <span class="tb-crumb" id="tb-crumb">Digital Notes</span>
   </div>
-  <div id="reading-progress"></div>
-
-  <nav class="reader-topbar" id="reader-topbar" style="display:none">
-    <div class="topbar-left">
-      <span class="topbar-logo">BCA/// HUB</span>
-      <span style="color:var(--text-subtle);font-size:.75rem">›</span>
-      <span class="topbar-crumb" id="topbar-crumb">Digital Notes</span>
+  <div class="tb-right">
+    <div class="fs-control" title="Font size">
+      <button class="fs-btn" onclick="changeFs(-1)" title="Smaller">A−</button>
+      <span class="fs-label" id="fs-label">100%</span>
+      <button class="fs-btn" onclick="changeFs(1)" title="Larger">A+</button>
     </div>
-    <div class="topbar-right">
-      <button class="topbar-btn" onclick="history.back()">← Back</button>
-      <button class="topbar-btn" id="copy-btn" onclick="copyNote()">📋 Copy</button>
-      <button class="topbar-btn" onclick="window.print()">🖨️ Print</button>
-      <button class="topbar-btn theme-btn" id="theme-btn" title="Toggle Theme" onclick="toggleTheme()">☀️</button>
-    </div>
-  </nav>
+    <button class="tb-btn" onclick="history.back()">← Back</button>
+    <button class="tb-btn" id="copy-btn" onclick="copyNote()">📋 Copy</button>
+    <button class="tb-btn" onclick="window.print()">🖨️</button>
+    <button class="tb-btn icon-only" id="theme-btn" title="Toggle theme" onclick="toggleTheme()">☀️</button>
+  </div>
+</nav>
 
-  <main id="reader-main" style="display:none">
-    <div class="note-article">
-      <div class="note-meta-row" id="meta-row"></div>
+<main id="main" style="display:none">
+  <div class="reader-wrap">
+    <header class="note-hero">
+      <div class="hero-badge-row" id="badge-row"></div>
       <h1 class="note-title" id="note-title">Loading...</h1>
-      <div class="note-tags" id="note-tags"></div>
-      <hr class="note-divider" />
-      <div class="note-body" id="note-body"></div>
-    </div>
-    <footer class="reader-footer" id="reader-footer" style="display:none">
-      <button class="reader-footer-btn" id="prev-note-btn" style="display:none">
-        <span class="btn-dir">← Previous</span>
-        <span class="btn-title" id="prev-note-title"></span>
-      </button>
-      <button class="reader-footer-btn next" id="next-note-btn" style="display:none">
-        <span class="btn-dir">Next →</span>
-        <span class="btn-title" id="next-note-title"></span>
-      </button>
-    </footer>
-  </main>
+      <div class="note-tags-row" id="note-tags"></div>
+      <hr class="hero-divider"/>
+    </header>
+    <div class="note-body" id="note-body"></div>
+  </div>
+  <footer class="reader-footer" id="reader-footer" style="display:none">
+    <button class="footer-btn" id="prev-btn" style="display:none">
+      <span class="dir">← Previous</span>
+      <span class="title" id="prev-title"></span>
+    </button>
+    <button class="footer-btn next" id="next-btn" style="display:none">
+      <span class="dir">Next →</span>
+      <span class="title" id="next-title"></span>
+    </button>
+  </footer>
+</main>
 
-  <script src="/visuals-engine.js"></script>
-  <script>
-    const FIREBASE_DB='https://bca2nd-5c622-default-rtdb.firebaseio.com/bca3';
-    let _allNotes=[],_currentNoteKey=null;
+<script src="/visuals-engine.js"></script>
+<script>
+const FIREBASE_DB='https://bca2nd-5c622-default-rtdb.firebaseio.com/bca3';
+let _notes=[],_key=null,_fsSt=0;
+const FS_STEPS=[0.85,0.92,1.0,1.0625,1.15,1.25,1.4];
+let _fsIdx=2; // default 1.0
 
-    // Theme
-    const savedTheme=localStorage.getItem('bca_hub_theme')||'dark';
-    document.documentElement.setAttribute('data-theme',savedTheme);
-    document.getElementById('theme-btn').textContent=savedTheme==='dark'?'☀️':'🌙';
+// ── Theme ──
+const savedTheme=localStorage.getItem('bca_hub_theme')||'dark';
+document.documentElement.setAttribute('data-theme',savedTheme);
+document.addEventListener('DOMContentLoaded',()=>{
+  const btn=document.getElementById('theme-btn');
+  if(btn) btn.textContent=savedTheme==='dark'?'☀️':'🌙';
+});
 
-    function toggleTheme(){
-      const cur=document.documentElement.getAttribute('data-theme');
-      const next=cur==='dark'?'light':'dark';
-      document.documentElement.setAttribute('data-theme',next);
-      localStorage.setItem('bca_hub_theme',next);
-      document.getElementById('theme-btn').textContent=next==='dark'?'☀️':'🌙';
-      mermaid.initialize({theme:next==='dark'?'dark':'base',startOnLoad:false,securityLevel:'loose'});
-      renderAllMermaid();
+function toggleTheme(){
+  const c=document.documentElement.getAttribute('data-theme');
+  const n=c==='dark'?'light':'dark';
+  document.documentElement.setAttribute('data-theme',n);
+  localStorage.setItem('bca_hub_theme',n);
+  document.getElementById('theme-btn').textContent=n==='dark'?'☀️':'🌙';
+  mermaid.initialize({theme:n==='dark'?'dark':'base',startOnLoad:false,securityLevel:'loose'});
+  document.querySelectorAll('.mermaid-body').forEach(el=>{
+    const src=el.querySelector('.mermaid-src');
+    if(src) renderMermaidNode(src,el);
+  });
+}
+
+// ── Font Size ──
+function changeFs(dir){
+  _fsIdx=Math.max(0,Math.min(FS_STEPS.length-1,_fsIdx+dir));
+  const v=FS_STEPS[_fsIdx];
+  document.getElementById('note-body').style.fontSize=(v*16)+'px';
+  document.getElementById('fs-label').textContent=Math.round(v*100)+'%';
+}
+
+// ── Progress bar ──
+window.addEventListener('scroll',()=>{
+  const s=document.documentElement.scrollTop;
+  const t=document.documentElement.scrollHeight-window.innerHeight;
+  document.getElementById('rp').style.width=(t>0?(s/t)*100:0)+'%';
+});
+
+// ── Mermaid init ──
+mermaid.initialize({
+  theme:savedTheme==='dark'?'dark':'base',
+  startOnLoad:false,securityLevel:'loose',
+  fontFamily:'Inter,sans-serif',fontSize:14,
+});
+
+// ── Main init ──
+async function init(){
+  const p=new URLSearchParams(location.search);
+  _key=p.get('id');
+  if(!_key){showErr('No note ID. Please go back and try again.');return;}
+  try{
+    const r=await fetch(`${FIREBASE_DB}/notes.json`);
+    const raw=await r.json();
+    if(raw&&typeof raw==='object'){
+      _notes=Object.entries(raw).map(([k,v])=>({...v,fbKey:k})).sort((a,b)=>(b.timestamp||0)-(a.timestamp||0));
     }
+    let note=_notes.find(n=>n.fbKey===_key||n.id===_key);
+    if(!note){
+      const r2=await fetch(`${FIREBASE_DB}/lectures/${_key}.json`);
+      const lr=await r2.json();
+      if(lr&&!lr.error) note={...lr,fbKey:_key};
+    }
+    if(!note){showErr('Note not found. It may have been deleted.');return;}
+    renderNote(note);
+    setupNav(_key);
+    hideLoading();
+  }catch(e){showErr('Could not load: '+e.message);}
+}
 
-    // Progress bar
-    window.addEventListener('scroll',()=>{
-      const s=document.documentElement.scrollTop;
-      const t=document.documentElement.scrollHeight-window.innerHeight;
-      document.getElementById('reading-progress').style.width=(t>0?(s/t)*100:0)+'%';
+function renderNote(note){
+  document.title=(note.title||'Note')+' — BCA III Hub';
+  document.getElementById('tb-crumb').innerHTML=`<strong>${esc(note.unit||'Notes')}</strong> › ${esc(note.title||'Note')}`;
+
+  // Badges
+  document.getElementById('badge-row').innerHTML=[
+    note.unit?`<span class="badge badge-unit">📚 ${esc(note.unit)}</span>`:'',
+    note.author?`<span class="badge badge-author">✍️ ${esc(note.author)}</span>`:'',
+    note.readTime?`<span class="badge badge-meta">⏱️ ${esc(note.readTime)}</span>`:'',
+    note.date?`<span class="badge badge-meta">📅 ${esc(note.date)}</span>`:'',
+  ].join('');
+
+  document.getElementById('note-title').textContent=note.title||'Untitled';
+  document.getElementById('note-tags').innerHTML=(note.tags||[]).slice(0,6).map(t=>`<span class="note-tag">${esc(t.replace(/^#/,''))}</span>`).join('');
+
+  const body=document.getElementById('note-body');
+  body.innerHTML=renderMD(note.content||'');
+
+  // Manim visuals
+  if(window.ManimVisuals) setTimeout(()=>window.ManimVisuals.mountAll(body),120);
+
+  // Syntax highlight
+  body.querySelectorAll('pre code').forEach(b=>{if(window.hljs)hljs.highlightElement(b);});
+
+  // Mermaid
+  renderAllMermaid();
+
+  // KaTeX
+  if(typeof renderMathInElement==='function') initKatex();
+}
+
+async function renderAllMermaid(){
+  const nodes=document.querySelectorAll('.mermaid-src');
+  for(const node of nodes){
+    if(node.getAttribute('data-done')) continue;
+    node.setAttribute('data-done','1');
+    const wrap=node.closest('.mermaid-body');
+    if(wrap) await renderMermaidNode(node,wrap);
+  }
+}
+
+async function renderMermaidNode(node,wrap){
+  const code=node.textContent||'';
+  wrap.innerHTML=`<div class="mermaid-rendering"><span class="mermaid-dot"></span>Rendering diagram...</div>`;
+  try{
+    const id='m'+Date.now().toString(36);
+    const {svg}=await mermaid.render(id,code);
+    wrap.innerHTML=svg;
+  }catch(e){
+    wrap.innerHTML=`<pre style="color:#f87171;font-size:.78rem;padding:1rem;overflow:auto;max-height:240px">[Diagram error: ${esc(e.message||'unknown')}]\n\n${esc(code)}</pre>`;
+  }
+}
+
+function initKatex(){
+  if(typeof renderMathInElement==='function'){
+    renderMathInElement(document.getElementById('note-body'),{
+      delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false},{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],
+      throwOnError:false,
     });
+  }
+}
 
-    // Mermaid init
-    mermaid.initialize({
-      theme:savedTheme==='dark'?'dark':'base',
-      startOnLoad:false,securityLevel:'loose',
-      fontFamily:'Inter,sans-serif',
-    });
+// ── Advanced Markdown Renderer ──
+function renderMD(raw){
+  if(!raw) return '';
+  let h=raw.replace(/\r\n/g,'\n');
 
-    async function init(){
-      const params=new URLSearchParams(location.search);
-      const fbKey=params.get('id');
-      if(!fbKey){showError('No note ID specified.');return;}
-      _currentNoteKey=fbKey;
-      try{
-        const res=await fetch(`${FIREBASE_DB}/notes.json`);
-        const raw=await res.json();
-        if(raw&&typeof raw==='object'){
-          _allNotes=Object.entries(raw).map(([k,v])=>({...v,fbKey:k})).sort((a,b)=>(b.timestamp||0)-(a.timestamp||0));
-        }
-        let note=_allNotes.find(n=>n.fbKey===fbKey||n.id===fbKey);
-        if(!note){
-          const r2=await fetch(`${FIREBASE_DB}/lectures/${fbKey}.json`);
-          const lr=await r2.json();
-          if(lr&&!lr.error) note={...lr,fbKey};
-        }
-        if(!note){showError('Note not found.');return;}
-        renderNote(note);
-        setupNav(fbKey);
-        hideLoading();
-      }catch(e){showError('Load failed: '+e.message);}
+  // Visual engine mounts  [visual:xxx]  or  @[visual:xxx]
+  h=h.replace(/(?:@\[visual:|(?<!!)\[visual:)([a-zA-Z0-9_-]+)\]/g,(m,type)=>{
+    const label=type.replace(/-/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
+    return `<div class="vis-frame"><div class="vis-head"><span class="vis-head-dot"></span><span class="vis-head-badge">✨ Interactive Visual — ${esc(label)}</span></div><div class="manim-visual-mount" data-manim-visual="${esc(type)}" style="min-height:200px;background:var(--bg-surface)"></div></div>`;
+  });
+
+  // Fenced code blocks
+  h=h.replace(/```([a-zA-Z0-9_+-]*)\s*\n([\s\S]*?)```/g,(m,lang,code)=>{
+    if(!code.trim()) return '';
+    const l=(lang||'').trim().toLowerCase();
+    const c=code.trim();
+    if(l==='mermaid'){
+      return `<div class="mermaid-wrap"><div class="mermaid-head"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0"><path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"/><path d="m13 13 6 6"/></svg><span class="mermaid-head-label">Diagram Visualization</span></div><div class="mermaid-body"><div class="mermaid-src" style="display:none">${esc(c)}</div></div></div>`;
     }
+    const colors={python:'#3b82f6',cpp:'#f59e0b',c:'#f59e0b',javascript:'#f59e0b',js:'#f59e0b',java:'#ef4444',sql:'#8b5cf6',bash:'#22c55e',sh:'#22c55e',css:'#ec4899',html:'#f97316'};
+    const col=colors[l]||'var(--color-indigo)';
+    return `<div class="code-wrap"><div class="code-head"><span class="code-lang" style="color:${col}"><span class="dot" style="background:${col}"></span>${esc(l||'code').toUpperCase()}</span><button class="code-copy-btn" onclick="cpCode(this)">📋 Copy</button></div><pre><code class="language-${esc(l||'plaintext')}">${esc(c)}</code></pre></div>`;
+  });
 
-    function renderNote(note){
-      document.title=(note.title||'Note')+' — BCA III Hub';
-      document.getElementById('topbar-crumb').innerHTML=`<strong>${esc(note.unit||'Unit')}</strong> › ${esc(note.title||'Note')}`;
-      document.getElementById('meta-row').innerHTML=[
-        note.unit?`<span class="meta-pill unit">📚 ${esc(note.unit)}</span>`:'',
-        note.author?`<span class="meta-pill author">✍️ ${esc(note.author)}</span>`:'',
-        note.readTime?`<span class="meta-pill">⏱️ ${esc(note.readTime)}</span>`:'',
-        note.date?`<span class="meta-pill">📅 ${esc(note.date)}</span>`:'',
-      ].join('');
-      document.getElementById('note-title').textContent=note.title||'Untitled';
-      document.getElementById('note-tags').innerHTML=(note.tags||[]).slice(0,6).map(t=>`<span class="note-tag">${esc(t.replace(/^#/,''))}</span>`).join('');
-      const bodyEl=document.getElementById('note-body');
-      bodyEl.innerHTML=renderMD(note.content||'');
-      // Manim visuals
-      if(window.ManimVisuals) setTimeout(()=>window.ManimVisuals.mountAll(bodyEl),120);
-      // Syntax highlight
-      bodyEl.querySelectorAll('pre code').forEach(b=>{if(window.hljs)hljs.highlightElement(b);});
-      // Mermaid
-      renderAllMermaid();
-      // KaTeX
-      initKatex();
-    }
+  // Unclosed ``` fallback
+  h=h.replace(/```\n?([\s\S]*?)```/g,(m,code)=>{
+    if(!code.trim()) return '';
+    return `<div class="code-wrap"><div class="code-head"><span class="code-lang" style="color:var(--text-subtle)">TEXT</span><button class="code-copy-btn" onclick="cpCode(this)">📋 Copy</button></div><pre><code>${esc(code.trim())}</code></pre></div>`;
+  });
 
-    async function renderAllMermaid(){
-      const nodes=document.querySelectorAll('.mermaid-source');
-      for(const node of nodes){
-        if(node.getAttribute('data-rendered')) continue;
-        node.setAttribute('data-rendered','true');
-        const code=node.textContent||'';
-        const wrapper=node.closest('.mermaid-diagram-body');
-        if(!wrapper) continue;
-        wrapper.innerHTML='<div style="padding:1.5rem;text-align:center;color:var(--text-subtle);font-size:.8rem;font-family:var(--font-mono)">⏳ Rendering diagram...</div>';
-        try{
-          const id='m'+Math.random().toString(36).slice(2);
-          const {svg}=await mermaid.render(id,code);
-          wrapper.innerHTML=svg;
-        }catch(e){
-          wrapper.innerHTML=`<pre style="color:#f87171;font-size:.8rem;padding:1rem;overflow-x:auto">[Diagram render error]\n${esc(code)}</pre>`;
-        }
-      }
-    }
+  // Tables
+  h=h.replace(/\|(.+)\|\n\|[-|\s:]+\|\n((?:\|.+\|\n?)+)/g,(m,header,rows)=>{
+    const ths=header.split('|').filter(x=>x.trim()).map(x=>`<th>${x.trim()}</th>`).join('');
+    const trs=rows.trim().split('\n').map(r=>`<tr>${r.split('|').filter(x=>x.trim()).map(x=>`<td>${x.trim()}</td>`).join('')}</tr>`).join('');
+    return `<div class="table-wrap"><table class="note-table"><thead><tr>${ths}</tr></thead><tbody>${trs}</tbody></table></div>`;
+  });
 
-    function initKatex(){
-      if(typeof renderMathInElement==='function'){
-        renderMathInElement(document.getElementById('note-body'),{
-          delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false},{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],
-          throwOnError:false
-        });
-      }
-    }
+  // Callouts  > emoji text
+  h=h.replace(/^>\s*(💡|⚡|✅|⚠️|🚨|ℹ️|📌|📝)?\s*(.+)$/gm,(m,icon,text)=>{
+    const t={['\u{1F4A1}']:'tip','\u26A1':'tip','\u2705':'tip','\u26A0\uFE0F':'warn','\u{1F6A8}':'warn','\u2139\uFE0F':'info','\u{1F4CC}':'note','\u{1F4DD}':'note'}[icon]||'note';
+    return `<div class="callout ${t}"><span class="callout-icon">${icon||'💡'}</span><div>${text}</div></div>`;
+  });
 
-    function renderMD(content){
-      if(!content) return '';
-      let html=content.replace(/\r\n/g,'\n');
+  // Headings
+  h=h.replace(/^#### (.+)$/gim,'<h4>$1</h4>');
+  h=h.replace(/^### (.+)$/gim,'<h3>$1</h3>');
+  h=h.replace(/^## (.+)$/gim,'<h2>$1</h2>');
+  h=h.replace(/^# (.+)$/gim,'<h1>$1</h1>');
+  h=h.replace(/^---$/gm,'<hr/>');
 
-      // Visual engine tags — both @[visual:X] and [visual:X]
-      html=html.replace(/(?:@\[visual:|(?<!\!)\[visual:)([a-zA-Z0-9_\-]+)\]/g,(m,type)=>{
-        const label=type.replace(/-/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
-        return `<div class="visual-engine-frame"><div class="visual-engine-header">✨ Interactive Visual — ${esc(label)}</div><div class="manim-visual-mount" data-manim-visual="${esc(type)}" style="min-height:180px;"></div></div>`;
-      });
+  // Inline
+  h=h.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>');
+  h=h.replace(/\*(.+?)\*/g,'<em>$1</em>');
+  h=h.replace(/`([^`\n]+)`/g,'<code>$1</code>');
 
-      // Fenced code blocks — mermaid gets special treatment
-      html=html.replace(/```([a-zA-Z0-9_\-+]*)\s*\n([\s\S]*?)```/g,(m,lang,code)=>{
-        if(!code.trim()) return '';
-        const l=(lang||'').trim().toLowerCase();
-        const clean=code.trim();
-        if(l==='mermaid'){
-          return `<div class="mermaid-diagram-wrapper"><div class="mermaid-diagram-header"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2M9 9h.01M15 9h.01"/></svg> Diagram Visualization</div><div class="mermaid-diagram-body"><div class="mermaid-source" style="display:none">${esc(clean)}</div></div></div>`;
-        }
-        return `<div class="code-block-wrapper"><div class="code-block-header"><span class="code-lang-badge">${esc(l||'code')}</span><button class="copy-code-btn" onclick="copyCode(this)">📋 Copy</button></div><pre><code class="language-${esc(l||'plaintext')}">${esc(clean)}</code></pre></div>`;
-      });
+  // Lists
+  h=h.replace(/((?:^[-*] .+\n?)+)/gm,b=>{
+    const items=b.trim().split('\n').map(l=>`<li>${l.replace(/^[-*] /,'')}</li>`).join('');
+    return `<ul>${items}</ul>`;
+  });
+  h=h.replace(/((?:^\d+\. .+\n?)+)/gm,b=>{
+    const items=b.trim().split('\n').map(l=>`<li>${l.replace(/^\d+\. /,'')}</li>`).join('');
+    return `<ol>${items}</ol>`;
+  });
 
-      // Triple-backtick with no language
-      html=html.replace(/```\n?([\s\S]*?)```/g,(m,code)=>{
-        if(!code.trim()) return '';
-        return `<div class="code-block-wrapper"><div class="code-block-header"><span class="code-lang-badge">TEXT</span><button class="copy-code-btn" onclick="copyCode(this)">📋 Copy</button></div><pre><code>${esc(code.trim())}</code></pre></div>`;
-      });
+  // Images
+  h=h.replace(/!\[(.+?)\]\((.+?)\)/g,(m,alt,url)=>`<figure style="margin:2rem 0;border-radius:var(--radius-lg);overflow:hidden;border:1px solid var(--border-color)"><img src="${url}" alt="${esc(alt)}" style="width:100%;display:block" loading="lazy"/><figcaption style="padding:.5rem 1rem;font-size:.75rem;color:var(--text-subtle);font-family:var(--font-sans)">${esc(alt)}</figcaption></figure>`);
 
-      // Tables
-      html=html.replace(/\|(.+)\|\n\|[-|\s:]+\|\n((?:\|.+\|\n?)+)/g,(m,header,rows)=>{
-        const ths=header.split('|').filter(h=>h.trim()).map(h=>`<th>${h.trim()}</th>`).join('');
-        const trs=rows.trim().split('\n').map(r=>{
-          const cols=r.split('|').filter(c=>c.trim()).map(c=>`<td>${c.trim()}</td>`).join('');
-          return `<tr>${cols}</tr>`;
-        }).join('');
-        return `<div class="table-wrapper"><table class="note-table"><thead><tr>${ths}</tr></thead><tbody>${trs}</tbody></table></div>`;
-      });
+  // Links
+  h=h.replace(/\[(.+?)\]\((.+?)\)/g,'<a href="$2" target="_blank" rel="noopener">$1 ↗</a>');
 
-      // Callouts
-      html=html.replace(/^>\s*(💡|📌|⚡|🚨|📝|✅|⚠️|ℹ️)?\s*(.+)$/gm,(m,icon,text)=>{
-        const t={'💡':'tip','⚡':'tip','✅':'tip','⚠️':'warn','🚨':'warn','ℹ️':'info','📌':'note','📝':'note'}[icon]||'note';
-        return `<div class="callout-block ${t}"><span class="callout-icon">${icon||'💡'}</span><div>${text}</div></div>`;
-      });
+  // Paragraphs
+  h=h.replace(/\n{2,}/g,'</p><p>');
+  h=h.replace(/(?<!\>)\n/g,'<br/>');
 
-      // Headings
-      html=html.replace(/^#### (.+)$/gim,'<h4>$1</h4>');
-      html=html.replace(/^### (.+)$/gim,'<h3>$1</h3>');
-      html=html.replace(/^## (.+)$/gim,'<h2>$1</h2>');
-      html=html.replace(/^# (.+)$/gim,'<h1>$1</h1>');
-      html=html.replace(/^---$/gm,'<hr/>');
+  return `<p>${h}</p>`;
+}
 
-      // Inline formatting
-      html=html.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>');
-      html=html.replace(/\*(.+?)\*/g,'<em>$1</em>');
-      html=html.replace(/`([^`\n]+)`/g,'<code>$1</code>');
+function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 
-      // Lists
-      html=html.replace(/((?:^[-*] .+\n?)+)/gm,b=>{
-        const items=b.trim().split('\n').map(l=>`<li>${l.replace(/^[-*] /,'')}</li>`).join('');
-        return `<ul>${items}</ul>`;
-      });
-      html=html.replace(/((?:^\d+\. .+\n?)+)/gm,b=>{
-        const items=b.trim().split('\n').map(l=>`<li>${l.replace(/^\d+\. /,'')}</li>`).join('');
-        return `<ol>${items}</ol>`;
-      });
+function cpCode(btn){
+  const c=btn.closest('.code-wrap').querySelector('code');
+  if(!c) return;
+  navigator.clipboard.writeText(c.textContent).then(()=>{btn.textContent='✅ Copied!';setTimeout(()=>{btn.textContent='📋 Copy';},2000);});
+}
 
-      // Images
-      html=html.replace(/!\[(.+?)\]\((.+?)\)/g,(m,alt,url)=>`<figure style="margin:2rem 0;border-radius:12px;overflow:hidden;border:1px solid var(--border-color)"><img src="${url}" alt="${esc(alt)}" style="width:100%;display:block"/><figcaption style="padding:.5rem 1rem;font-size:.78rem;color:var(--text-subtle);font-family:var(--font-sans)">${esc(alt)}</figcaption></figure>`);
+function copyNote(){
+  const b=document.getElementById('note-body');
+  if(!b) return;
+  navigator.clipboard.writeText(b.innerText).then(()=>{
+    const btn=document.getElementById('copy-btn');
+    btn.textContent='✅ Copied!';
+    setTimeout(()=>{btn.textContent='📋 Copy';},2000);
+  });
+}
 
-      // Links
-      html=html.replace(/\[(.+?)\]\((.+?)\)/g,'<a href="$2" target="_blank" rel="noopener">$1 ↗</a>');
+function setupNav(key){
+  const idx=_notes.findIndex(n=>n.fbKey===key||n.id===key);
+  if(idx<0||_notes.length<2) return;
+  document.getElementById('reader-footer').style.display='flex';
+  if(idx>0){
+    const p=_notes[idx-1];
+    const b=document.getElementById('prev-btn');
+    b.style.display='flex';
+    document.getElementById('prev-title').textContent=p.title;
+    b.onclick=()=>go(p.fbKey||p.id);
+  }
+  if(idx<_notes.length-1){
+    const n=_notes[idx+1];
+    const b=document.getElementById('next-btn');
+    b.style.display='flex';
+    document.getElementById('next-title').textContent=n.title;
+    b.onclick=()=>go(n.fbKey||n.id);
+  }
+}
 
-      // Paragraphs
-      html=html.replace(/\n{2,}/g,'</p><p>');
-      html=html.replace(/\n/g,'<br/>');
+function go(id){
+  const u=new URL(location.href);u.searchParams.set('id',id);location.href=u.toString();
+}
 
-      return `<p>${html}</p>`;
-    }
+function showErr(msg){
+  document.getElementById('ls').innerHTML=`<div style="text-align:center;padding:2rem;max-width:400px"><div style="font-size:3rem;margin-bottom:1.25rem">📭</div><p style="color:var(--text-muted);line-height:1.7;margin-bottom:1.5rem">${msg}</p><button onclick="history.back()" style="padding:.5rem 1.25rem;border:1px solid var(--border-color);border-radius:var(--radius-sm);background:transparent;color:var(--text-muted);cursor:pointer;font-family:var(--font-sans);font-size:.85rem">← Go Back</button></div>`;
+}
 
-    function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+function hideLoading(){
+  document.getElementById('ls').style.display='none';
+  document.getElementById('topbar').style.display='flex';
+  document.getElementById('main').style.display='block';
+  const btn=document.getElementById('theme-btn');
+  if(btn) btn.textContent=savedTheme==='dark'?'☀️':'🌙';
+}
 
-    function setupNav(key){
-      const idx=_allNotes.findIndex(n=>n.fbKey===key||n.id===key);
-      if(idx<0||_allNotes.length<2) return;
-      document.getElementById('reader-footer').style.display='flex';
-      if(idx>0){
-        const p=_allNotes[idx-1];
-        const pb=document.getElementById('prev-note-btn');
-        pb.style.display='flex';
-        document.getElementById('prev-note-title').textContent=p.title;
-        pb.onclick=()=>goTo(p.fbKey||p.id);
-      }
-      if(idx<_allNotes.length-1){
-        const n=_allNotes[idx+1];
-        const nb=document.getElementById('next-note-btn');
-        nb.style.display='flex';
-        document.getElementById('next-note-title').textContent=n.title;
-        nb.onclick=()=>goTo(n.fbKey||n.id);
-      }
-    }
-
-    function goTo(id){
-      const u=new URL(location.href);u.searchParams.set('id',id);location.href=u.toString();
-    }
-
-    function copyNote(){
-      const b=document.getElementById('note-body');
-      if(b) navigator.clipboard.writeText(b.innerText).then(()=>{
-        const btn=document.getElementById('copy-btn');
-        btn.textContent='✅ Copied!';
-        setTimeout(()=>{btn.textContent='📋 Copy';},2000);
-      });
-    }
-
-    function copyCode(btn){
-      const c=btn.closest('.code-block-wrapper').querySelector('code');
-      if(c) navigator.clipboard.writeText(c.textContent).then(()=>{
-        btn.textContent='✅ Copied!';setTimeout(()=>{btn.textContent='📋 Copy';},2000);
-      });
-    }
-
-    function showError(msg){
-      document.getElementById('loading-screen').innerHTML=`<div style="text-align:center;padding:2rem"><div style="font-size:3rem;margin-bottom:1rem">⚠️</div><p style="color:var(--text-muted);max-width:360px;line-height:1.6">${msg}</p><button onclick="history.back()" style="margin-top:1.5rem;padding:.5rem 1.25rem;border:1px solid var(--border-color);border-radius:8px;background:transparent;color:var(--text-muted);cursor:pointer;font-family:var(--font-sans)">← Go Back</button></div>`;
-    }
-
-    function hideLoading(){
-      document.getElementById('loading-screen').style.display='none';
-      document.getElementById('reader-topbar').style.display='flex';
-      document.getElementById('reader-main').style.display='block';
-    }
-
-    init();
-  </script>
+init();
+</script>
 </body>
 </html>
