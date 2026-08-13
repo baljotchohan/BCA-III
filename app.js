@@ -2025,17 +2025,14 @@ async function renderAdminManageData() {
   let html = '';
 
   // --- NOTES SECTION ---
-  const allNotes = [
-    ...fbNotes.map(n => ({ ...n, _sourceCol: 'notes' })),
-    ...fbLectures.filter(l => (l.content && !l.topic) || (l.isAdminPublished && !fbNotes.some(fn => fn.fbKey === l.fbKey))).map(n => ({ ...n, _sourceCol: 'lectures' }))
-  ];
+  const allNotes = (fbNotes || []).map(n => ({ ...n, _sourceCol: 'notes' }));
   html += `<h4 style="font-size: 0.95rem; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.4rem;">📝 Digital Notes <span style="font-size: 0.75rem; background: var(--bg-surface-subtle); padding: 0.15rem 0.5rem; border-radius: var(--radius-full); color: var(--text-subtle);">${allNotes.length}</span></h4>`;
 
   if (!allNotes.length) {
     html += `<p style="font-size: 0.8125rem; color: var(--text-subtle); margin-bottom: 1rem;">No published digital notes yet.</p>`;
   } else {
     html += allNotes.map(n => {
-      const col = n._sourceCol || 'notes';
+      const col = 'notes';
       const subjectLabel = n.subjectId ? getSubjectName(n.subjectId) || n.subjectId : (n.subject ? getSubjectName(n.subject) || n.subject : 'General');
       return `
         <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.55rem 0.75rem; background: var(--bg-surface-subtle); border-radius: var(--radius-sm); margin-bottom: 0.35rem; font-size: 0.85rem;">
@@ -2052,7 +2049,7 @@ async function renderAdminManageData() {
   }
 
   // --- LECTURES SECTION ---
-  const allLectures = fbLectures.filter(l => l.topic && !l.content);
+  const allLectures = (fbLectures || []).map(l => ({ ...l, _sourceCol: 'lectures' }));
   html += `<h4 style="font-size: 0.95rem; margin: 1.25rem 0 0.5rem 0; display: flex; align-items: center; gap: 0.4rem;">📅 Lecture Logs <span style="font-size: 0.75rem; background: var(--bg-surface-subtle); padding: 0.15rem 0.5rem; border-radius: var(--radius-full); color: var(--text-subtle);">${allLectures.length}</span></h4>`;
 
   if (!allLectures.length) {
@@ -2063,7 +2060,7 @@ async function renderAdminManageData() {
       return `
         <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.55rem 0.75rem; background: var(--bg-surface-subtle); border-radius: var(--radius-sm); margin-bottom: 0.35rem; font-size: 0.85rem;">
           <div style="min-width: 0; flex: 1; overflow: hidden;">
-            <strong style="word-break: break-word;">${escapeHtml(l.topic || 'Untitled')}</strong>
+            <strong style="word-break: break-word;">${escapeHtml(l.topic || l.title || 'Untitled Lecture')}</strong>
             <div style="font-size: 0.75rem; color: var(--text-subtle); margin-top: 0.15rem;">${escapeHtml(subjectLabel)} · ${l.date || '—'} · <span style="color: #2ecc71;">☁️ Public Live</span></div>
           </div>
           <div style="display: flex; gap: 0.35rem; flex-shrink: 0; margin-left: 0.5rem;">
