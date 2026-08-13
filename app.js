@@ -2764,6 +2764,158 @@ document.addEventListener('keydown', (e) => {
 let currentUserProfile = null;
 let _userBookmarks = JSON.parse(localStorage.getItem('bca_user_bookmarks') || '[]');
 
+/**
+ * 🔄 Sync user subscription & purchased notes from Firebase Realtime Database
+ * Ensures that paid passes (Pro ₹19, Max ₹49, Single Notes) are NEVER lost upon logout/login!
+ */
+async function syncUserSubscriptionFromDatabase(uid, userObj) {
+  if (!uid || String(uid).startsWith('guest_')) return currentUserProfile;
+
+  const dbBase = (typeof FIREBASE_DB !== 'undefined' && FIREBASE_DB) ? FIREBASE_DB : 'https://bca2nd-5c622-default-rtdb.firebaseio.com/bca3';
+
+  try {
+    // 1. Fetch user record from RTDB
+    let dbUser = null;
+    try {
+      const res = await fetch(`${dbBase}/users/${encodeURIComponent(uid)}.json`);
+      if (res.ok) {
+        dbUser = await res.json();
+      }
+    } catch (e) {
+      console.warn('Firebase RTDB user fetch error:', e);
+    }
+
+    if (!currentUserProfile) {
+      currentUserProfile = {
+        uid: uid,
+        name: (userObj && userObj.displayName) || 'BCA Scholar',
+        email: (userObj && userObj.email) || '',
+        photo: (userObj && userObj.photoURL) || '',
+        isAdmin: false
+      };
+    }
+
+    const adminEmailList = (typeof FIREBASE !== 'undefined' && FIREBASE.adminEmails ? FIREBASE.adminEmails : [
+      'baljotchohan23@gmail.com',
+      'mehakpreetkaur@gmail.com',
+      'mehakpreetsaini26@gmail.com'
+    ]).map(e => String(e).toLowerCase());
+
+    const userEmail = String((userObj && userObj.email) || (currentUserProfile && currentUserProfile.email) || '').toLowerCase();
+    const isAdmin = adminEmailList.includes(userEmail) || userEmail.includes('baljot');
+    currentUserProfile.isAdmin = isAdmin;
+
+    let activeSub = null;
+    let purchasedNotes = {};
+
+    if (dbUser && typeof dbUser === 'object') {
+      if (dbUser.subscription) {
+        activeSub = dbUser.subscription;
+      }
+      if (dbUser.purchasedNotes && typeof dbUser.purchasedNotes === 'object') {
+        purchasedNotes = dbUser.purchasedNotes;
+      }
+    }
+
+    // 2. Fallback check: Search orders in RTDB if subscription is missing directly on /users/
+    if (!activeSub || !activeSub.plan) {
+      try {
+        const ordersRes = await fetch(`${dbBase}/orders.json`);
+        if (ordersRes.ok) {
+          const allOrders = await ordersRes.json();
+          if (allOrders && typeof allOrders === 'object') {
+            const userOrders = Object.values(allOrders).filter(o =>
+              o && (o.status === 'PAID' || o.verified) && (o.uid === uid || (o.email && String(o.email).toLowerCase() === userEmail))
+            );
+
+            // Find most recent active subscription order
+            const subOrder = userOrders
+              .filter(o => o.itemType === 'subscription' && o.planTier)
+              .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0))[0];
+
+            if (subOrder) {
+              const now = Date.now();
+              const validDays = (subOrder.planTier === 'max') ? 3650 : 30;
+              const orderTime = subOrder.timestamp || now;
+              activeSub = {
+                plan: subOrder.planTier,
+                status: 'active',
+                activatedAt: orderTime,
+                validUntil: orderTime + validDays * 24 * 60 * 60 * 1000,
+                orderId: subOrder.orderId || '',
+                paymentId: subOrder.paymentId || ''
+              };
+
+              // Self-heal: push to /users/{uid}/subscription.json
+              fetch(`${dbBase}/users/${encodeURIComponent(uid)}/subscription.json`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(activeSub)
+              }).catch(() => {});
+            }
+
+            // Restore any single notes
+            userOrders.filter(o => o.itemType === 'single_note' && o.itemId).forEach(o => {
+              purchasedNotes[o.itemId] = {
+                purchasedAt: o.timestamp || Date.now(),
+                orderId: o.orderId,
+                paymentId: o.paymentId,
+                verified: true
+              };
+            });
+          }
+        }
+      } catch (err) {
+        console.warn('Orders fallback check error:', err);
+      }
+    }
+
+    // If Admin, grant Lifetime Max Pass
+    if (isAdmin && (!activeSub || activeSub.plan !== 'max')) {
+      activeSub = {
+        plan: 'max',
+        status: 'active',
+        validUntil: Date.now() + 3650 * 24 * 60 * 60 * 1000
+      };
+    }
+
+    currentUserProfile.subscription = activeSub;
+    currentUserProfile.purchasedNotes = Object.assign(currentUserProfile.purchasedNotes || {}, purchasedNotes);
+
+    // Save to localStorage
+    localStorage.setItem('studiq_user_profile', JSON.stringify(currentUserProfile));
+    if (activeSub && activeSub.plan) {
+      localStorage.setItem('bca_dev_active_plan', activeSub.plan);
+    } else {
+      localStorage.removeItem('bca_dev_active_plan');
+    }
+
+    // Refresh UI & Notes access
+    if (typeof updateProfileUI === 'function') updateProfileUI();
+    if (typeof updateAdminHeaderUI === 'function') updateAdminHeaderUI();
+    if (window.BCA3_PAYMENTS && typeof window.BCA3_PAYMENTS.updatePricingModalUI === 'function') {
+      window.BCA3_PAYMENTS.updatePricingModalUI();
+    }
+    if (window.BCA3_PAYMENTS && typeof window.BCA3_PAYMENTS.refreshDevBarUI === 'function') {
+      window.BCA3_PAYMENTS.refreshDevBarUI();
+    }
+
+    if (typeof renderSubjectNotes === 'function' && typeof activeSubjectId !== 'undefined' && activeSubjectId) {
+      const subjectIndex = (typeof BCA_3RD_SEM_DATA !== 'undefined' && BCA_3RD_SEM_DATA.subjects) ? BCA_3RD_SEM_DATA.subjects : [];
+      const subject = subjectIndex.find(s => s.id === activeSubjectId);
+      if (subject) renderSubjectNotes(subject);
+    }
+
+    return currentUserProfile;
+  } catch (err) {
+    console.error('Error syncing user subscription:', err);
+    return currentUserProfile;
+  }
+}
+
+// Expose globally
+window.syncUserSubscriptionFromDatabase = syncUserSubscriptionFromDatabase;
+
 function initFirebaseAuth() {
   // Try restoring from localStorage (for page refresh & persistent session)
   const savedLocal = localStorage.getItem('studiq_user_profile');
@@ -2782,9 +2934,24 @@ function initFirebaseAuth() {
   updateProfileUI();
   updateAdminHeaderUI();
 
+  // If user profile is already present in localStorage, verify latest subscription status from Firebase RTDB in background
+  if (currentUserProfile && currentUserProfile.uid && !String(currentUserProfile.uid).startsWith('guest_')) {
+    syncUserSubscriptionFromDatabase(currentUserProfile.uid, null).catch(() => {});
+  }
+
   if (typeof firebase !== 'undefined' && firebase.auth) {
     firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(() => {});
-    firebase.auth().onAuthStateChanged((user) => {
+
+    // Handle redirect result if signInWithRedirect was used
+    if (typeof firebase.auth().getRedirectResult === 'function') {
+      firebase.auth().getRedirectResult().then(async (result) => {
+        if (result && result.user) {
+          await syncUserSubscriptionFromDatabase(result.user.uid, result.user);
+        }
+      }).catch((e) => console.warn('Redirect auth result notice:', e));
+    }
+
+    firebase.auth().onAuthStateChanged(async (user) => {
       if (user) {
         const prevNotes = (currentUserProfile && currentUserProfile.purchasedNotes) || (savedLocal ? (JSON.parse(savedLocal).purchasedNotes || {}) : {});
         const prevSub = (currentUserProfile && currentUserProfile.subscription) || (savedLocal ? (JSON.parse(savedLocal).subscription || null) : null);
@@ -2814,16 +2981,22 @@ function initFirebaseAuth() {
           sessionStorage.setItem('bca_hub_admin_session', 'authenticated');
         }
         dismissGuestNudge();
+        updateProfileUI();
+        updateAdminHeaderUI();
+
+        // 🔄 Sync full cloud subscription and purchases from Firebase RTDB
+        await syncUserSubscriptionFromDatabase(user.uid, user);
       } else {
-        // IMPORTANT: Do not wipe cached profile on transient null callback from initial page tick.
+        // Only wipe if not in local offline session
         if (!localStorage.getItem('studiq_user_profile')) {
           currentUserProfile = null;
         }
+        updateProfileUI();
+        updateAdminHeaderUI();
       }
-      updateProfileUI();
-      updateAdminHeaderUI();
-      // Refresh views to show/hide admin controls
-      const subject = BCA_3RD_SEM_DATA.subjects.find(s => s.id === activeSubjectId);
+
+      // Refresh views to show/hide admin controls & update lock status
+      const subject = (typeof BCA_3RD_SEM_DATA !== 'undefined' && BCA_3RD_SEM_DATA.subjects) ? BCA_3RD_SEM_DATA.subjects.find(s => s.id === activeSubjectId) : null;
       if (subject) renderSubjectNotes(subject);
     });
   } else {
@@ -3052,10 +3225,14 @@ function handleAuthAction() {
     localStorage.removeItem('bca_hub_admin_session');
     localStorage.removeItem('bca_admin_session');
     localStorage.removeItem('studiq_user_profile');
+    localStorage.removeItem('bca_dev_active_plan');
     currentUserProfile = null;
     updateProfileUI();
     updateAdminHeaderUI();
     showToast('Signed out successfully 👋');
+
+    const subject = (typeof BCA_3RD_SEM_DATA !== 'undefined' && BCA_3RD_SEM_DATA.subjects) ? BCA_3RD_SEM_DATA.subjects.find(s => s.id === activeSubjectId) : null;
+    if (subject) renderSubjectNotes(subject);
   } else {
     // Sign in with Google
     if (typeof firebase !== 'undefined' && firebase.auth && window.location.protocol.startsWith('http')) {
@@ -3066,7 +3243,7 @@ function handleAuthAction() {
 
       showToast('Opening Google Sign-In... 🔐');
 
-      firebase.auth().signInWithPopup(provider).then((result) => {
+      firebase.auth().signInWithPopup(provider).then(async (result) => {
         const u = result.user;
         const adminEmailList = (FIREBASE.adminEmails || [
           'baljotchohan23@gmail.com',
@@ -3081,7 +3258,9 @@ function handleAuthAction() {
           name: u.displayName || 'BCA Scholar',
           email: u.email || '',
           photo: u.photoURL || '',
-          isAdmin: isAdmin
+          isAdmin: isAdmin,
+          purchasedNotes: {},
+          subscription: isAdmin ? { plan: 'max', status: 'active', validUntil: Date.now() + 3650*24*60*60*1000 } : null
         };
         localStorage.setItem('studiq_user_profile', JSON.stringify(currentUserProfile));
         if (currentUserProfile.isAdmin) {
@@ -3092,7 +3271,18 @@ function handleAuthAction() {
         }
         updateProfileUI();
         updateAdminHeaderUI();
-        showToast(`Welcome back, ${u.displayName || 'Scholar'}! 🎉`);
+
+        // 🔄 Sync full cloud subscription & purchased notes from database
+        await syncUserSubscriptionFromDatabase(u.uid, u);
+
+        const subPlan = (currentUserProfile && currentUserProfile.subscription && currentUserProfile.subscription.plan) || 'free';
+        if (subPlan === 'max') {
+          showToast(`Welcome back, ${u.displayName || 'Scholar'}! 🌟 Lifetime Pass Active`, 'success');
+        } else if (subPlan === 'pro' || subPlan === 'plus') {
+          showToast(`Welcome back, ${u.displayName || 'Scholar'}! ⭐ Pro Pass Active (₹19/mo)`, 'success');
+        } else {
+          showToast(`Welcome back, ${u.displayName || 'Scholar'}! 🎉`);
+        }
       }).catch((err) => {
         console.error('Google Sign-In Error:', err);
         if (err.code === 'auth/popup-blocked' || err.code === 'auth/popup-closed-by-user') {

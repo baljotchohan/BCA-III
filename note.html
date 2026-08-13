@@ -606,11 +606,29 @@ if (hasAdminSession) {
       uid: 'admin_user',
       name: 'Administrator',
       email: 'baljotchohan23@gmail.com',
-      isAdmin: true
+      isAdmin: true,
+      subscription: { plan: 'max', status: 'active', validUntil: Date.now() + 3650*24*60*60*1000 }
     };
   } else {
     currentUserProfile.isAdmin = true;
+    currentUserProfile.subscription = { plan: 'max', status: 'active', validUntil: Date.now() + 3650*24*60*60*1000 };
   }
+}
+
+// 🔄 Auto-sync cloud subscription and purchased notes from Firebase RTDB
+if (currentUserProfile && currentUserProfile.uid && !String(currentUserProfile.uid).startsWith('guest_')) {
+  fetch(`${FIREBASE_DB}/users/${encodeURIComponent(currentUserProfile.uid)}.json`)
+    .then(r => r.json())
+    .then(dbUser => {
+      if (dbUser && typeof dbUser === 'object') {
+        if (dbUser.subscription) currentUserProfile.subscription = dbUser.subscription;
+        if (dbUser.purchasedNotes) currentUserProfile.purchasedNotes = Object.assign(currentUserProfile.purchasedNotes || {}, dbUser.purchasedNotes);
+        localStorage.setItem('studiq_user_profile', JSON.stringify(currentUserProfile));
+        if (dbUser.subscription && dbUser.subscription.plan) {
+          localStorage.setItem('bca_dev_active_plan', dbUser.subscription.plan);
+        }
+      }
+    }).catch(() => {});
 }
 
 const FS_STEPS = [0.85, 0.92, 1.0, 1.0625, 1.15, 1.25, 1.4];
