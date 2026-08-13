@@ -640,6 +640,17 @@ body.modal-open {
   letter-spacing: -0.03em;
 }
 
+.high-tech-title {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+  background: linear-gradient(135deg, #ffffff 0%, #a5b4fc 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  text-shadow: 0 0 30px rgba(255, 255, 255, 0.15);
+  margin-bottom: 0.5rem;
+}
+
 .Hero-module-scss-module__sp7muW__summary {
   color: var(--text-muted);
   max-width: 720px;
@@ -848,8 +859,9 @@ body.modal-open {
 }
 
 .EducationSections-module-scss-module__dxNdua__section:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
 .EducationSections-module-scss-module__dxNdua__section.bg-cactus {
@@ -4453,7 +4465,7 @@ body.modal-open {
 
   /* All 7 Subject Cards */
   .EducationSections-module-scss-module__dxNdua__sectionWrapper {
-    grid-template-columns: 1fr 1fr !important;
+    grid-template-columns: 1fr !important;
     gap: 0.85rem !important;
     margin-top: 1rem !important;
     margin-bottom: 2.5rem !important;
@@ -5546,17 +5558,18 @@ body.modal-open {
 
 .mobile-bottom-nav-item.active svg {
   stroke: var(--color-coral, #d946ef);
+  transform: translateY(-2px);
 }
 
 .mobile-bottom-nav-item.active::after {
   content: '';
   position: absolute;
-  top: 0;
+  top: -0.4rem;
   width: 16px;
   height: 3px;
   background: var(--color-coral, #d946ef);
   border-radius: 2px;
-  box-shadow: 0 0 8px var(--color-coral, #d946ef);
+  box-shadow: 0 0 10px var(--color-coral, #d946ef);
 }
 
 @media (max-width: 768px) {

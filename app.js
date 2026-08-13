@@ -1301,9 +1301,9 @@ function updateAdminHeaderUI() {
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
           </svg>
-          <span>Admin Active</span>
+          <span class="admin-btn-label">Admin Active</span>
         </button>
-        <button onclick="handleInAppAdminLogout()" title="Log out of Admin mode" style="background: none; border: 1px solid var(--border-subtle); border-radius: var(--radius-xs); padding: 0.3rem 0.5rem; font-size: 0.72rem; color: var(--color-coral); cursor: pointer;">
+        <button class="admin-btn-label" onclick="handleInAppAdminLogout()" title="Log out of Admin mode" style="background: none; border: 1px solid var(--border-subtle); border-radius: var(--radius-xs); padding: 0.3rem 0.5rem; font-size: 0.72rem; color: var(--color-coral); cursor: pointer;">
           Exit
         </button>
       </div>
