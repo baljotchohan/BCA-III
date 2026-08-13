@@ -433,12 +433,9 @@ async function renderSubjectNotes(subject) {
 
 function openNoteReaderView(noteKey) {
   const note = (_currentSubjectNotes || []).find(n => (n.fbKey === noteKey || n.id === noteKey));
-  if (!note) return;
-
-  // Open in full-screen note reader page
-  const noteId = note.fbKey || note.id || noteKey;
+  const noteId = note ? (note.fbKey || note.id || noteKey) : noteKey;
   const readerUrl = `/note.html?id=${encodeURIComponent(noteId)}&subject=${encodeURIComponent(activeSubjectId || '')}`;
-  window.open(readerUrl, '_blank', 'noopener');
+  window.location.href = readerUrl;
 }
 
 
@@ -1722,133 +1719,14 @@ async function syncFirebaseData() {
 
 function openZenReader() {
   const subject = BCA_3RD_SEM_DATA.subjects.find(s => s.id === activeSubjectId);
-  if (!subject) return;
-
-  const allNotes = _currentSubjectNotes && _currentSubjectNotes.length ? _currentSubjectNotes : (subject.digitalNotes || []);
-
-  if (!allNotes.length) {
-    showToast('No notes to display in focus reader.');
-    return;
-  }
-
-  const modal = document.getElementById('zen-reader-modal');
-  const container = document.getElementById('zen-article-content');
-  const badge = document.getElementById('zen-badge');
-
-  if (badge) badge.innerText = `${subject.title} • Master Study Guide`;
-  if (container) {
-    container.innerHTML = `
-      <div class="note-document-header" style="text-align: center; margin-bottom: 2.25rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--border-color);">
-        <div style="display: inline-block; background: rgba(79, 70, 229, 0.1); color: #4f46e5; font-size: 0.72rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.15em; padding: 0.35rem 1rem; border-radius: var(--radius-full); margin-bottom: 0.85rem;">
-          ANTIGRAVITY • BILINGUAL STUDY EDITION
-        </div>
-        <h1 class="serif" style="font-size: clamp(2rem, 4vw, 2.75rem); font-weight: 800; line-height: 1.15; margin-bottom: 0.5rem; color: var(--text-main);">
-          ${escapeHtml(subject.title)}
-        </h1>
-        <p style="color: var(--color-coral); font-style: italic; font-size: 1.1rem; font-weight: 500; margin-bottom: 1rem;">
-          Complete Master Notes &amp; Exam Focus Guide
-        </p>
-        <div style="font-size: 0.76rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-subtle); display: flex; gap: 0.75rem; justify-content: center; align-items: center; flex-wrap: wrap;">
-          <span>Code: ${escapeHtml(subject.code)}</span>
-          <span>•</span>
-          <span>${allNotes.length} Topics Covered</span>
-          <span>•</span>
-          <span>Panjab University 2026-27</span>
-        </div>
-      </div>
-
-      <div class="space-y-8">
-        ${allNotes.map((note, idx) => `
-          <div class="focus-topic-block" style="margin-bottom: 3rem; padding-bottom: 2rem; border-bottom: 1px dashed var(--border-subtle);">
-            <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.15rem;">
-              <div class="topic-num-badge">${idx + 1}</div>
-              <div>
-                <span style="font-size: 0.72rem; font-weight: 700; color: var(--color-coral); text-transform: uppercase; letter-spacing: 0.05em;">${escapeHtml(note.unit || 'Unit I')} • ${escapeHtml(note.readTime || '6 min read')}</span>
-                <h2 class="serif" style="font-size: 1.55rem; font-weight: 700; margin: 0; color: var(--text-main);">${escapeHtml(note.title)}</h2>
-              </div>
-            </div>
-
-            <div class="bilingual-note-card">
-              <div class="bilingual-col-english">
-                <div class="bilingual-section-head en">Easy English Study Notes</div>
-                <div class="markdown-rendered-content" style="font-size: 0.95rem; line-height: 1.7;">
-                  ${renderMarkdownBlocks(note.content)}
-                </div>
-              </div>
-              <div class="bilingual-col-punjabi">
-                <div class="bilingual-section-head pa">ਆਸਾਨ ਪੰਜਾਬੀ ਅਨੁਵਾਦ / Key Summary</div>
-                <div class="markdown-rendered-content" style="font-size: 0.95rem; line-height: 1.7; color: var(--text-main);">
-                  ${renderMarkdownBlocks(note.punjabiSummary || note.content)}
-                </div>
-              </div>
-            </div>
-          </div>
-        `).join('')}
-      </div>
-    `;
-  }
-
-  if (modal) {
-    modal.style.display = 'flex';
-    lockScroll(true);
-    if (window.ManimVisuals) {
-      setTimeout(() => window.ManimVisuals.mountAll(container), 40);
-    }
-  }
+  const subjId = subject ? subject.id : (activeSubjectId || 'comp-arch');
+  const readerUrl = `/note.html?subject=${encodeURIComponent(subjId)}&mode=master`;
+  window.location.href = readerUrl;
 }
 
 function openZenReaderWithNote(noteId) {
-  const subject = BCA_3RD_SEM_DATA.subjects.find(s => s.id === activeSubjectId);
-  const allNotes = _currentSubjectNotes && _currentSubjectNotes.length ? _currentSubjectNotes : (subject ? (subject.digitalNotes || []) : []);
-  const note = allNotes.find(n => (n.fbKey === noteId || n.id === noteId)) || allNotes[0];
-
-  if (!note) {
-    showToast('Note not found.');
-    return;
-  }
-
-  const modal = document.getElementById('zen-reader-modal');
-  const container = document.getElementById('zen-article-content');
-  const badge = document.getElementById('zen-badge');
-
-  if (badge) badge.innerText = `${subject ? subject.title : 'BCA III'} • ${note.unit || 'General'}`;
-  if (container) {
-    container.innerHTML = `
-      <div class="note-document-header" style="text-align: center; margin-bottom: 2rem; padding-bottom: 1.25rem; border-bottom: 1px solid var(--border-color);">
-        <div style="display: inline-block; background: rgba(79, 70, 229, 0.1); color: #4f46e5; font-size: 0.72rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.15em; padding: 0.35rem 1rem; border-radius: var(--radius-full); margin-bottom: 0.75rem;">
-          ANTIGRAVITY • BILINGUAL STUDY EDITION
-        </div>
-        <h1 class="serif" style="font-size: clamp(2rem, 3.5vw, 2.5rem); font-weight: 800; margin-bottom: 0.4rem; color: var(--text-main);">${escapeHtml(note.title)}</h1>
-        <p style="color: var(--color-coral); font-style: italic; font-size: 1.05rem; margin-bottom: 0.75rem;">${escapeHtml(subject ? subject.title : 'BCA III')} Focus Notes</p>
-        <div style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-subtle);">
-          ${subject ? subject.code : 'BCA III'} · ${escapeHtml(note.unit || 'General')} · ${escapeHtml(note.readTime || '6 min read')} · Panjab University
-        </div>
-      </div>
-
-      <div class="bilingual-note-card">
-        <div class="bilingual-col-english">
-          <div class="bilingual-section-head en">Easy English Study Notes</div>
-          <div class="markdown-rendered-content" style="font-size: 0.95rem; line-height: 1.7; color: var(--text-main);">
-            ${renderMarkdownBlocks(note.content)}
-          </div>
-        </div>
-        <div class="bilingual-col-punjabi">
-          <div class="bilingual-section-head pa">ਆਸਾਨ ਪੰਜਾਬੀ ਅਨੁਵਾਦ / Key Summary</div>
-          <div class="markdown-rendered-content" style="font-size: 0.95rem; line-height: 1.7; color: var(--text-main);">
-            ${renderMarkdownBlocks(note.punjabiSummary || note.content)}
-          </div>
-        </div>
-      </div>
-    `;
-  }
-
-  if (modal) {
-    modal.style.display = 'flex';
-    lockScroll(true);
-    if (window.ManimVisuals) {
-      setTimeout(() => window.ManimVisuals.mountAll(container), 40);
-    }
-  }
+  const readerUrl = `/note.html?id=${encodeURIComponent(noteId)}&subject=${encodeURIComponent(activeSubjectId || '')}`;
+  window.location.href = readerUrl;
 }
 
 function closeZenReader(e) {
@@ -2391,6 +2269,7 @@ function initFirebaseAuth() {
   }
 
   if (typeof firebase !== 'undefined' && firebase.auth) {
+    firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(() => {});
     firebase.auth().onAuthStateChanged((user) => {
       if (user) {
         const prevNotes = (currentUserProfile && currentUserProfile.purchasedNotes) || (savedLocal ? (JSON.parse(savedLocal).purchasedNotes || {}) : {});
@@ -2562,6 +2441,7 @@ function handleAuthAction() {
   } else {
     // Sign in with Google
     if (typeof firebase !== 'undefined' && firebase.auth && window.location.protocol.startsWith('http')) {
+      firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(() => {});
       const provider = new firebase.auth.GoogleAuthProvider();
       provider.addScope('profile');
       provider.addScope('email');
@@ -2722,10 +2602,8 @@ function renderSavedNotesList() {
 
 function openZenReaderForSavedNote(noteId, subjectId) {
   closeProfileModal();
-  navigateToSubject(subjectId);
-  setTimeout(() => {
-    openZenReader();
-  }, 300);
+  const readerUrl = `/note.html?id=${encodeURIComponent(noteId)}&subject=${encodeURIComponent(subjectId || activeSubjectId || '')}`;
+  window.location.href = readerUrl;
 }
 
 function renderSubjectProgressList() {

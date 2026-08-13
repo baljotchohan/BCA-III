@@ -145,18 +145,90 @@ module.exports = async (req, res) => {
 
     const isAdmin = ADMIN_EMAILS.includes(record.email);
 
+    // Create long-lived persistent session token & refresh token (1 year TTL)
+    const sessionToken = 'mcp_sk_' + crypto.randomBytes(32).toString('hex');
+    const refreshToken  = 'mcp_rf_' + crypto.randomBytes(32).toString('hex');
+    const ONE_YEAR_MS   = 365 * 24 * 60 * 60 * 1000;
+    const expiresAt     = Date.now() + ONE_YEAR_MS;
+
+    await firebaseRequest('PUT', `/bca3/session_tokens/${sessionToken}`, {
+      uid: record.uid,
+      email: record.email,
+      name: record.name || 'BCA Scholar',
+      isAdmin,
+      idToken: record.idToken,
+      createdAt: Date.now(),
+      expiresAt
+    });
+
+    await firebaseRequest('PUT', `/bca3/refresh_tokens/${refreshToken}`, {
+      sessionToken,
+      uid: record.uid,
+      email: record.email,
+      name: record.name || 'BCA Scholar',
+      isAdmin,
+      createdAt: Date.now(),
+      expiresAt
+    });
+
     return res.status(200).json({
-      access_token: record.idToken,
+      access_token: sessionToken,
       token_type: 'Bearer',
-      expires_in: 3600,
+      expires_in: 31536000, // 1 year in seconds
+      refresh_token: refreshToken,
       scope: isAdmin ? 'admin read write' : 'read',
       user_email: record.email,
-      user_name: record.name,
+      user_name: record.name || 'BCA Scholar',
       is_admin: isAdmin
     });
   }
 
-  // ── GRANT 3: ADMIN_SECRET passthrough (for Cursor / Claude Desktop config) ──
+  // ── GRANT 3: Refresh Token → New Access Token ──────────────────────────────
+  if (grantType === 'refresh_token') {
+    const refreshToken = body.refresh_token || req.query?.refresh_token || '';
+    if (!refreshToken) {
+      return res.status(400).json({ error: 'invalid_request', error_description: 'refresh_token required' });
+    }
+
+    const record = await firebaseRequest('GET', `/bca3/refresh_tokens/${refreshToken}`, null);
+    if (!record || !record.email) {
+      return res.status(400).json({ error: 'invalid_grant', error_description: 'Refresh token invalid or expired. Please sign in again.' });
+    }
+
+    if (Date.now() > record.expiresAt) {
+      await firebaseRequest('DELETE', `/bca3/refresh_tokens/${refreshToken}`, null);
+      return res.status(400).json({ error: 'invalid_grant', error_description: 'Refresh token expired. Please sign in again.' });
+    }
+
+    const newSessionToken = 'mcp_sk_' + crypto.randomBytes(32).toString('hex');
+    const ONE_YEAR_MS = 365 * 24 * 60 * 60 * 1000;
+    const expiresAt = Date.now() + ONE_YEAR_MS;
+
+    await firebaseRequest('PUT', `/bca3/session_tokens/${newSessionToken}`, {
+      uid: record.uid,
+      email: record.email,
+      name: record.name,
+      isAdmin: record.isAdmin,
+      createdAt: Date.now(),
+      expiresAt
+    });
+
+    await firebaseRequest('PUT', `/bca3/refresh_tokens/${refreshToken}`, {
+      ...record,
+      sessionToken: newSessionToken,
+      updatedAt: Date.now()
+    });
+
+    return res.status(200).json({
+      access_token: newSessionToken,
+      token_type: 'Bearer',
+      expires_in: 31536000,
+      refresh_token: refreshToken,
+      scope: record.isAdmin ? 'admin read write' : 'read'
+    });
+  }
+
+  // ── GRANT 4: ADMIN_SECRET passthrough (for Cursor / Claude Desktop config) ──
   if (grantType === 'client_credentials') {
     const secret = body.client_secret || (req.headers['authorization'] || '').replace(/^Basic\s+/i, '');
     if (ADMIN_SECRET && secret === ADMIN_SECRET) {
@@ -173,6 +245,7 @@ module.exports = async (req, res) => {
 
   return res.status(400).json({
     error: 'unsupported_grant_type',
-    error_description: `Supported: authorization_code, urn:bca3:firebase_token, client_credentials`
+    error_description: `Supported: authorization_code, refresh_token, urn:bca3:firebase_token, client_credentials`
   });
 };
+

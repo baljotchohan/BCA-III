@@ -349,6 +349,7 @@ module.exports = async (req, res) => {
       setStatus('Opening Google Sign-In...');
 
       try {
+        await firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(() => {});
         const provider = new firebase.auth.GoogleAuthProvider();
         provider.addScope('email');
         provider.addScope('profile');

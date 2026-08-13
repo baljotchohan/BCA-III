@@ -848,9 +848,36 @@ function deleteFirebaseData(endpoint, id, authToken = ADMIN_SECRET) {
   });
 }
 
-// Helper: Verify a Firebase ID Token via Google's token introspection API
+function fetchSessionToken(token) {
+  return new Promise((resolve) => {
+    const url = `https://bca2nd-5c622-default-rtdb.firebaseio.com/bca3/session_tokens/${encodeURIComponent(token)}.json`;
+    https.get(url, (res) => {
+      let data = '';
+      res.on('data', chunk => { data += chunk; });
+      res.on('end', () => {
+        try {
+          const parsed = JSON.parse(data);
+          resolve(parsed && !parsed.error ? parsed : null);
+        } catch { resolve(null); }
+      });
+    }).on('error', () => resolve(null));
+  });
+}
+
+// Helper: Verify a Firebase ID Token or MCP Session Token
 async function verifyFirebaseToken(idToken) {
   if (!idToken) return null;
+
+  // Check if token is an MCP Session Token stored in Firebase RTDB
+  if (idToken.startsWith('mcp_sk_')) {
+    const session = await fetchSessionToken(idToken);
+    if (session && session.expiresAt && Date.now() < session.expiresAt) {
+      return { uid: session.uid, email: session.email, name: session.name, isAdmin: session.isAdmin };
+    }
+    return null;
+  }
+
+  // Otherwise verify raw Firebase ID Token via Google's token introspection API
   return new Promise((resolve) => {
     const url = `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=AIzaSyAM8tcsYAnJoLzY6ZUxp6M5h2z-M6AJzDI`;
     const body = JSON.stringify({ idToken });
@@ -874,6 +901,7 @@ async function verifyFirebaseToken(idToken) {
     req.end();
   });
 }
+
 
 // Helper: Verify admin access (Google ID Token email OR ADMIN_SECRET env fallback for AI tools)
 async function verifyAdmin(authHeader) {

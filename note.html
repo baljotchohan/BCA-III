@@ -3,12 +3,13 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>Note Reader — BCA III Hub</title>
+<title>Study Reader — BCA III Academic Hub</title>
+<meta name="description" content="Official BCA 3rd Semester Study Notes, Master Guides, and Bilingual Academic Handouts — Panjab University."/>
 <meta name="robots" content="noindex"/>
 <link rel="icon" type="image/svg+xml" href="/favicon.svg"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,300..700;1,6..72,300..700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,300..700;1,6..72,300..700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
 <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css"/>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
@@ -19,211 +20,476 @@
 <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/languages/cpp.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/languages/python.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/languages/javascript.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/languages/x86asm.min.js"></script>
+
 <style>
 :root{
   --fs-base: 1.0625;
-  --font-serif:'Newsreader','Instrument Serif',Georgia,serif;
-  --font-sans:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
-  --font-mono:'JetBrains Mono',SFMono-Regular,Menlo,monospace;
-  --bg-page:#0e0e0d;
-  --bg-surface:#161615;
-  --bg-card:#1c1c1a;
-  --bg-glass:rgba(14,14,13,0.92);
-  --border-color:rgba(255,255,255,0.08);
-  --border-strong:rgba(255,255,255,0.14);
-  --text-main:#f0ede6;
-  --text-muted:#a09d96;
-  --text-subtle:#5c5a55;
-  --color-coral:#cc785c;
-  --color-coral-dim:rgba(204,120,92,0.12);
-  --color-coral-border:rgba(204,120,92,0.3);
-  --color-indigo:#818cf8;
-  --color-indigo-dim:rgba(129,140,248,0.08);
-  --color-indigo-border:rgba(129,140,248,0.25);
-  --color-emerald:#34d399;
-  --color-amber:#fbbf24;
-  --radius-sm:8px;
-  --radius-md:12px;
-  --radius-lg:18px;
-  --radius-xl:24px;
+  --font-serif: 'Newsreader', 'Instrument Serif', Georgia, serif;
+  --font-sans: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'JetBrains Mono', SFMono-Regular, Menlo, monospace;
+  
+  --bg-page: #0c0c12;
+  --bg-surface: #14141e;
+  --bg-card: #1b1b28;
+  --bg-card-subtle: #222232;
+  --bg-glass: rgba(12, 12, 18, 0.88);
+  --border-color: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.16);
+  --border-accent: rgba(204, 120, 92, 0.35);
+  
+  --text-main: #f4f4f8;
+  --text-muted: #a4a4b8;
+  --text-subtle: #6c6c82;
+  
+  --color-coral: #cc785c;
+  --color-coral-dim: rgba(204, 120, 92, 0.12);
+  --color-coral-border: rgba(204, 120, 92, 0.3);
+  
+  --color-indigo: #818cf8;
+  --color-indigo-dim: rgba(129, 140, 248, 0.09);
+  --color-indigo-border: rgba(129, 140, 248, 0.25);
+  
+  --color-emerald: #34d399;
+  --color-amber: #fbbf24;
+  --color-blue: #38bdf8;
+  
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 26px;
+  --shadow-card: 0 20px 50px rgba(0, 0, 0, 0.4);
 }
+
 [data-theme="light"]{
-  --bg-page:#faf8f3;
-  --bg-surface:#ffffff;
-  --bg-card:#f4f2ec;
-  --bg-glass:rgba(250,248,243,0.95);
-  --border-color:rgba(20,20,19,0.09);
-  --border-strong:rgba(20,20,19,0.16);
-  --text-main:#1a1916;
-  --text-muted:#5e5c57;
-  --text-subtle:#9e9c97;
-  --color-indigo:#4338ca;
-  --color-indigo-dim:rgba(67,56,202,0.06);
-  --color-indigo-border:rgba(67,56,202,0.2);
+  --bg-page: #f8fafc;
+  --bg-surface: #ffffff;
+  --bg-card: #ffffff;
+  --bg-card-subtle: #f1f5f9;
+  --bg-glass: rgba(248, 250, 252, 0.92);
+  --border-color: rgba(15, 23, 42, 0.08);
+  --border-strong: rgba(15, 23, 42, 0.15);
+  --border-accent: rgba(204, 120, 92, 0.4);
+  
+  --text-main: #0f172a;
+  --text-muted: #475569;
+  --text-subtle: #94a3b8;
+  
+  --color-indigo: #4f46e5;
+  --color-indigo-dim: rgba(79, 70, 229, 0.08);
+  --color-indigo-border: rgba(79, 70, 229, 0.2);
+  --shadow-card: 0 10px 30px rgba(0, 0, 0, 0.06);
 }
+
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{font-size:16px;scroll-behavior:smooth;-webkit-text-size-adjust:none}
-body{font-family:var(--font-sans);background:var(--bg-page);color:var(--text-main);min-height:100vh;line-height:1.6;transition:background .25s,color .25s}
+body{font-family:var(--font-sans);background:var(--bg-page);color:var(--text-main);min-height:100vh;line-height:1.65;transition:background .25s,color .25s}
 
-/* ──────────── READING PROGRESS ──────────── */
-#rp{position:fixed;top:0;left:0;height:2.5px;width:0;z-index:200;background:linear-gradient(90deg,var(--color-coral),var(--color-indigo));border-radius:0 2px 2px 0;transition:width .06s linear}
+/* ──────────── TOP READING PROGRESS BAR ──────────── */
+#rp{position:fixed;top:0;left:0;height:3px;width:0;z-index:9999;background:linear-gradient(90deg,var(--color-coral),#818cf8,#38bdf8);border-radius:0 2px 2px 0;transition:width .06s linear}
 
-/* ──────────── TOP NAV ──────────── */
+/* ──────────── TOP NAVIGATION BAR ──────────── */
 .topbar{
-  position:sticky;top:0;z-index:100;
+  position:sticky;top:0;z-index:1000;
   display:flex;align-items:center;justify-content:space-between;
-  height:50px;padding:0 1.5rem;gap:1rem;
+  height:56px;padding:0 1.5rem;gap:1rem;
   background:var(--bg-glass);
   backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
   border-bottom:1px solid var(--border-color);
 }
-.tb-left{display:flex;align-items:center;gap:.6rem;min-width:0;flex:1}
-.tb-logo{font-family:var(--font-mono);font-size:.78rem;font-weight:700;color:var(--color-coral);letter-spacing:.06em;flex-shrink:0}
-.tb-sep{color:var(--text-subtle);font-size:.72rem;flex-shrink:0}
-.tb-crumb{font-size:.78rem;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
-.tb-crumb strong{color:var(--text-main);font-weight:600}
-.tb-right{display:flex;align-items:center;gap:.35rem;flex-shrink:0}
+.tb-left{display:flex;align-items:center;gap:.75rem;min-width:0;flex:1}
+.tb-back-btn{
+  display:inline-flex;align-items:center;gap:.4rem;
+  padding:.4rem .75rem;border-radius:var(--radius-sm);
+  background:var(--bg-card);border:1px solid var(--border-color);
+  color:var(--text-main);font-size:.78rem;font-weight:600;
+  cursor:pointer;transition:all .15s;text-decoration:none;
+  flex-shrink:0;
+}
+.tb-back-btn:hover{background:var(--color-coral-dim);border-color:var(--color-coral);color:var(--color-coral);transform:translateX(-2px)}
+.tb-logo{font-family:var(--font-mono);font-size:.82rem;font-weight:800;color:var(--color-coral);letter-spacing:.06em;flex-shrink:0;text-decoration:none}
+.tb-sep{color:var(--text-subtle);font-size:.75rem;flex-shrink:0}
+.tb-crumb{font-size:.8rem;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.tb-crumb strong{color:var(--text-main);font-weight:700}
+.tb-right{display:flex;align-items:center;gap:.45rem;flex-shrink:0}
 
 /* Toolbar buttons */
 .tb-btn{
-  display:flex;align-items:center;justify-content:center;gap:.3rem;
-  height:30px;padding:0 .7rem;
+  display:inline-flex;align-items:center;justify-content:center;gap:.35rem;
+  height:32px;padding:0 .75rem;
   border:1px solid var(--border-color);border-radius:var(--radius-sm);
-  background:transparent;color:var(--text-muted);
-  font-size:.72rem;font-family:var(--font-sans);font-weight:500;
+  background:var(--bg-card);color:var(--text-muted);
+  font-size:.75rem;font-family:var(--font-sans);font-weight:600;
   cursor:pointer;transition:all .15s;white-space:nowrap;
 }
 .tb-btn:hover{border-color:var(--color-coral);color:var(--color-coral);background:var(--color-coral-dim)}
-.tb-btn.icon-only{width:30px;padding:0;border-radius:var(--radius-sm)}
 .tb-btn.active{border-color:var(--color-indigo);color:var(--color-indigo);background:var(--color-indigo-dim)}
+.tb-btn.icon-only{width:32px;padding:0}
+.tb-btn.pdf-btn{background:var(--color-coral);color:#fff;border-color:var(--color-coral)}
+.tb-btn.pdf-btn:hover{background:#b8654a;border-color:#b8654a;color:#fff;transform:translateY(-1px);box-shadow:0 4px 12px rgba(204,120,92,0.3)}
+
+/* Language Switcher */
+.lang-group{display:flex;align-items:center;border:1px solid var(--border-color);border-radius:var(--radius-sm);overflow:hidden;background:var(--bg-card)}
+.lang-btn{padding:0 .55rem;height:32px;background:transparent;border:none;color:var(--text-subtle);font-size:.72rem;font-weight:700;cursor:pointer;transition:all .15s}
+.lang-btn:hover{color:var(--text-main)}
+.lang-btn.active{background:var(--color-indigo-dim);color:var(--color-indigo);font-weight:800}
 
 /* Font size control */
-.fs-control{display:flex;align-items:center;border:1px solid var(--border-color);border-radius:var(--radius-sm);overflow:hidden}
-.fs-btn{width:28px;height:30px;background:transparent;border:none;border-radius:0;color:var(--text-muted);font-size:.85rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.fs-control{display:flex;align-items:center;border:1px solid var(--border-color);border-radius:var(--radius-sm);overflow:hidden;background:var(--bg-card)}
+.fs-btn{width:28px;height:32px;background:transparent;border:none;color:var(--text-muted);font-size:.85rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
 .fs-btn:hover{background:var(--color-coral-dim);color:var(--color-coral)}
 .fs-btn:first-child{border-right:1px solid var(--border-color)}
 .fs-btn:last-child{border-left:1px solid var(--border-color)}
-.fs-label{padding:0 .4rem;font-size:.7rem;font-family:var(--font-mono);color:var(--text-subtle);min-width:28px;text-align:center;line-height:30px}
+.fs-label{padding:0 .4rem;font-size:.7rem;font-family:var(--font-mono);color:var(--text-subtle);min-width:32px;text-align:center;line-height:32px}
 
-/* ──────────── LOADING ──────────── */
+/* ──────────── LOADING & ERROR STATES ──────────── */
 #ls{position:fixed;inset:0;background:var(--bg-page);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.25rem;z-index:999}
-.ls-ring{width:44px;height:44px;border:2.5px solid var(--border-color);border-top-color:var(--color-coral);border-radius:50%;animation:spin .75s linear infinite}
-.ls-text{font-family:var(--font-mono);font-size:.8rem;color:var(--text-subtle);letter-spacing:.04em}
+.ls-ring{width:46px;height:46px;border:3px solid var(--border-color);border-top-color:var(--color-coral);border-radius:50%;animation:spin .75s linear infinite}
+.ls-text{font-family:var(--font-mono);font-size:.85rem;color:var(--text-subtle);letter-spacing:.04em}
 @keyframes spin{to{transform:rotate(360deg)}}
 
-/* ──────────── LAYOUT ──────────── */
-.reader-wrap{max-width:760px;margin:0 auto;padding:3rem 2rem 8rem}
-
-/* ──────────── HERO HEADER ──────────── */
-.note-hero{margin-bottom:2.75rem}
-.hero-badge-row{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;margin-bottom:1.25rem}
-.badge{display:inline-flex;align-items:center;gap:.3rem;padding:.24rem .7rem;border-radius:999px;font-size:.7rem;font-weight:700;letter-spacing:.03em;border:1px solid}
-.badge-unit{color:var(--color-coral);border-color:var(--color-coral-border);background:var(--color-coral-dim)}
-.badge-author{color:var(--color-indigo);border-color:var(--color-indigo-border);background:var(--color-indigo-dim)}
-.badge-meta{color:var(--text-subtle);border-color:var(--border-color);background:var(--bg-card)}
-
-.note-title{
-  font-family:var(--font-serif);
-  font-size:clamp(2.25rem,6vw,3.25rem);
-  font-weight:700;line-height:1.15;
-  letter-spacing:-.03em;
-  color:var(--text-main);
-  margin-bottom:1.25rem;
+/* ──────────── MAIN LAYOUT & CONTAINER ──────────── */
+.reader-wrap{
+  max-width: 960px;
+  margin: 2rem auto;
+  padding: 2.5rem 2.5rem 8rem;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-card);
+  position: relative;
 }
-.note-tags-row{display:flex;gap:.35rem;flex-wrap:wrap;margin-bottom:2rem}
-.note-tag{
-  font-family:var(--font-mono);
-  font-size:.65rem;font-weight:600;letter-spacing:.04em;
-  padding:.2rem .55rem;border-radius:5px;
-  background:var(--bg-card);border:1px solid var(--border-color);color:var(--text-subtle);
-}
-.hero-divider{height:1px;background:linear-gradient(90deg,var(--color-coral-border),transparent);margin-bottom:2.5rem;border:none}
 
-/* ──────────── BODY TEXT ──────────── */
-.note-body{
-  font-family:var(--font-serif);
-  font-size:calc(var(--fs-base) * 1rem);
-  line-height:1.85;color:var(--text-muted);
-  transition:font-size .2s;
+/* ──────────── DOCUMENT MASTER HEADER ──────────── */
+.doc-header{
+  text-align: center;
+  margin-bottom: 3rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid var(--border-color);
+  position: relative;
 }
-.note-body > p{margin-bottom:1.4rem}
-.note-body h1{font-family:var(--font-serif);font-size:2rem;font-weight:700;color:var(--text-main);margin:2.75rem 0 .8rem;line-height:1.2;letter-spacing:-.025em;border-bottom:1px solid var(--border-color);padding-bottom:.6rem}
-.note-body h2{font-family:var(--font-serif);font-size:1.5rem;font-weight:600;color:var(--text-main);margin:2.25rem 0 .65rem;letter-spacing:-.02em}
-.note-body h3{font-family:var(--font-sans);font-size:1.1rem;font-weight:700;color:var(--text-main);margin:1.75rem 0 .45rem}
-.note-body h4{font-family:var(--font-sans);font-size:.75rem;font-weight:800;color:var(--color-coral);margin:1.5rem 0 .4rem;text-transform:uppercase;letter-spacing:.1em}
-.note-body strong{color:var(--text-main);font-weight:700}
-.note-body em{color:var(--text-main);font-style:italic}
-.note-body a{color:var(--color-coral);text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px}
-.note-body a:hover{text-decoration-thickness:2px}
-.note-body hr{border:none;border-top:1px solid var(--border-color);margin:2.25rem 0}
-.note-body ul{margin:.6rem 0 1.25rem 1.6rem;list-style:disc}
-.note-body ol{margin:.6rem 0 1.25rem 1.6rem;list-style:decimal}
-.note-body li{margin-bottom:.45rem;color:var(--text-muted)}
-.note-body blockquote{border-left:3px solid var(--color-coral);padding:.65rem 1.25rem;margin:1.75rem 0;background:var(--color-coral-dim);border-radius:0 var(--radius-md) var(--radius-md) 0}
-.note-body code{font-family:var(--font-mono);background:var(--color-indigo-dim);border:1px solid var(--color-indigo-border);padding:.12rem .4rem;border-radius:5px;font-size:.82em;color:var(--color-indigo)}
+.doc-badge-pill{
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  background: var(--color-indigo-dim);
+  color: var(--color-indigo);
+  border: 1px solid var(--color-indigo-border);
+  font-size: .72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .15em;
+  padding: .35rem 1.1rem;
+  border-radius: 999px;
+  margin-bottom: 1rem;
+}
+.doc-title{
+  font-family: var(--font-serif);
+  font-size: clamp(2.25rem, 5.5vw, 3.5rem);
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -.03em;
+  color: var(--text-main);
+  margin-bottom: .6rem;
+}
+.doc-subtitle{
+  font-size: 1.15rem;
+  font-weight: 500;
+  color: var(--color-coral);
+  font-style: italic;
+  margin-bottom: 1.25rem;
+}
+.doc-meta-row{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .85rem;
+  font-size: .75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--text-subtle);
+  flex-wrap: wrap;
+}
+
+/* ──────────── TOPIC / SECTION BLOCKS ──────────── */
+.topic-card{
+  margin-bottom: 3.5rem;
+  padding-bottom: 2.5rem;
+  border-bottom: 1px dashed var(--border-color);
+}
+.topic-card:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
+
+.topic-header{
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+.topic-number{
+  width: 42px;
+  height: 42px;
+  background: #0f172a;
+  color: #ffffff;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  font-size: 1.15rem;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+}
+[data-theme="light"] .topic-number {
+  background: #0f172a;
+  color: #ffffff;
+}
+.topic-title-wrap{flex:1;min-width:0}
+.topic-meta-tag{
+  font-size: .72rem;
+  font-weight: 800;
+  color: var(--color-coral);
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  margin-bottom: .25rem;
+}
+.topic-title{
+  font-family: var(--font-serif);
+  font-size: clamp(1.4rem, 3vw, 1.85rem);
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--text-main);
+  letter-spacing: -.01em;
+}
+
+/* ──────────── BILINGUAL MASTER GRID (BCA 2ND SEM STYLE) ──────────── */
+.bilingual-grid{
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.75rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 1.75rem;
+  margin: 1.25rem 0;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+@media(max-width:860px){
+  .bilingual-grid{grid-template-columns:1fr;gap:1.5rem;padding:1.25rem}
+}
+
+.col-english{
+  border-right: 1px solid var(--border-color);
+  padding-right: 1.5rem;
+}
+@media(max-width:860px){
+  .col-english{border-right:none;border-bottom:1px solid var(--border-color);padding-right:0;padding-bottom:1.5rem}
+}
+
+.col-punjabi{
+  padding-left: .25rem;
+}
+
+.col-header{
+  font-size: .8rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  padding-bottom: .5rem;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+}
+.col-header.en{color:#818cf8}
+.col-header.pa{color:#38bdf8}
+[data-theme="light"] .col-header.en{color:#4f46e5}
+[data-theme="light"] .col-header.pa{color:#0284c7}
+
+/* ──────────── MARKDOWN CONTENT & TYPOGRAPHY ──────────── */
+.prose-content{
+  font-family: var(--font-serif);
+  font-size: calc(var(--fs-base) * 1rem);
+  line-height: 1.85;
+  color: var(--text-muted);
+  transition: font-size .15s;
+}
+.prose-content > p{margin-bottom:1.35rem}
+.prose-content h1{font-family:var(--font-serif);font-size:1.85rem;font-weight:700;color:var(--text-main);margin:2.25rem 0 .75rem;line-height:1.2;border-bottom:1px solid var(--border-color);padding-bottom:.5rem}
+.prose-content h2{font-family:var(--font-serif);font-size:1.45rem;font-weight:700;color:var(--text-main);margin:1.85rem 0 .6rem}
+.prose-content h3{font-family:var(--font-sans);font-size:1.05rem;font-weight:700;color:var(--text-main);margin:1.5rem 0 .4rem}
+.prose-content h4{font-family:var(--font-sans);font-size:.78rem;font-weight:800;color:var(--color-coral);margin:1.25rem 0 .35rem;text-transform:uppercase;letter-spacing:.08em}
+.prose-content strong{color:var(--text-main);font-weight:700}
+.prose-content em{color:var(--text-main);font-style:italic}
+.prose-content a{color:var(--color-coral);text-decoration:underline;text-underline-offset:3px}
+.prose-content hr{border:none;border-top:1px solid var(--border-color);margin:2rem 0}
+.prose-content ul{margin:.5rem 0 1.25rem 1.6rem;list-style:disc}
+.prose-content ol{margin:.5rem 0 1.25rem 1.6rem;list-style:decimal}
+.prose-content li{margin-bottom:.4rem;color:var(--text-muted)}
+.prose-content blockquote{border-left:3px solid var(--color-coral);padding:.65rem 1.25rem;margin:1.5rem 0;background:var(--color-coral-dim);border-radius:0 var(--radius-sm) var(--radius-sm) 0}
+.prose-content code{font-family:var(--font-mono);background:var(--color-indigo-dim);border:1px solid var(--color-indigo-border);padding:.12rem .4rem;border-radius:5px;font-size:.85em;color:var(--color-indigo)}
+
+/* Language filtering */
+[data-lang-mode="en"] .col-punjabi{display:none!important}
+[data-lang-mode="en"] .col-english{border-right:none!important;padding-right:0!important;grid-column:1/-1!important}
+[data-lang-mode="pa"] .col-english{display:none!important}
+[data-lang-mode="pa"] .col-punjabi{border-left:none!important;padding-left:0!important;grid-column:1/-1!important}
 
 /* ──────────── CODE BLOCKS ──────────── */
-.code-wrap{margin:2rem 0;border-radius:var(--radius-lg);overflow:hidden;border:1px solid var(--border-color)}
-.code-head{display:flex;align-items:center;justify-content:space-between;padding:.55rem 1rem;background:#0d1117;border-bottom:1px solid rgba(255,255,255,0.06)}
-.code-lang{font-family:var(--font-mono);font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;display:flex;align-items:center;gap:.4rem}
-.code-lang .dot{width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.7}
-.code-copy-btn{display:flex;align-items:center;gap:.3rem;padding:.2rem .55rem;border-radius:5px;background:transparent;border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.4);font-size:.68rem;font-family:var(--font-sans);cursor:pointer;transition:all .15s}
-.code-copy-btn:hover{border-color:var(--color-indigo);color:var(--color-indigo)}
-.code-wrap pre{margin:0;padding:1.25rem;overflow-x:auto;font-family:var(--font-mono);font-size:.875rem;line-height:1.7;background:#0d1117}
-.code-wrap code{background:transparent;border:none;padding:0;border-radius:0;font-size:inherit;color:inherit}
+.code-wrap{margin:1.75rem 0;border-radius:var(--radius-md);overflow:hidden;border:1px solid var(--border-color);background:#0d1117}
+.code-head{display:flex;align-items:center;justify-content:space-between;padding:.55rem 1rem;background:#161b22;border-bottom:1px solid rgba(255,255,255,0.06)}
+.code-lang{font-family:var(--font-mono);font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;display:flex;align-items:center;gap:.4rem}
+.code-lang .dot{width:6px;height:6px;border-radius:50%;background:currentColor}
+.code-copy-btn{display:flex;align-items:center;gap:.3rem;padding:.2rem .6rem;border-radius:5px;background:transparent;border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.6);font-size:.7rem;font-family:var(--font-sans);cursor:pointer;transition:all .15s}
+.code-copy-btn:hover{border-color:var(--color-indigo);color:#fff;background:rgba(255,255,255,0.06)}
+.code-wrap pre{margin:0;padding:1.25rem;overflow-x:auto;font-family:var(--font-mono);font-size:.875rem;line-height:1.7;color:#e6edf3}
+.code-wrap code{background:transparent;border:none;padding:0;font-size:inherit;color:inherit}
 
 /* ──────────── MERMAID DIAGRAMS ──────────── */
-.mermaid-wrap{margin:2.25rem 0;border-radius:var(--radius-xl);border:1px solid var(--color-indigo-border);overflow:hidden;background:var(--bg-surface)}
-.mermaid-head{display:flex;align-items:center;gap:.5rem;padding:.7rem 1.2rem;background:linear-gradient(90deg,var(--color-indigo-dim),transparent);border-bottom:1px solid var(--color-indigo-border)}
-.mermaid-head-label{font-size:.68rem;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--color-indigo);font-family:var(--font-sans)}
-.mermaid-body{padding:1.75rem;overflow-x:auto;min-height:100px;display:flex;align-items:center;justify-content:center;background:var(--bg-surface)}
+.mermaid-wrap{margin:2rem 0;border-radius:var(--radius-lg);border:1px solid var(--color-indigo-border);overflow:hidden;background:var(--bg-surface)}
+.mermaid-head{display:flex;align-items:center;gap:.5rem;padding:.65rem 1.2rem;background:var(--color-indigo-dim);border-bottom:1px solid var(--color-indigo-border)}
+.mermaid-head-label{font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--color-indigo);font-family:var(--font-sans)}
+.mermaid-body{padding:1.75rem;overflow-x:auto;min-height:90px;display:flex;align-items:center;justify-content:center;background:var(--bg-surface)}
 .mermaid-body svg{max-width:100%;height:auto;display:block;margin:0 auto}
-.mermaid-rendering{display:flex;align-items:center;gap:.5rem;font-size:.78rem;color:var(--text-subtle);font-family:var(--font-mono)}
-.mermaid-dot{width:6px;height:6px;border-radius:50%;background:var(--color-indigo);animation:pulse 1s ease infinite alternate}
-@keyframes pulse{to{opacity:.25}}
 
-/* ──────────── CALLOUT BLOCKS ──────────── */
-.callout{display:flex;align-items:flex-start;gap:.75rem;padding:1rem 1.25rem;margin:1.75rem 0;border-radius:var(--radius-md);border:1px solid;font-family:var(--font-sans);font-size:.88rem;line-height:1.65}
-.callout.tip{border-color:rgba(52,211,153,.2);background:rgba(52,211,153,.04);color:#6ee7b7}
-.callout.warn{border-color:rgba(251,191,36,.2);background:rgba(251,191,36,.04);color:#fde68a}
+/* ──────────── CALLOUT BOXES ──────────── */
+.callout{display:flex;align-items:flex-start;gap:.85rem;padding:1rem 1.25rem;margin:1.6rem 0;border-radius:var(--radius-md);border:1px solid;font-family:var(--font-sans);font-size:.9rem;line-height:1.65}
+.callout.tip{border-color:rgba(52,211,153,.3);background:rgba(52,211,153,.06);color:#34d399}
+.callout.warn{border-color:rgba(251,191,36,.3);background:rgba(251,191,36,.06);color:#fbbf24}
 .callout.info{border-color:var(--color-indigo-border);background:var(--color-indigo-dim);color:var(--color-indigo)}
 .callout.note{border-color:var(--border-color);background:var(--bg-card);color:var(--text-muted)}
-.callout-icon{font-size:1rem;flex-shrink:0;margin-top:.1rem}
+.callout-icon{font-size:1.15rem;flex-shrink:0;margin-top:.05rem}
 
 /* ──────────── TABLES ──────────── */
-.table-wrap{overflow-x:auto;margin:2rem 0;border-radius:var(--radius-lg);border:1px solid var(--border-color)}
+.table-wrap{overflow-x:auto;margin:1.85rem 0;border-radius:var(--radius-md);border:1px solid var(--border-color)}
 .note-table{width:100%;border-collapse:collapse;font-family:var(--font-sans);font-size:.875rem}
-.note-table thead th{padding:.75rem 1rem;text-align:left;background:var(--bg-card);border-bottom:1px solid var(--border-strong);font-weight:700;color:var(--text-main);font-size:.7rem;text-transform:uppercase;letter-spacing:.07em}
+.note-table thead th{padding:.75rem 1rem;text-align:left;background:var(--bg-card);border-bottom:1px solid var(--border-strong);font-weight:700;color:var(--text-main);font-size:.72rem;text-transform:uppercase;letter-spacing:.08em}
 .note-table tbody td{padding:.7rem 1rem;border-bottom:1px solid var(--border-color);color:var(--text-muted)}
 .note-table tbody tr:last-child td{border-bottom:none}
 .note-table tbody tr:hover td{background:rgba(255,255,255,0.02)}
 
-/* ──────────── VISUAL ENGINE FRAME ──────────── */
-.vis-frame{margin:2.25rem 0;border-radius:var(--radius-xl);border:1px solid var(--color-coral-border);overflow:hidden}
+/* ──────────── INTERACTIVE VISUAL ENGINE MOUNTS ──────────── */
+.vis-frame{margin:2.25rem 0;border-radius:var(--radius-xl);border:1px solid var(--color-coral-border);overflow:hidden;background:var(--bg-surface)}
 .vis-head{display:flex;align-items:center;gap:.5rem;padding:.7rem 1.2rem;background:linear-gradient(90deg,var(--color-coral-dim),transparent);border-bottom:1px solid var(--color-coral-border)}
-.vis-head-badge{font-size:.65rem;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--color-coral);font-family:var(--font-sans)}
-.vis-head-dot{width:5px;height:5px;border-radius:50%;background:var(--color-coral);animation:pulse 1s ease infinite alternate}
+.vis-head-badge{font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--color-coral);font-family:var(--font-sans)}
+.vis-head-dot{width:6px;height:6px;border-radius:50%;background:var(--color-coral);box-shadow:0 0 8px var(--color-coral);animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
 
-/* ──────────── FOOTER NAV ──────────── */
-.reader-footer{max-width:760px;margin:0 auto;padding:0 2rem 5rem;display:flex;gap:1rem}
-.footer-btn{flex:1;padding:.9rem 1.25rem;border:1px solid var(--border-color);border-radius:var(--radius-lg);background:var(--bg-card);cursor:pointer;font-family:var(--font-sans);font-size:.85rem;text-align:left;transition:all .2s;display:flex;flex-direction:column;gap:.22rem}
-.footer-btn:hover{border-color:var(--color-coral-border);background:var(--color-coral-dim)}
-.footer-btn .dir{font-size:.65rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--color-coral)}
-.footer-btn .title{font-weight:600;color:var(--text-muted);font-size:.88rem}
-.footer-btn.next{text-align:right}
+/* ──────────── FOOTER NAVIGATION CARDS ──────────── */
+.reader-footer{max-width:960px;margin:2rem auto 5rem;display:flex;gap:1.25rem}
+.footer-nav-card{
+  flex:1;padding:1.15rem 1.5rem;
+  border:1px solid var(--border-color);border-radius:var(--radius-lg);
+  background:var(--bg-surface);cursor:pointer;
+  font-family:var(--font-sans);text-align:left;
+  transition:all .2s;display:flex;flex-direction:column;gap:.3rem;
+  box-shadow:0 4px 16px rgba(0,0,0,0.1);
+  text-decoration:none;color:inherit;
+}
+.footer-nav-card:hover{border-color:var(--color-coral);background:var(--color-coral-dim);transform:translateY(-2px)}
+.footer-nav-card.next{text-align:right}
+.footer-nav-dir{font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--color-coral)}
+.footer-nav-title{font-weight:700;color:var(--text-main);font-size:.95rem}
 
-/* ──────────── FLOAT TOC ──────────── */
-.float-toc{position:fixed;right:1.5rem;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:.3rem;z-index:50;opacity:0;pointer-events:none;transition:opacity .3s}
-.float-toc.visible{opacity:1;pointer-events:all}
-.toc-dot{width:6px;height:6px;border-radius:50%;background:var(--border-color);cursor:pointer;transition:all .2s}
-.toc-dot.active{background:var(--color-coral);transform:scale(1.5)}
-.toc-dot:hover{background:var(--text-subtle)}
+/* ──────────── FLOATING TABLE OF CONTENTS (TOC) ──────────── */
+.floating-toc{
+  position:fixed;right:2rem;top:50%;transform:translateY(-50%);
+  display:flex;flex-direction:column;gap:.45rem;
+  z-index:50;background:var(--bg-glass);backdrop-filter:blur(16px);
+  padding:.75rem .6rem;border-radius:999px;border:1px solid var(--border-color);
+  box-shadow:0 8px 30px rgba(0,0,0,0.25);
+  opacity:0;pointer-events:none;transition:opacity .3s;
+}
+.floating-toc.visible{opacity:1;pointer-events:all}
+.toc-dot{
+  width:8px;height:8px;border-radius:50%;background:var(--text-subtle);
+  cursor:pointer;transition:all .2s;
+}
+.toc-dot.active{background:var(--color-coral);transform:scale(1.6);box-shadow:0 0 8px var(--color-coral)}
+.toc-dot:hover{background:var(--text-main)}
 
-@media(max-width:640px){
-  .reader-wrap{padding:1.5rem 1rem 6rem}
+@media(max-width:1180px){
+  .floating-toc{display:none}
+}
+@media(max-width:768px){
+  .reader-wrap{margin:1rem .75rem 5rem;padding:1.5rem 1.25rem 5rem;border-radius:var(--radius-lg)}
   .tb-crumb,.fs-label{display:none}
-  .reader-footer{flex-direction:column}
-  .float-toc{display:none}
+  .reader-footer{flex-direction:column;padding:0 .75rem}
+}
+
+/* ──────────── PRINT / PDF EXPORT MEDIA QUERY ──────────── */
+@media print{
+  #rp, .topbar, .floating-toc, .reader-footer, .code-copy-btn, .fs-control, .lang-group {
+    display: none !important;
+  }
+  
+  body {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    font-size: 11pt !important;
+    line-height: 1.5 !important;
+  }
+  
+  .reader-wrap {
+    max-width: 100% !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    background: #ffffff !important;
+  }
+  
+  .doc-header {
+    border-bottom: 2px solid #0f172a !important;
+    padding-bottom: 1.5rem !important;
+    margin-bottom: 2rem !important;
+  }
+  
+  .doc-title {
+    color: #0f172a !important;
+    font-size: 26pt !important;
+  }
+  
+  .doc-subtitle {
+    color: #4f46e5 !important;
+  }
+  
+  .bilingual-grid {
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    box-shadow: none !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    margin-bottom: 2rem !important;
+  }
+  
+  .topic-card {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+  
+  .topic-number {
+    background: #0f172a !important;
+    color: #ffffff !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  
+  .prose-content {
+    color: #1e293b !important;
+  }
+  
+  .code-wrap, .mermaid-wrap, .table-wrap, .vis-frame {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    border: 1px solid #cbd5e1 !important;
+  }
 }
 </style>
 </head>
@@ -231,315 +497,609 @@ body{font-family:var(--font-sans);background:var(--bg-page);color:var(--text-mai
 
 <div id="rp"></div>
 
-<div id="ls"><div class="ls-ring"></div><div class="ls-text">Loading note...</div></div>
+<div id="ls">
+  <div class="ls-ring"></div>
+  <div class="ls-text">Loading academic study notes...</div>
+</div>
 
+<!-- Sticky Top Navbar -->
 <nav class="topbar" id="topbar" style="display:none">
   <div class="tb-left">
-    <span class="tb-logo">BCA///</span>
+    <button class="tb-back-btn" onclick="handleBackNavigation()" title="Back to Dashboard">
+      ← <span>Back</span>
+    </button>
+    <a href="/" class="tb-logo">BCA///</a>
     <span class="tb-sep">›</span>
-    <span class="tb-crumb" id="tb-crumb">Digital Notes</span>
+    <span class="tb-crumb" id="tb-crumb">Study Guide</span>
   </div>
   <div class="tb-right">
-    <div class="fs-control" title="Font size">
-      <button class="fs-btn" onclick="changeFs(-1)" title="Smaller">A−</button>
-      <span class="fs-label" id="fs-label">100%</span>
-      <button class="fs-btn" onclick="changeFs(1)" title="Larger">A+</button>
+    <!-- Language Toggle -->
+    <div class="lang-group" id="lang-group" title="Language view">
+      <button class="lang-btn active" data-lang="all" onclick="setLangMode('all')">All</button>
+      <button class="lang-btn" data-lang="en" onclick="setLangMode('en')">EN</button>
+      <button class="lang-btn" data-lang="pa" onclick="setLangMode('pa')">ਪੰਜਾਬੀ</button>
     </div>
-    <button class="tb-btn" onclick="history.back()">← Back</button>
-    <button class="tb-btn" id="copy-btn" onclick="copyNote()">📋 Copy</button>
-    <button class="tb-btn" onclick="window.print()">🖨️</button>
-    <button class="tb-btn icon-only" id="theme-btn" title="Toggle theme" onclick="toggleTheme()">☀️</button>
+
+    <!-- Font Size Controls -->
+    <div class="fs-control" title="Adjust text size">
+      <button class="fs-btn" onclick="changeFs(-1)" title="Smaller font">A−</button>
+      <span class="fs-label" id="fs-label">100%</span>
+      <button class="fs-btn" onclick="changeFs(1)" title="Larger font">A+</button>
+    </div>
+
+    <!-- Download PDF / Print Button -->
+    <button class="tb-btn pdf-btn" onclick="downloadPdf()" title="Download PDF or Print Handout">
+      📥 <span>Download PDF</span>
+    </button>
+
+    <!-- Copy Note Text -->
+    <button class="tb-btn" id="copy-btn" onclick="copyNoteContent()" title="Copy Markdown & Notes">
+      📋 <span class="hide-mobile">Copy</span>
+    </button>
+
+    <!-- Theme Toggle -->
+    <button class="tb-btn icon-only" id="theme-btn" title="Toggle dark/light theme" onclick="toggleTheme()">☀️</button>
   </div>
 </nav>
 
+<!-- Floating Table of Contents Jump Links -->
+<div class="floating-toc" id="floating-toc"></div>
+
+<!-- Main Reader Document Content -->
 <main id="main" style="display:none">
   <div class="reader-wrap">
-    <header class="note-hero">
-      <div class="hero-badge-row" id="badge-row"></div>
-      <h1 class="note-title" id="note-title">Loading...</h1>
-      <div class="note-tags-row" id="note-tags"></div>
-      <hr class="hero-divider"/>
+    <header class="doc-header" id="doc-header">
+      <div class="doc-badge-pill" id="doc-badge">ANTIGRAVITY • BILINGUAL STUDY EDITION</div>
+      <h1 class="doc-title" id="doc-title">Loading Note...</h1>
+      <p class="doc-subtitle" id="doc-subtitle">Complete Master Study Guide</p>
+      <div class="doc-meta-row" id="doc-meta"></div>
     </header>
-    <div class="note-body" id="note-body"></div>
+
+    <div id="content-container"></div>
   </div>
+
+  <!-- Footer Navigation -->
   <footer class="reader-footer" id="reader-footer" style="display:none">
-    <button class="footer-btn" id="prev-btn" style="display:none">
-      <span class="dir">← Previous</span>
-      <span class="title" id="prev-title"></span>
-    </button>
-    <button class="footer-btn next" id="next-btn" style="display:none">
-      <span class="dir">Next →</span>
-      <span class="title" id="next-title"></span>
-    </button>
+    <a class="footer-nav-card" id="prev-btn" style="display:none">
+      <span class="footer-nav-dir">← Previous Topic</span>
+      <span class="footer-nav-title" id="prev-title"></span>
+    </a>
+    <a class="footer-nav-card next" id="next-btn" style="display:none">
+      <span class="footer-nav-dir">Next Topic →</span>
+      <span class="footer-nav-title" id="next-title"></span>
+    </a>
   </footer>
 </main>
 
+<script src="/syllabus-data.js"></script>
 <script src="/visuals-engine.js"></script>
 <script>
-const FIREBASE_DB='https://bca2nd-5c622-default-rtdb.firebaseio.com/bca3';
-let _notes=[],_key=null,_fsSt=0;
-const FS_STEPS=[0.85,0.92,1.0,1.0625,1.15,1.25,1.4];
-let _fsIdx=2; // default 1.0
+const FIREBASE_DB = 'https://bca2nd-5c622-default-rtdb.firebaseio.com/bca3';
+let _notes = [];
+let _currentKey = null;
+let _currentSubjectId = null;
+let _mode = 'single'; // 'single' | 'master'
 
-// ── Theme ──
-const savedTheme=localStorage.getItem('bca_hub_theme')||'dark';
-document.documentElement.setAttribute('data-theme',savedTheme);
-document.addEventListener('DOMContentLoaded',()=>{
-  const btn=document.getElementById('theme-btn');
-  if(btn) btn.textContent=savedTheme==='dark'?'☀️':'🌙';
+const FS_STEPS = [0.85, 0.92, 1.0, 1.0625, 1.15, 1.25, 1.4];
+let _fsIdx = 2; // Default: 100%
+
+// ── Theme Initialization ──
+const savedTheme = localStorage.getItem('bca_hub_theme') || 'dark';
+document.documentElement.setAttribute('data-theme', savedTheme);
+document.addEventListener('DOMContentLoaded', () => {
+  const btn = document.getElementById('theme-btn');
+  if (btn) btn.textContent = savedTheme === 'dark' ? '☀️' : '🌙';
 });
 
-function toggleTheme(){
-  const c=document.documentElement.getAttribute('data-theme');
-  const n=c==='dark'?'light':'dark';
-  document.documentElement.setAttribute('data-theme',n);
-  localStorage.setItem('bca_hub_theme',n);
-  document.getElementById('theme-btn').textContent=n==='dark'?'☀️':'🌙';
-  mermaid.initialize({theme:n==='dark'?'dark':'base',startOnLoad:false,securityLevel:'loose'});
-  document.querySelectorAll('.mermaid-body').forEach(el=>{
-    const src=el.querySelector('.mermaid-src');
-    if(src) renderMermaidNode(src,el);
+function toggleTheme() {
+  const cur = document.documentElement.getAttribute('data-theme');
+  const next = cur === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('bca_hub_theme', next);
+  document.getElementById('theme-btn').textContent = next === 'dark' ? '☀️' : '🌙';
+  mermaid.initialize({ theme: next === 'dark' ? 'dark' : 'base', startOnLoad: false, securityLevel: 'loose' });
+  document.querySelectorAll('.mermaid-body').forEach(el => {
+    const src = el.querySelector('.mermaid-src');
+    if (src) renderMermaidNode(src, el);
   });
 }
 
-// ── Font Size ──
-function changeFs(dir){
-  _fsIdx=Math.max(0,Math.min(FS_STEPS.length-1,_fsIdx+dir));
-  const v=FS_STEPS[_fsIdx];
-  document.getElementById('note-body').style.fontSize=(v*16)+'px';
-  document.getElementById('fs-label').textContent=Math.round(v*100)+'%';
+// ── Font Size Scaling ──
+function changeFs(dir) {
+  _fsIdx = Math.max(0, Math.min(FS_STEPS.length - 1, _fsIdx + dir));
+  const v = FS_STEPS[_fsIdx];
+  document.querySelectorAll('.prose-content').forEach(el => {
+    el.style.fontSize = (v * 16) + 'px';
+  });
+  document.getElementById('fs-label').textContent = Math.round(v * 100) + '%';
 }
 
-// ── Progress bar ──
-window.addEventListener('scroll',()=>{
-  const s=document.documentElement.scrollTop;
-  const t=document.documentElement.scrollHeight-window.innerHeight;
-  document.getElementById('rp').style.width=(t>0?(s/t)*100:0)+'%';
+// ── Reading Progress Bar ──
+window.addEventListener('scroll', () => {
+  const s = document.documentElement.scrollTop;
+  const t = document.documentElement.scrollHeight - window.innerHeight;
+  document.getElementById('rp').style.width = (t > 0 ? (s / t) * 100 : 0) + '%';
+  updateActiveTocDot();
 });
 
-// ── Mermaid init ──
+// ── Language Filter ──
+function setLangMode(mode) {
+  document.querySelectorAll('.lang-btn').forEach(b => {
+    b.classList.toggle('active', b.getAttribute('data-lang') === mode);
+  });
+  document.getElementById('main').setAttribute('data-lang-mode', mode);
+}
+
+// ── Smart Back Navigation ──
+function handleBackNavigation() {
+  const p = new URLSearchParams(location.search);
+  const subj = p.get('subject') || _currentSubjectId || '';
+  if (window.history.length > 1 && document.referrer && document.referrer.includes(window.location.host)) {
+    window.history.back();
+  } else {
+    window.location.href = subj ? `/?subject=${encodeURIComponent(subj)}` : '/';
+  }
+}
+
+// Keyboard shortcuts: Escape to go back, Arrow keys for prev/next
+window.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && !e.target.matches('input, textarea')) {
+    handleBackNavigation();
+  }
+});
+
+// ── Download PDF / Print ──
+function downloadPdf() {
+  const oldTitle = document.title;
+  const title = document.getElementById('doc-title').textContent || 'BCA_III_Notes';
+  document.title = `${title.trim()} — BCA III Handout`;
+  window.print();
+  setTimeout(() => { document.title = oldTitle; }, 1000);
+}
+
+// ── Copy Full Note Text ──
+function copyNoteContent() {
+  const container = document.getElementById('content-container');
+  if (!container) return;
+  navigator.clipboard.writeText(container.innerText).then(() => {
+    const btn = document.getElementById('copy-btn');
+    const orig = btn.innerHTML;
+    btn.innerHTML = '✅ <span>Copied!</span>';
+    setTimeout(() => { btn.innerHTML = orig; }, 2000);
+  });
+}
+
+// ── Mermaid Initialization ──
 mermaid.initialize({
-  theme:savedTheme==='dark'?'dark':'base',
-  startOnLoad:false,securityLevel:'loose',
-  fontFamily:'Inter,sans-serif',fontSize:14,
+  theme: savedTheme === 'dark' ? 'dark' : 'base',
+  startOnLoad: false,
+  securityLevel: 'loose',
+  fontFamily: 'Plus Jakarta Sans, Inter, sans-serif',
+  fontSize: 14,
 });
 
-// ── Main init ──
-async function init(){
-  const p=new URLSearchParams(location.search);
-  _key=p.get('id');
-  if(!_key){showErr('No note ID. Please go back and try again.');return;}
-  try{
-    const r=await fetch(`${FIREBASE_DB}/notes.json`);
-    const raw=await r.json();
-    if(raw&&typeof raw==='object'){
-      _notes=Object.entries(raw).map(([k,v])=>({...v,fbKey:k})).sort((a,b)=>(b.timestamp||0)-(a.timestamp||0));
+// ── Main Page Initialization ──
+async function init() {
+  const p = new URLSearchParams(location.search);
+  _currentKey = p.get('id');
+  _currentSubjectId = p.get('subject');
+  const modeParam = p.get('mode');
+
+  try {
+    // 1. Fetch Cloud Notes from Firebase RTDB
+    let cloudNotes = [];
+    try {
+      const r = await fetch(`${FIREBASE_DB}/notes.json`);
+      const raw = await r.json();
+      if (raw && typeof raw === 'object') {
+        cloudNotes = Object.entries(raw).map(([k, v]) => ({ ...v, fbKey: k })).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+      }
+    } catch (err) {
+      console.warn('Firebase RTDB notes fetch:', err);
     }
-    let note=_notes.find(n=>n.fbKey===_key||n.id===_key);
-    if(!note){
-      const r2=await fetch(`${FIREBASE_DB}/lectures/${_key}.json`);
-      const lr=await r2.json();
-      if(lr&&!lr.error) note={...lr,fbKey:_key};
+
+    // 2. Gather Built-in Notes from BCA_3RD_SEM_DATA
+    let staticNotes = [];
+    if (typeof BCA_3RD_SEM_DATA !== 'undefined' && BCA_3RD_SEM_DATA.subjects) {
+      BCA_3RD_SEM_DATA.subjects.forEach(s => {
+        (s.digitalNotes || []).forEach(n => {
+          staticNotes.push({ ...n, subjectId: s.id, subjectTitle: s.title, subjectCode: s.code });
+        });
+      });
     }
-    if(!note){showErr('Note not found. It may have been deleted.');return;}
-    renderNote(note);
-    setupNav(_key);
+
+    _notes = [...cloudNotes, ...staticNotes];
+
+    // Determine subject metadata
+    let activeSubject = null;
+    if (_currentSubjectId && typeof BCA_3RD_SEM_DATA !== 'undefined') {
+      activeSubject = BCA_3RD_SEM_DATA.subjects.find(s => s.id === _currentSubjectId);
+    }
+
+    // If mode=master or (subject provided and no specific note id), render Master Study Guide
+    if (modeParam === 'master' || (!_currentKey && activeSubject)) {
+      _mode = 'master';
+      const subjNotes = _notes.filter(n => (n.subject === _currentSubjectId || n.subjectId === _currentSubjectId));
+      renderMasterGuide(activeSubject || { id: _currentSubjectId, title: 'BCA III Subject', code: 'BCA 301' }, subjNotes);
+      hideLoading();
+      return;
+    }
+
+    // Otherwise render Single Note view
+    let targetNote = _notes.find(n => n.fbKey === _currentKey || n.id === _currentKey);
+    if (!targetNote && _currentKey) {
+      // Fallback: try fetching lecture log
+      try {
+        const r2 = await fetch(`${FIREBASE_DB}/lectures/${_currentKey}.json`);
+        const lr = await r2.json();
+        if (lr && !lr.error) targetNote = { ...lr, fbKey: _currentKey };
+      } catch (e) {}
+    }
+
+    if (!targetNote) {
+      if (_notes.length > 0) {
+        targetNote = _notes[0];
+      } else {
+        showErr('Note not found. Please return to dashboard and select a topic.');
+        return;
+      }
+    }
+
+    renderSingleNote(targetNote);
+    setupNav(targetNote.fbKey || targetNote.id);
     hideLoading();
-  }catch(e){showErr('Could not load: '+e.message);}
+
+  } catch (e) {
+    showErr('Could not load note content: ' + e.message);
+  }
 }
 
-function renderNote(note){
-  document.title=(note.title||'Note')+' — BCA III Hub';
-  document.getElementById('tb-crumb').innerHTML=`<strong>${esc(note.unit||'Notes')}</strong> › ${esc(note.title||'Note')}`;
+// ── Render Single Note View ──
+function renderSingleNote(note) {
+  _mode = 'single';
+  document.title = `${note.title || 'Note'} — BCA III Academic Hub`;
+  
+  const subjName = note.subjectTitle || (typeof getSubjectName === 'function' ? getSubjectName(note.subject) : (note.subject || 'Academic Notes'));
+  document.getElementById('tb-crumb').innerHTML = `<a href="/?subject=${encodeURIComponent(note.subject || _currentSubjectId || '')}" style="color:inherit;text-decoration:none"><strong>${esc(subjName)}</strong></a> › ${esc(note.unit || 'Unit I')} › ${esc(note.title || 'Topic')}`;
 
-  // Badges
-  document.getElementById('badge-row').innerHTML=[
-    note.unit?`<span class="badge badge-unit">📚 ${esc(note.unit)}</span>`:'',
-    note.author?`<span class="badge badge-author">✍️ ${esc(note.author)}</span>`:'',
-    note.readTime?`<span class="badge badge-meta">⏱️ ${esc(note.readTime)}</span>`:'',
-    note.date?`<span class="badge badge-meta">📅 ${esc(note.date)}</span>`:'',
-  ].join('');
+  document.getElementById('doc-badge').textContent = `${note.unit || 'Unit I'} • ${note.readTime || '5 min read'}`;
+  document.getElementById('doc-title').textContent = note.title || 'Untitled Academic Note';
+  document.getElementById('doc-subtitle').textContent = `Authored by ${note.author || 'Baljot Chohan'} · Panjab University`;
 
-  document.getElementById('note-title').textContent=note.title||'Untitled';
-  document.getElementById('note-tags').innerHTML=(note.tags||[]).slice(0,6).map(t=>`<span class="note-tag">${esc(t.replace(/^#/,''))}</span>`).join('');
+  document.getElementById('doc-meta').innerHTML = [
+    note.unit ? `<span>📚 ${esc(note.unit)}</span>` : '',
+    note.author ? `<span>✍️ By ${esc(note.author)}</span>` : '',
+    note.readTime ? `<span>⏱️ ${esc(note.readTime)}</span>` : '',
+    note.date ? `<span>📅 ${esc(note.date)}</span>` : '',
+  ].filter(Boolean).join('<span>•</span>');
 
-  const body=document.getElementById('note-body');
-  body.innerHTML=renderMD(note.content||'');
+  const container = document.getElementById('content-container');
+  const hasPunjabi = !!note.punjabiSummary;
 
-  // Manim visuals
-  if(window.ManimVisuals) setTimeout(()=>window.ManimVisuals.mountAll(body),120);
+  if (hasPunjabi) {
+    container.innerHTML = `
+      <div class="bilingual-grid">
+        <div class="col-english">
+          <div class="col-header en">📖 Easy English Study Notes</div>
+          <div class="prose-content">
+            ${renderMD(note.content || '')}
+          </div>
+        </div>
+        <div class="col-punjabi">
+          <div class="col-header pa">🌟 ਆਸਾਨ ਪੰਜਾਬੀ ਅਨੁਵਾਦ / Key Summary</div>
+          <div class="prose-content">
+            ${renderMD(note.punjabiSummary || '')}
+          </div>
+        </div>
+      </div>
+    `;
+    document.getElementById('lang-group').style.display = 'flex';
+  } else {
+    container.innerHTML = `
+      <div class="prose-content" style="max-width: 820px; margin: 0 auto;">
+        ${renderMD(note.content || '')}
+      </div>
+    `;
+    document.getElementById('lang-group').style.display = 'none';
+  }
 
-  // Syntax highlight
-  body.querySelectorAll('pre code').forEach(b=>{if(window.hljs)hljs.highlightElement(b);});
+  postRenderMounts(container);
+  buildTableOfContents();
+}
 
-  // Mermaid
+// ── Render Master Study Guide (BCA 2nd Sem Style) ──
+function renderMasterGuide(subject, notes) {
+  _mode = 'master';
+  document.title = `${subject.title} Master Study Notes — BCA III Hub`;
+  document.getElementById('tb-crumb').innerHTML = `<strong>${esc(subject.title)}</strong> › Master Bilingual Study Guide`;
+
+  document.getElementById('doc-badge').textContent = 'ANTIGRAVITY • BILINGUAL MASTER EDITION';
+  document.getElementById('doc-title').textContent = subject.title;
+  document.getElementById('doc-subtitle').textContent = 'Complete Master Notes & Handouts (English + ਪੰਜਾਬੀ)';
+
+  document.getElementById('doc-meta').innerHTML = `
+    <span>Code: ${esc(subject.code || 'BCA-301')}</span>
+    <span>•</span>
+    <span>${notes.length} Topics Covered</span>
+    <span>•</span>
+    <span>Panjab University 2026-27</span>
+  `;
+
+  const container = document.getElementById('content-container');
+
+  if (!notes || notes.length === 0) {
+    container.innerHTML = `
+      <div style="text-align:center;padding:3rem 1rem;">
+        <div style="font-size:2.5rem;margin-bottom:1rem">📚</div>
+        <h3 style="margin-bottom:.5rem">No Digital Notes Published Yet</h3>
+        <p style="color:var(--text-muted)">Notes for ${esc(subject.title)} are currently being compiled. Check back soon!</p>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = `
+    <div class="master-topics-stack">
+      ${notes.map((note, idx) => `
+        <article class="topic-card" id="topic-section-${idx}">
+          <div class="topic-header">
+            <div class="topic-number">${idx + 1}</div>
+            <div class="topic-title-wrap">
+              <div class="topic-meta-tag">${esc(note.unit || 'Unit I')} • ${esc(note.readTime || '6 min read')} • By ${esc(note.author || 'Baljot Chohan')}</div>
+              <h2 class="topic-title">${esc(note.title)}</h2>
+            </div>
+          </div>
+
+          <div class="bilingual-grid">
+            <div class="col-english">
+              <div class="col-header en">📖 Easy English Study Notes</div>
+              <div class="prose-content">
+                ${renderMD(note.content || '')}
+              </div>
+            </div>
+            <div class="col-punjabi">
+              <div class="col-header pa">🌟 ਆਸਾਨ ਪੰਜਾਬੀ ਅਨੁਵਾਦ / Key Summary</div>
+              <div class="prose-content">
+                ${renderMD(note.punjabiSummary || note.content || '')}
+              </div>
+            </div>
+          </div>
+        </article>
+      `).join('')}
+    </div>
+  `;
+
+  postRenderMounts(container);
+  buildTableOfContents();
+}
+
+// ── Post Render Mounts (Visuals, Syntax Highlighting, Mermaid, Math) ──
+function postRenderMounts(root) {
+  // 1. Manim / Interactive Visual Engine
+  if (window.ManimVisuals) {
+    setTimeout(() => window.ManimVisuals.mountAll(root), 60);
+  }
+
+  // 2. Syntax Highlighting
+  root.querySelectorAll('pre code').forEach(block => {
+    if (window.hljs) hljs.highlightElement(block);
+  });
+
+  // 3. Mermaid Diagrams
   renderAllMermaid();
 
-  // KaTeX
-  if(typeof renderMathInElement==='function') initKatex();
+  // 4. KaTeX Math rendering
+  if (typeof renderMathInElement === 'function') initKatex();
 }
 
-async function renderAllMermaid(){
-  const nodes=document.querySelectorAll('.mermaid-src');
-  for(const node of nodes){
-    if(node.getAttribute('data-done')) continue;
-    node.setAttribute('data-done','1');
-    const wrap=node.closest('.mermaid-body');
-    if(wrap) await renderMermaidNode(node,wrap);
+// ── Floating Table of Contents Builder ──
+function buildTableOfContents() {
+  const toc = document.getElementById('floating-toc');
+  if (!toc) return;
+  const headings = document.querySelectorAll('.topic-title, .prose-content h1, .prose-content h2');
+  if (headings.length < 2) {
+    toc.style.display = 'none';
+    return;
+  }
+  toc.style.display = 'flex';
+  toc.innerHTML = Array.from(headings).map((h, i) => `
+    <div class="toc-dot" data-idx="${i}" title="${esc(h.textContent)}" onclick="scrollToHeading(${i})"></div>
+  `).join('');
+  toc.classList.add('visible');
+}
+
+function scrollToHeading(idx) {
+  const headings = document.querySelectorAll('.topic-title, .prose-content h1, .prose-content h2');
+  if (headings[idx]) {
+    headings[idx].scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
 }
 
-async function renderMermaidNode(node,wrap){
-  const code=node.textContent||'';
-  wrap.innerHTML=`<div class="mermaid-rendering"><span class="mermaid-dot"></span>Rendering diagram...</div>`;
-  try{
-    const id='m'+Date.now().toString(36);
-    const {svg}=await mermaid.render(id,code);
-    wrap.innerHTML=svg;
-  }catch(e){
-    wrap.innerHTML=`<pre style="color:#f87171;font-size:.78rem;padding:1rem;overflow:auto;max-height:240px">[Diagram error: ${esc(e.message||'unknown')}]\n\n${esc(code)}</pre>`;
+function updateActiveTocDot() {
+  const headings = document.querySelectorAll('.topic-title, .prose-content h1, .prose-content h2');
+  const dots = document.querySelectorAll('.toc-dot');
+  if (!headings.length || !dots.length) return;
+  let activeIdx = 0;
+  headings.forEach((h, i) => {
+    const rect = h.getBoundingClientRect();
+    if (rect.top <= window.innerHeight * 0.4) activeIdx = i;
+  });
+  dots.forEach((d, i) => d.classList.toggle('active', i === activeIdx));
+}
+
+// ── Mermaid Diagram Renderer ──
+async function renderAllMermaid() {
+  const nodes = document.querySelectorAll('.mermaid-src');
+  for (const node of nodes) {
+    if (node.getAttribute('data-done')) continue;
+    node.setAttribute('data-done', '1');
+    const wrap = node.closest('.mermaid-body');
+    if (wrap) await renderMermaidNode(node, wrap);
   }
 }
 
-function initKatex(){
-  if(typeof renderMathInElement==='function'){
-    renderMathInElement(document.getElementById('note-body'),{
-      delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false},{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],
-      throwOnError:false,
+async function renderMermaidNode(node, wrap) {
+  const code = node.textContent || '';
+  wrap.innerHTML = `<div style="font-family:var(--font-mono);font-size:.78rem;color:var(--text-subtle)">Rendering diagram...</div>`;
+  try {
+    const id = 'm' + Math.random().toString(36).substring(2, 9);
+    const { svg } = await mermaid.render(id, code);
+    wrap.innerHTML = svg;
+  } catch (e) {
+    wrap.innerHTML = `<pre style="color:#f87171;font-size:.78rem;padding:1rem;overflow:auto;max-height:240px">[Diagram render note: ${esc(e.message||'Check syntax')}]\n\n${esc(code)}</pre>`;
+  }
+}
+
+// ── KaTeX Math Formula Renderer ──
+function initKatex() {
+  if (typeof renderMathInElement === 'function') {
+    renderMathInElement(document.getElementById('main'), {
+      delimiters: [
+        { left: '$$', right: '$$', display: true },
+        { left: '$', right: '$', display: false },
+        { left: '\\[', right: '\\]', display: true },
+        { left: '\\(', right: '\\)', display: false }
+      ],
+      throwOnError: false,
     });
   }
 }
 
-// ── Advanced Markdown Renderer ──
-function renderMD(raw){
-  if(!raw) return '';
-  let h=raw.replace(/\r\n/g,'\n');
+// ── Markdown Parser Engine ──
+function renderMD(raw) {
+  if (!raw) return '';
+  let h = raw.replace(/\r\n/g, '\n');
 
-  // Visual engine mounts  [visual:xxx]  or  @[visual:xxx]
-  h=h.replace(/(?:@\[visual:|(?<!!)\[visual:)([a-zA-Z0-9_-]+)\]/g,(m,type)=>{
-    const label=type.replace(/-/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
-    return `<div class="vis-frame"><div class="vis-head"><span class="vis-head-dot"></span><span class="vis-head-badge">✨ Interactive Visual — ${esc(label)}</span></div><div class="manim-visual-mount" data-manim-visual="${esc(type)}" style="min-height:200px;background:var(--bg-surface)"></div></div>`;
+  // Visual engine mounts [visual:xxx] or @[visual:xxx]
+  h = h.replace(/(?:@\[visual:|(?<!!)\[visual:)([a-zA-Z0-9_-]+)\]/g, (m, type) => {
+    const label = type.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+    return `<div class="vis-frame"><div class="vis-head"><span class="vis-head-dot"></span><span class="vis-head-badge">✨ Interactive Visual — ${esc(label)}</span></div><div class="manim-visual-mount" data-manim-visual="${esc(type)}" style="min-height:220px;background:var(--bg-surface)"></div></div>`;
+  });
+
+  // Mermaid diagrams
+  h = h.replace(/```mermaid\s*\n([\s\S]*?)```/gi, (m, c) => {
+    return `<div class="mermaid-wrap"><div class="mermaid-head"><span class="mermaid-head-label">📊 Architecture Diagram</span></div><div class="mermaid-body"><div class="mermaid-src" style="display:none">${esc(c.trim())}</div></div></div>`;
   });
 
   // Fenced code blocks
-  h=h.replace(/```([a-zA-Z0-9_+-]*)\s*\n([\s\S]*?)```/g,(m,lang,code)=>{
-    if(!code.trim()) return '';
-    const l=(lang||'').trim().toLowerCase();
-    const c=code.trim();
-    if(l==='mermaid'){
-      return `<div class="mermaid-wrap"><div class="mermaid-head"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0"><path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"/><path d="m13 13 6 6"/></svg><span class="mermaid-head-label">Diagram Visualization</span></div><div class="mermaid-body"><div class="mermaid-src" style="display:none">${esc(c)}</div></div></div>`;
-    }
-    const colors={python:'#3b82f6',cpp:'#f59e0b',c:'#f59e0b',javascript:'#f59e0b',js:'#f59e0b',java:'#ef4444',sql:'#8b5cf6',bash:'#22c55e',sh:'#22c55e',css:'#ec4899',html:'#f97316'};
-    const col=colors[l]||'var(--color-indigo)';
-    return `<div class="code-wrap"><div class="code-head"><span class="code-lang" style="color:${col}"><span class="dot" style="background:${col}"></span>${esc(l||'code').toUpperCase()}</span><button class="code-copy-btn" onclick="cpCode(this)">📋 Copy</button></div><pre><code class="language-${esc(l||'plaintext')}">${esc(c)}</code></pre></div>`;
-  });
-
-  // Unclosed ``` fallback
-  h=h.replace(/```\n?([\s\S]*?)```/g,(m,code)=>{
-    if(!code.trim()) return '';
-    return `<div class="code-wrap"><div class="code-head"><span class="code-lang" style="color:var(--text-subtle)">TEXT</span><button class="code-copy-btn" onclick="cpCode(this)">📋 Copy</button></div><pre><code>${esc(code.trim())}</code></pre></div>`;
+  h = h.replace(/```([a-zA-Z0-9_+-]*)\s*\n([\s\S]*?)```/g, (m, lang, code) => {
+    if (!code.trim()) return '';
+    const l = (lang || 'code').trim().toLowerCase();
+    const colors = { python: '#3b82f6', cpp: '#f59e0b', c: '#f59e0b', javascript: '#f59e0b', js: '#f59e0b', java: '#ef4444', sql: '#8b5cf6', asm: '#10b981', x86: '#10b981' };
+    const col = colors[l] || 'var(--color-indigo)';
+    return `<div class="code-wrap"><div class="code-head"><span class="code-lang" style="color:${col}"><span class="dot" style="background:${col}"></span>${esc(l).toUpperCase()}</span><button class="code-copy-btn" onclick="cpCode(this)">📋 Copy</button></div><pre><code class="language-${esc(l)}">${esc(code.trim())}</code></pre></div>`;
   });
 
   // Tables
-  h=h.replace(/\|(.+)\|\n\|[-|\s:]+\|\n((?:\|.+\|\n?)+)/g,(m,header,rows)=>{
-    const ths=header.split('|').filter(x=>x.trim()).map(x=>`<th>${x.trim()}</th>`).join('');
-    const trs=rows.trim().split('\n').map(r=>`<tr>${r.split('|').filter(x=>x.trim()).map(x=>`<td>${x.trim()}</td>`).join('')}</tr>`).join('');
+  h = h.replace(/\|(.+)\|\n\|[-|\s:]+\|\n((?:\|.+\|\n?)+)/g, (m, header, rows) => {
+    const ths = header.split('|').filter(x => x.trim()).map(x => `<th>${x.trim()}</th>`).join('');
+    const trs = rows.trim().split('\n').map(r => `<tr>${r.split('|').filter(x => x.trim()).map(x => `<td>${x.trim()}</td>`).join('')}</tr>`).join('');
     return `<div class="table-wrap"><table class="note-table"><thead><tr>${ths}</tr></thead><tbody>${trs}</tbody></table></div>`;
   });
 
-  // Callouts  > emoji text
-  h=h.replace(/^>\s*(💡|⚡|✅|⚠️|🚨|ℹ️|📌|📝)?\s*(.+)$/gm,(m,icon,text)=>{
-    const t={['\u{1F4A1}']:'tip','\u26A1':'tip','\u2705':'tip','\u26A0\uFE0F':'warn','\u{1F6A8}':'warn','\u2139\uFE0F':'info','\u{1F4CC}':'note','\u{1F4DD}':'note'}[icon]||'note';
-    return `<div class="callout ${t}"><span class="callout-icon">${icon||'💡'}</span><div>${text}</div></div>`;
+  // Callouts > 💡 Tip
+  h = h.replace(/^>\s*(💡|⚡|✅|⚠️|🚨|ℹ️|📌|📝)?\s*(.+)$/gm, (m, icon, text) => {
+    const t = { ['💡']: 'tip', ['⚡']: 'tip', ['✅']: 'tip', ['⚠️']: 'warn', ['🚨']: 'warn', ['ℹ️']: 'info', ['📌']: 'note', ['📝']: 'note' }[icon] || 'note';
+    return `<div class="callout ${t}"><span class="callout-icon">${icon || '💡'}</span><div>${text}</div></div>`;
   });
 
   // Headings
-  h=h.replace(/^#### (.+)$/gim,'<h4>$1</h4>');
-  h=h.replace(/^### (.+)$/gim,'<h3>$1</h3>');
-  h=h.replace(/^## (.+)$/gim,'<h2>$1</h2>');
-  h=h.replace(/^# (.+)$/gim,'<h1>$1</h1>');
-  h=h.replace(/^---$/gm,'<hr/>');
+  h = h.replace(/^#### (.+)$/gim, '<h4>$1</h4>');
+  h = h.replace(/^### (.+)$/gim, '<h3>$1</h3>');
+  h = h.replace(/^## (.+)$/gim, '<h2>$1</h2>');
+  h = h.replace(/^# (.+)$/gim, '<h1>$1</h1>');
+  h = h.replace(/^---$/gm, '<hr/>');
 
-  // Inline
-  h=h.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>');
-  h=h.replace(/\*(.+?)\*/g,'<em>$1</em>');
-  h=h.replace(/`([^`\n]+)`/g,'<code>$1</code>');
+  // Inline formatting
+  h = h.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  h = h.replace(/\*(.+?)\*/g, '<em>$1</em>');
+  h = h.replace(/`([^`\n]+)`/g, '<code>$1</code>');
 
   // Lists
-  h=h.replace(/((?:^[-*] .+\n?)+)/gm,b=>{
-    const items=b.trim().split('\n').map(l=>`<li>${l.replace(/^[-*] /,'')}</li>`).join('');
+  h = h.replace(/((?:^[-*] .+\n?)+)/gm, b => {
+    const items = b.trim().split('\n').map(l => `<li>${l.replace(/^[-*] /, '')}</li>`).join('');
     return `<ul>${items}</ul>`;
   });
-  h=h.replace(/((?:^\d+\. .+\n?)+)/gm,b=>{
-    const items=b.trim().split('\n').map(l=>`<li>${l.replace(/^\d+\. /,'')}</li>`).join('');
+  h = h.replace(/((?:^\d+\. .+\n?)+)/gm, b => {
+    const items = b.trim().split('\n').map(l => `<li>${l.replace(/^\d+\. /, '')}</li>`).join('');
     return `<ol>${items}</ol>`;
   });
 
   // Images
-  h=h.replace(/!\[(.+?)\]\((.+?)\)/g,(m,alt,url)=>`<figure style="margin:2rem 0;border-radius:var(--radius-lg);overflow:hidden;border:1px solid var(--border-color)"><img src="${url}" alt="${esc(alt)}" style="width:100%;display:block" loading="lazy"/><figcaption style="padding:.5rem 1rem;font-size:.75rem;color:var(--text-subtle);font-family:var(--font-sans)">${esc(alt)}</figcaption></figure>`);
+  h = h.replace(/!\[(.+?)\]\((.+?)\)/g, (m, alt, url) => `<figure style="margin:2rem 0;border-radius:var(--radius-md);overflow:hidden;border:1px solid var(--border-color)"><img src="${url}" alt="${esc(alt)}" style="width:100%;display:block" loading="lazy"/><figcaption style="padding:.5rem 1rem;font-size:.75rem;color:var(--text-subtle)">${esc(alt)}</figcaption></figure>`);
 
   // Links
-  h=h.replace(/\[(.+?)\]\((.+?)\)/g,'<a href="$2" target="_blank" rel="noopener">$1 ↗</a>');
+  h = h.replace(/\[(.+?)\]\((.+?)\)/g, '<a href="$2" target="_blank" rel="noopener">$1 ↗</a>');
 
   // Paragraphs
-  h=h.replace(/\n{2,}/g,'</p><p>');
-  h=h.replace(/(?<!\>)\n/g,'<br/>');
+  h = h.replace(/\n{2,}/g, '</p><p>');
+  h = h.replace(/(?<!\>)\n/g, '<br/>');
 
   return `<p>${h}</p>`;
 }
 
-function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
-
-function cpCode(btn){
-  const c=btn.closest('.code-wrap').querySelector('code');
-  if(!c) return;
-  navigator.clipboard.writeText(c.textContent).then(()=>{btn.textContent='✅ Copied!';setTimeout(()=>{btn.textContent='📋 Copy';},2000);});
+function esc(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
-function copyNote(){
-  const b=document.getElementById('note-body');
-  if(!b) return;
-  navigator.clipboard.writeText(b.innerText).then(()=>{
-    const btn=document.getElementById('copy-btn');
-    btn.textContent='✅ Copied!';
-    setTimeout(()=>{btn.textContent='📋 Copy';},2000);
+function cpCode(btn) {
+  const c = btn.closest('.code-wrap').querySelector('code');
+  if (!c) return;
+  navigator.clipboard.writeText(c.textContent).then(() => {
+    btn.textContent = '✅ Copied!';
+    setTimeout(() => { btn.textContent = '📋 Copy'; }, 2000);
   });
 }
 
-function setupNav(key){
-  const idx=_notes.findIndex(n=>n.fbKey===key||n.id===key);
-  if(idx<0||_notes.length<2) return;
-  document.getElementById('reader-footer').style.display='flex';
-  if(idx>0){
-    const p=_notes[idx-1];
-    const b=document.getElementById('prev-btn');
-    b.style.display='flex';
-    document.getElementById('prev-title').textContent=p.title;
-    b.onclick=()=>go(p.fbKey||p.id);
+// ── Setup Next / Previous Note Navigation ──
+function setupNav(currentKey) {
+  const subjNotes = _notes.filter(n => n.subject === _currentSubjectId || n.subjectId === _currentSubjectId);
+  const pool = subjNotes.length > 1 ? subjNotes : _notes;
+  const idx = pool.findIndex(n => n.fbKey === currentKey || n.id === currentKey);
+  if (idx < 0 || pool.length < 2) return;
+
+  const footer = document.getElementById('reader-footer');
+  const prevBtn = document.getElementById('prev-btn');
+  const nextBtn = document.getElementById('next-btn');
+  footer.style.display = 'flex';
+
+  if (idx > 0) {
+    const p = pool[idx - 1];
+    prevBtn.style.display = 'flex';
+    document.getElementById('prev-title').textContent = p.title;
+    prevBtn.href = `/note.html?id=${encodeURIComponent(p.fbKey || p.id)}&subject=${encodeURIComponent(p.subject || p.subjectId || '')}`;
+  } else {
+    prevBtn.style.display = 'none';
   }
-  if(idx<_notes.length-1){
-    const n=_notes[idx+1];
-    const b=document.getElementById('next-btn');
-    b.style.display='flex';
-    document.getElementById('next-title').textContent=n.title;
-    b.onclick=()=>go(n.fbKey||n.id);
+
+  if (idx < pool.length - 1) {
+    const n = pool[idx + 1];
+    nextBtn.style.display = 'flex';
+    document.getElementById('next-title').textContent = n.title;
+    nextBtn.href = `/note.html?id=${encodeURIComponent(n.fbKey || n.id)}&subject=${encodeURIComponent(n.subject || n.subjectId || '')}`;
+  } else {
+    nextBtn.style.display = 'none';
   }
 }
 
-function go(id){
-  const u=new URL(location.href);u.searchParams.set('id',id);location.href=u.toString();
+function showErr(msg) {
+  document.getElementById('ls').innerHTML = `
+    <div style="text-align:center;padding:2.5rem;max-width:440px;background:var(--bg-surface);border-radius:var(--radius-lg);border:1px solid var(--border-color)">
+      <div style="font-size:3rem;margin-bottom:1rem">📭</div>
+      <h3 style="margin-bottom:.5rem;color:var(--text-main)">Note Reader Notice</h3>
+      <p style="color:var(--text-muted);line-height:1.6;margin-bottom:1.5rem;font-size:.9rem">${msg}</p>
+      <button onclick="handleBackNavigation()" style="padding:.6rem 1.5rem;border:1px solid var(--border-color);border-radius:var(--radius-sm);background:var(--color-coral);color:#fff;cursor:pointer;font-weight:700;font-size:.85rem">← Return to Hub</button>
+    </div>
+  `;
 }
 
-function showErr(msg){
-  document.getElementById('ls').innerHTML=`<div style="text-align:center;padding:2rem;max-width:400px"><div style="font-size:3rem;margin-bottom:1.25rem">📭</div><p style="color:var(--text-muted);line-height:1.7;margin-bottom:1.5rem">${msg}</p><button onclick="history.back()" style="padding:.5rem 1.25rem;border:1px solid var(--border-color);border-radius:var(--radius-sm);background:transparent;color:var(--text-muted);cursor:pointer;font-family:var(--font-sans);font-size:.85rem">← Go Back</button></div>`;
-}
-
-function hideLoading(){
-  document.getElementById('ls').style.display='none';
-  document.getElementById('topbar').style.display='flex';
-  document.getElementById('main').style.display='block';
-  const btn=document.getElementById('theme-btn');
-  if(btn) btn.textContent=savedTheme==='dark'?'☀️':'🌙';
+function hideLoading() {
+  document.getElementById('ls').style.display = 'none';
+  document.getElementById('topbar').style.display = 'flex';
+  document.getElementById('main').style.display = 'block';
+  const btn = document.getElementById('theme-btn');
+  if (btn) btn.textContent = savedTheme === 'dark' ? '☀️' : '🌙';
 }
 
 init();
