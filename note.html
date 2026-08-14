@@ -137,7 +137,7 @@ body{font-family:var(--font-sans);background:var(--bg-page);color:var(--text-mai
 .fs-label{padding:0 .4rem;font-size:.7rem;font-family:var(--font-mono);color:var(--text-subtle);min-width:32px;text-align:center;line-height:32px}
 
 /* ──────────── LOADING & ERROR STATES ──────────── */
-#ls{position:fixed;inset:0;background:var(--bg-page);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.25rem;z-index:999}
+#ls{display:none !important;}
 .ls-ring{width:46px;height:46px;border:3px solid var(--border-color);border-top-color:var(--color-coral);border-radius:50%;animation:spin .75s linear infinite}
 .ls-text{font-family:var(--font-mono);font-size:.85rem;color:var(--text-subtle);letter-spacing:.04em}
 @keyframes spin{to{transform:rotate(360deg)}}
@@ -495,13 +495,8 @@ body{font-family:var(--font-sans);background:var(--bg-page);color:var(--text-mai
 
 <div id="rp"></div>
 
-<div id="ls">
-  <div class="ls-ring"></div>
-  <div class="ls-text">Loading academic study notes...</div>
-</div>
-
 <!-- Sticky Top Navbar -->
-<nav class="topbar" id="topbar" style="display:none">
+<nav class="topbar" id="topbar">
   <div class="tb-left">
     <button class="tb-back-btn" onclick="handleBackNavigation()" title="Back to Dashboard">
       ← <span>Back</span>
@@ -549,7 +544,7 @@ body{font-family:var(--font-sans);background:var(--bg-page);color:var(--text-mai
 <div class="floating-toc" id="floating-toc"></div>
 
 <!-- Main Reader Document Content -->
-<main id="main" style="display:none">
+<main id="main">
   <div class="reader-wrap">
     <header class="doc-header" id="doc-header">
       <div class="doc-badge-pill" id="doc-badge">ANTIGRAVITY • BILINGUAL STUDY EDITION</div>
@@ -638,12 +633,17 @@ function toggleTheme() {
   const next = cur === 'dark' ? 'light' : 'dark';
   document.documentElement.setAttribute('data-theme', next);
   localStorage.setItem('bca_hub_theme', next);
-  document.getElementById('theme-btn').textContent = next === 'dark' ? '☀️' : '🌙';
-  mermaid.initialize({ theme: next === 'dark' ? 'dark' : 'base', startOnLoad: false, securityLevel: 'loose' });
-  document.querySelectorAll('.mermaid-body').forEach(el => {
-    const src = el.querySelector('.mermaid-src');
-    if (src) renderMermaidNode(src, el);
-  });
+  const btn = document.getElementById('theme-btn');
+  if (btn) btn.textContent = next === 'dark' ? '☀️' : '🌙';
+  try {
+    if (typeof mermaid !== 'undefined') {
+      mermaid.initialize({ theme: next === 'dark' ? 'dark' : 'base', startOnLoad: false, securityLevel: 'loose' });
+      document.querySelectorAll('.mermaid-body').forEach(el => {
+        const src = el.querySelector('.mermaid-src');
+        if (src) renderMermaidNode(src, el);
+      });
+    }
+  } catch (e) {}
 }
 
 // ── Font Size Scaling ──
@@ -1168,6 +1168,7 @@ function updateActiveTocDot() {
 
 // ── Mermaid Diagram Renderer ──
 async function renderAllMermaid() {
+  if (typeof mermaid === 'undefined') return;
   const nodes = document.querySelectorAll('.mermaid-src');
   for (const node of nodes) {
     if (node.getAttribute('data-done')) continue;
@@ -1178,8 +1179,8 @@ async function renderAllMermaid() {
 }
 
 async function renderMermaidNode(node, wrap) {
+  if (typeof mermaid === 'undefined') return;
   const code = node.textContent || '';
-  wrap.innerHTML = `<div style="font-family:var(--font-mono);font-size:.78rem;color:var(--text-subtle)">Rendering diagram...</div>`;
   try {
     const id = 'm' + Math.random().toString(36).substring(2, 9);
     const { svg } = await mermaid.render(id, code);
