@@ -583,6 +583,10 @@ body{font-family:var(--font-sans);background:var(--bg-page);color:var(--text-mai
   </footer>
 </main>
 
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="firebase-config.js?v=5.0"></script>
 <script src="syllabus-data.js?v=5.0"></script>
 <script src="visuals-engine.js?v=5.0"></script>
 <script src="payment.js?v=5.0"></script>
@@ -719,14 +723,62 @@ function copyNoteContent() {
   });
 }
 
+// ── Loader & Error UI Helpers ──
+function hideLoading() {
+  const ls = document.getElementById('ls');
+  if (ls) ls.style.display = 'none';
+  const topbar = document.getElementById('topbar');
+  if (topbar) topbar.style.display = 'flex';
+  const main = document.getElementById('main');
+  if (main) main.style.display = 'block';
+  const footer = document.getElementById('reader-footer');
+  if (footer && _mode === 'single') footer.style.display = 'flex';
+}
+
+function showLoading() {
+  const ls = document.getElementById('ls');
+  if (ls) ls.style.display = 'flex';
+  const main = document.getElementById('main');
+  if (main) main.style.display = 'none';
+}
+
+function showErr(msg) {
+  const ls = document.getElementById('ls');
+  if (ls) ls.style.display = 'none';
+  const topbar = document.getElementById('topbar');
+  if (topbar) topbar.style.display = 'flex';
+  const main = document.getElementById('main');
+  if (main) main.style.display = 'block';
+  const container = document.getElementById('content-container');
+  if (container) {
+    container.innerHTML = `
+      <div style="text-align:center;padding:3.5rem 1.5rem;max-width:640px;margin:2rem auto;background:var(--bg-card);border:1px solid var(--border-color);border-radius:var(--radius-lg);box-shadow:var(--shadow-card);">
+        <div style="font-size:3rem;margin-bottom:1rem">📚</div>
+        <h2 style="font-family:var(--font-serif);margin-bottom:0.75rem;font-size:1.6rem;color:var(--text-main);">Note Unavailable</h2>
+        <p style="color:var(--text-muted);font-size:0.95rem;margin-bottom:1.75rem;line-height:1.5;">${esc(msg)}</p>
+        <div style="display:flex;gap:0.75rem;justify-content:center;flex-wrap:wrap;">
+          <button class="tb-btn" style="height:40px;padding:0 1.25rem;font-size:0.88rem;cursor:pointer;" onclick="handleBackNavigation()">← Return to Dashboard</button>
+          <button class="tb-btn" style="height:40px;padding:0 1.25rem;font-size:0.88rem;background:var(--color-coral);color:#fff;border-color:var(--color-coral);cursor:pointer;" onclick="window.location.reload()">🔄 Retry</button>
+        </div>
+      </div>
+    `;
+  }
+}
+
 // ── Mermaid Initialization ──
-mermaid.initialize({
-  theme: savedTheme === 'dark' ? 'dark' : 'base',
-  startOnLoad: false,
-  securityLevel: 'loose',
-  fontFamily: 'Plus Jakarta Sans, Inter, sans-serif',
-  fontSize: 14,
-});
+try {
+  if (typeof mermaid !== 'undefined') {
+    mermaid.initialize({
+      theme: savedTheme === 'dark' ? 'dark' : 'base',
+      startOnLoad: false,
+      securityLevel: 'loose',
+      fontFamily: 'Plus Jakarta Sans, Inter, sans-serif',
+      fontSize: 14,
+    });
+  }
+} catch (mErr) {
+  console.warn('Mermaid initialization notice:', mErr);
+}
 
 // ── Main Page Initialization ──
 async function init() {
@@ -736,19 +788,7 @@ async function init() {
   const modeParam = p.get('mode');
 
   try {
-    // 1. Fetch Cloud Notes from Firebase RTDB
-    let cloudNotes = [];
-    try {
-      const r = await fetch(`${FIREBASE_DB}/notes.json`);
-      const raw = await r.json();
-      if (raw && typeof raw === 'object') {
-        cloudNotes = Object.entries(raw).map(([k, v]) => ({ ...v, fbKey: k })).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-      }
-    } catch (err) {
-      console.warn('Firebase RTDB notes fetch:', err);
-    }
-
-    // 2. Gather Built-in Notes from BCA_3RD_SEM_DATA
+    // 1. Gather Built-in Notes from BCA_3RD_SEM_DATA immediately
     let staticNotes = [];
     if (typeof BCA_3RD_SEM_DATA !== 'undefined' && BCA_3RD_SEM_DATA.subjects) {
       BCA_3RD_SEM_DATA.subjects.forEach(s => {
@@ -756,6 +796,23 @@ async function init() {
           staticNotes.push({ ...n, subjectId: s.id, subjectTitle: s.title, subjectCode: s.code });
         });
       });
+    }
+
+    // 2. Fetch Cloud Notes from Firebase RTDB with a strict 3.5s timeout
+    let cloudNotes = [];
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 3500);
+      const r = await fetch(`${FIREBASE_DB}/notes.json`, { signal: controller.signal });
+      clearTimeout(timeoutId);
+      if (r.ok) {
+        const raw = await r.json();
+        if (raw && typeof raw === 'object') {
+          cloudNotes = Object.entries(raw).map(([k, v]) => ({ ...v, fbKey: k })).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+        }
+      }
+    } catch (err) {
+      console.warn('Firebase RTDB notes fetch fallback:', err);
     }
 
     _notes = [...cloudNotes, ...staticNotes];
@@ -795,12 +852,17 @@ async function init() {
     }
 
     // Otherwise render Single Note Focus View (Unit 1 Topic 1 by default)
-    let targetNote = _notes.find(n => n.fbKey === _currentKey || n.id === _currentKey);
+    let targetNote = _notes.find(n => (n.fbKey === _currentKey || n.id === _currentKey));
     if (!targetNote && _currentKey) {
       try {
-        const r2 = await fetch(`${FIREBASE_DB}/lectures/${_currentKey}.json`);
-        const lr = await r2.json();
-        if (lr && !lr.error) targetNote = { ...lr, fbKey: _currentKey };
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3000);
+        const r2 = await fetch(`${FIREBASE_DB}/lectures/${_currentKey}.json`, { signal: controller.signal });
+        clearTimeout(timeoutId);
+        if (r2.ok) {
+          const lr = await r2.json();
+          if (lr && !lr.error) targetNote = { ...lr, fbKey: _currentKey };
+        }
       } catch (e) {}
     }
 
@@ -813,7 +875,7 @@ async function init() {
       } else if (_notes.length > 0) {
         targetNote = _notes[0];
       } else {
-        showErr('Note not found. Please return to dashboard and select a topic.');
+        showErr('Note not found. Please return to the dashboard and select a topic.');
         return;
       }
     }
@@ -823,6 +885,7 @@ async function init() {
     hideLoading();
 
   } catch (e) {
+    console.error('Note reader initialization error:', e);
     showErr('Could not load note content: ' + e.message);
   }
 }
@@ -1228,15 +1291,28 @@ function setupNav(currentKey) {
   }
 }
 
-function showErr(msg) {
-  document.getElementById('ls').innerHTML = `
-    <div style="text-align:center;padding:2.5rem;max-width:440px;background:var(--bg-surface);border-radius:var(--radius-lg);border:1px solid var(--border-color)">
-      <div style="font-size:3rem;margin-bottom:1rem">📭</div>
-      <h3 style="margin-bottom:.5rem;color:var(--text-main)">Note Reader Notice</h3>
-      <p style="color:var(--text-muted);line-height:1.6;margin-bottom:1.5rem;font-size:.9rem">${msg}</p>
-      <button onclick="handleBackNavigation()" style="padding:.6rem 1.5rem;border:1px solid var(--border-color);border-radius:var(--radius-sm);background:var(--color-coral);color:#fff;cursor:pointer;font-weight:700;font-size:.85rem">← Return to Hub</button>
-    </div>
-  `;
+function showToast(msg, type = 'info') {
+  let toastContainer = document.getElementById('toast-container');
+  if (!toastContainer) {
+    toastContainer = document.createElement('div');
+    toastContainer.id = 'toast-container';
+    toastContainer.style.cssText = 'position:fixed;bottom:1.5rem;right:1.5rem;z-index:99999;display:flex;flex-direction:column;gap:0.5rem;pointer-events:none;';
+    document.body.appendChild(toastContainer);
+  }
+  const toast = document.createElement('div');
+  const bg = type === 'success' ? '#10b981' : (type === 'error' ? '#ef4444' : '#1f2937');
+  toast.style.cssText = `background:${bg};color:#fff;padding:0.65rem 1rem;border-radius:8px;font-size:0.85rem;font-weight:600;box-shadow:0 4px 14px rgba(0,0,0,0.35);transition:all 0.25s ease;opacity:0;transform:translateY(10px);pointer-events:auto;`;
+  toast.textContent = msg;
+  toastContainer.appendChild(toast);
+  requestAnimationFrame(() => {
+    toast.style.opacity = '1';
+    toast.style.transform = 'translateY(0)';
+  });
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transform = 'translateY(-10px)';
+    setTimeout(() => toast.remove(), 300);
+  }, 3500);
 }
 
 function toggleReaderBookmark() {
