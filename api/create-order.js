@@ -89,21 +89,28 @@ module.exports = async function handler(req, res) {
       }
     };
 
+    if (!keySecret) {
+      console.error('CRITICAL: RAZORPAY_KEY_SECRET is not configured on the server');
+      return res.status(500).json({ error: 'Razorpay payment gateway secret not configured on server' });
+    }
+
     let order = null;
-    if (keyId && keySecret) {
-      try {
-        order = await createRazorpayOrderViaHttp(keyId, keySecret, orderPayload);
-      } catch (httpErr) {
-        console.error('Razorpay Direct API Error:', httpErr.message);
-        return res.status(502).json({ error: 'Failed to communicate with Razorpay payment gateway', details: httpErr.message });
-      }
+    try {
+      order = await createRazorpayOrderViaHttp(keyId, keySecret, orderPayload);
+    } catch (httpErr) {
+      console.error('Razorpay Direct API Error:', httpErr.message);
+      return res.status(502).json({ error: 'Failed to communicate with Razorpay payment gateway', details: httpErr.message });
+    }
+
+    if (!order || !order.id) {
+      return res.status(502).json({ error: 'Razorpay returned empty order response' });
     }
 
     return res.status(200).json({
       success: true,
-      orderId: (order && order.id) ? order.id : null,
-      amount: (order && order.amount) ? order.amount : amountInPaise,
-      currency: (order && order.currency) ? order.currency : 'INR',
+      orderId: order.id,
+      amount: order.amount || amountInPaise,
+      currency: order.currency || 'INR',
       keyId: keyId
     });
 

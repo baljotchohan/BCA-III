@@ -24,6 +24,13 @@ const FIREBASE = {
     'mehakpreetsaini26@gmail.com'
   ],
 
+  // Check if given email or user object is registered admin
+  isUserAdmin: (userOrEmail) => {
+    if (!userOrEmail) return false;
+    const email = typeof userOrEmail === 'string' ? userOrEmail : (userOrEmail.email || '');
+    return FIREBASE.adminEmails.some(ae => ae.toLowerCase() === email.toLowerCase().trim());
+  },
+
   // Full REST API URL builder
   url: (path) =>
     `https://bca2nd-5c622-default-rtdb.firebaseio.com/bca3/${path}.json`,

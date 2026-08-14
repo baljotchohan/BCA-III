@@ -2,17 +2,19 @@
  * OAuth 2.0 Token Endpoint — BCA III Hub
  * POST /api/token
  *
- * Handles two grant types:
+ * Handles four grant types:
  *  1. urn:bca3:firebase_token — exchanges a Firebase ID token for a short auth code
  *     (called by the authorize page after Google sign-in)
  *  2. authorization_code — exchanges the short auth code for an access token
- *     (called by Claude / Cursor / ChatGPT)
+ *     (called by Claude / Cursor / ChatGPT, supports PKCE RFC 7636)
+ *  3. refresh_token — exchanges refresh token for new access token
+ *  4. client_credentials — ADMIN_SECRET direct passthrough
  *
  * Auth codes are stored in Firebase RTDB and expire after 5 minutes.
- * Access tokens returned ARE the Firebase ID token (verified by mcp.js).
  */
 
 const https = require('https');
+const crypto = require('crypto');
 
 const FIREBASE_DB  = 'https://bca2nd-5c622-default-rtdb.firebaseio.com';
 const FIREBASE_KEY = 'AIzaSyAM8tcsYAnJoLzY6ZUxp6M5h2z-M6AJzDI';
@@ -28,7 +30,9 @@ const CODE_TTL_MS  = 5 * 60 * 1000; // 5 minutes
 
 function firebaseRequest(method, path, body) {
   return new Promise((resolve) => {
-    const url = `${FIREBASE_DB}${path}.json`;
+    const secret = process.env.FIREBASE_DATABASE_SECRET || process.env.ADMIN_SECRET || '';
+    const authQuery = secret ? `?auth=${encodeURIComponent(secret)}` : '';
+    const url = `${FIREBASE_DB}${path}.json${authQuery}`;
     const data = body ? JSON.stringify(body) : undefined;
     const options = {
       method,
@@ -72,8 +76,6 @@ function verifyFirebaseToken(idToken) {
   });
 }
 
-const crypto = require('crypto');
-
 function generateCode() {
   return crypto.randomBytes(24).toString('hex');
 }
@@ -106,7 +108,7 @@ module.exports = async (req, res) => {
       return res.status(401).json({ error: 'invalid_token', error_description: 'Firebase token verification failed' });
     }
 
-    // Generate short code, store it in Firebase with a TTL
+    // Generate short code, store it in Firebase with a TTL and PKCE challenge
     const code = generateCode();
     const isAdmin = ADMIN_EMAILS.includes(user.email);
     await firebaseRequest('PUT', `/bca3/auth_codes/${code}`, {
@@ -115,6 +117,9 @@ module.exports = async (req, res) => {
       email: user.email,
       name: user.name || 'BCA Scholar',
       isAdmin,
+      codeChallenge: body.code_challenge || null,
+      codeChallengeMethod: body.code_challenge_method || 'S256',
+      redirectUri: body.redirect_uri || null,
       createdAt: Date.now(),
       expiresAt: Date.now() + CODE_TTL_MS
     });
@@ -142,6 +147,21 @@ module.exports = async (req, res) => {
       // Clean up expired code
       await firebaseRequest('DELETE', `/bca3/auth_codes/${code}`, null);
       return res.status(400).json({ error: 'invalid_grant', error_description: 'Auth code expired. Please sign in again.' });
+    }
+
+    // PKCE verification if challenge was set
+    if (record.codeChallenge) {
+      const verifier = body.code_verifier || req.query?.code_verifier || '';
+      if (!verifier) {
+        return res.status(400).json({ error: 'invalid_request', error_description: 'code_verifier required for PKCE' });
+      }
+      let calculatedChallenge = verifier;
+      if (record.codeChallengeMethod === 'S256') {
+        calculatedChallenge = crypto.createHash('sha256').update(verifier).digest('base64url');
+      }
+      if (calculatedChallenge !== record.codeChallenge) {
+        return res.status(400).json({ error: 'invalid_grant', error_description: 'PKCE verification failed' });
+      }
     }
 
     // Delete code (single use)
@@ -234,7 +254,17 @@ module.exports = async (req, res) => {
 
   // ── GRANT 4: ADMIN_SECRET passthrough (for Cursor / Claude Desktop config) ──
   if (grantType === 'client_credentials') {
-    const secret = body.client_secret || (req.headers['authorization'] || '').replace(/^Basic\s+/i, '');
+    let secret = body.client_secret;
+    if (!secret && req.headers['authorization']) {
+      const authHeader = req.headers['authorization'].trim();
+      if (authHeader.startsWith('Basic ')) {
+        const credentials = Buffer.from(authHeader.slice(6), 'base64').toString('utf8');
+        const parts = credentials.split(':');
+        secret = parts.length > 1 ? parts[1] : parts[0];
+      } else if (authHeader.startsWith('Bearer ')) {
+        secret = authHeader.slice(7);
+      }
+    }
     if (ADMIN_SECRET && secret === ADMIN_SECRET) {
       return res.status(200).json({
         access_token: ADMIN_SECRET,
@@ -252,4 +282,3 @@ module.exports = async (req, res) => {
     error_description: `Supported: authorization_code, refresh_token, urn:bca3:firebase_token, client_credentials`
   });
 };
-

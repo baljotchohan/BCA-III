@@ -6,16 +6,46 @@
  * Mobile-First Google OAuth with Automatic Popup/Redirect fallback.
  */
 
+function isAllowedRedirectUri(uri) {
+  if (!uri) return false;
+  try {
+    const parsed = new URL(uri);
+    const host = parsed.hostname;
+    return (
+      host === 'localhost' ||
+      host === '127.0.0.1' ||
+      host === 'claude.ai' ||
+      host.endsWith('.claude.ai') ||
+      host === 'chatgpt.com' ||
+      host.endsWith('.chatgpt.com') ||
+      host === 'cursor.sh' ||
+      host.endsWith('.cursor.sh') ||
+      host === 'bca-iii.vercel.app' ||
+      host.endsWith('.vercel.app')
+    );
+  } catch (e) {
+    return false;
+  }
+}
+
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   if (req.method === 'OPTIONS') return res.status(200).end();
 
-  const { redirect_uri = '', state = '', client_id = 'MCP Client' } = req.query || {};
+  const {
+    redirect_uri = '',
+    state = '',
+    client_id = 'MCP Client',
+    code_challenge = '',
+    code_challenge_method = 'S256'
+  } = req.query || {};
 
   const safeRedirect = encodeURIComponent(redirect_uri);
   const safeState = encodeURIComponent(state);
   const safeClientId = encodeURIComponent(client_id);
+  const safeChallenge = encodeURIComponent(code_challenge);
+  const safeChallengeMethod = encodeURIComponent(code_challenge_method);
   const displayClient = client_id.toLowerCase().includes('chatgpt') ? 'ChatGPT' 
                       : client_id.toLowerCase().includes('claude') ? 'Claude' 
                       : client_id.toLowerCase().includes('cursor') ? 'Cursor' 
@@ -396,16 +426,44 @@ module.exports = async (req, res) => {
     const params = new URLSearchParams(window.location.search);
     let serverRedirect = "${safeRedirect}" ? decodeURIComponent("${safeRedirect}") : '';
     let serverState = "${safeState}" ? decodeURIComponent("${safeState}") : '';
+    let serverChallenge = "${safeChallenge}" ? decodeURIComponent("${safeChallenge}") : '';
+    let serverChallengeMethod = "${safeChallengeMethod}" ? decodeURIComponent("${safeChallengeMethod}") : 'S256';
 
     let redirectUri = params.get('redirect_uri') || params.get('redirectUri') || serverRedirect || sessionStorage.getItem('bca_mcp_redirect_uri') || '';
     let state = params.get('state') || serverState || sessionStorage.getItem('bca_mcp_state') || '';
+    let codeChallenge = params.get('code_challenge') || serverChallenge || sessionStorage.getItem('bca_mcp_challenge') || '';
+    let codeChallengeMethod = params.get('code_challenge_method') || serverChallengeMethod || sessionStorage.getItem('bca_mcp_challenge_method') || 'S256';
 
     // Cache parameters for mobile redirect survival
     if (redirectUri) sessionStorage.setItem('bca_mcp_redirect_uri', redirectUri);
     if (state) sessionStorage.setItem('bca_mcp_state', state);
+    if (codeChallenge) sessionStorage.setItem('bca_mcp_challenge', codeChallenge);
+    if (codeChallengeMethod) sessionStorage.setItem('bca_mcp_challenge_method', codeChallengeMethod);
 
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile|mobile|CriOS/i.test(navigator.userAgent) || window.innerWidth <= 768;
     let authProcessed = false;
+
+    function isAllowedRedirect(uri) {
+      if (!uri) return false;
+      try {
+        const u = new URL(uri);
+        const host = u.hostname;
+        return (
+          host === 'localhost' ||
+          host === '127.0.0.1' ||
+          host === 'claude.ai' ||
+          host.endsWith('.claude.ai') ||
+          host === 'chatgpt.com' ||
+          host.endsWith('.chatgpt.com') ||
+          host === 'cursor.sh' ||
+          host.endsWith('.cursor.sh') ||
+          host === 'bca-iii.vercel.app' ||
+          host.endsWith('.vercel.app')
+        );
+      } catch (e) {
+        return false;
+      }
+    }
 
     function setStatus(msg, type = '') {
       const el = document.getElementById('statusMsg');
@@ -440,7 +498,13 @@ module.exports = async (req, res) => {
         const resp = await fetch('/api/token', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ grant_type: 'urn:bca3:firebase_token', id_token: idToken })
+          body: JSON.stringify({
+            grant_type: 'urn:bca3:firebase_token',
+            id_token: idToken,
+            code_challenge: codeChallenge,
+            code_challenge_method: codeChallengeMethod,
+            redirect_uri: redirectUri
+          })
         });
         const data = await resp.json();
 
@@ -452,6 +516,11 @@ module.exports = async (req, res) => {
         const targetState = state || sessionStorage.getItem('bca_mcp_state') || '';
 
         if (targetRedirect && targetRedirect !== 'undefined' && targetRedirect.length > 5) {
+          if (!isAllowedRedirect(targetRedirect)) {
+            setStatus('⚠️ Redirect destination not in authorized whitelist: ' + targetRedirect, 'error');
+            return;
+          }
+
           const sep = targetRedirect.includes('?') ? '&' : '?';
           const finalUrl = targetRedirect + sep + 'code=' + encodeURIComponent(data.code) + (targetState ? '&state=' + encodeURIComponent(targetState) : '');
 
@@ -552,6 +621,12 @@ module.exports = async (req, res) => {
 </body>
 </html>`;
 
-  res.setHeader('Content-Type', 'text/html');
-  return res.status(200).send(html);
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  if (typeof res.status === 'function') {
+    res.status(200);
+  }
+  if (typeof res.send === 'function') {
+    return res.send(html);
+  }
+  return res.end(html);
 };

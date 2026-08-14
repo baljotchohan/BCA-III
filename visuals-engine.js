@@ -382,6 +382,7 @@
       }
 
       function loop() {
+        if (!canvas.isConnected || !container.isConnected) return;
         renderFrame();
         requestAnimationFrame(loop);
       }
@@ -671,6 +672,7 @@
         }
         traverseNodes(root);
 
+        if (!canvas.isConnected || !container.isConnected) return;
         requestAnimationFrame(render);
       }
 
@@ -904,6 +906,7 @@
         container.querySelector('#gd-hud-loss').textContent = currLoss.toFixed(4);
         container.querySelector('#gd-hud-grad').textContent = `${currGrad >= 0 ? '+' : ''}${currGrad.toFixed(3)}`;
 
+        if (!canvas.isConnected || !container.isConnected) return;
         requestAnimationFrame(render);
       }
       requestAnimationFrame(render);
@@ -1222,6 +1225,7 @@
         container.querySelector('#cpu-hud-bus').textContent = `${st.activeBus.toUpperCase()} Bus (16-bit)`;
         container.querySelector('#cpu-hud-desc').textContent = st.desc;
 
+        if (!canvas.isConnected || !container.isConnected) return;
         requestAnimationFrame(render);
       }
       requestAnimationFrame(render);

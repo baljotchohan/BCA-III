@@ -122,6 +122,20 @@ function initHashRouter() {
 }
 
 function handleRoute() {
+  const searchStr = (typeof window !== 'undefined' && window.location && window.location.search) ? window.location.search : '';
+  const urlParams = (typeof URLSearchParams !== 'undefined') ? new URLSearchParams(searchStr) : { get: () => null };
+  const querySubject = urlParams.get('subject') || urlParams.get('subjectId');
+  if (querySubject) {
+    // Clear search param and set hash to preserve clean SPA history
+    try {
+      if (typeof window !== 'undefined' && window.history && window.location) {
+        window.history.replaceState(null, '', window.location.pathname + '#/subject/' + encodeURIComponent(querySubject));
+      }
+    } catch (e) {}
+    renderSubjectWorkspace(querySubject);
+    return;
+  }
+
   const hash = window.location.hash || '#/';
   
   if (hash.startsWith('#/subject/')) {
@@ -850,10 +864,25 @@ function copySnippet(btn) {
 
 function copyNoteContent(noteId) {
   const el = document.getElementById(`note-body-${noteId}`);
-  if (el) {
-    navigator.clipboard.writeText(el.innerText).then(() => {
-      showToast('Full note copied to clipboard! 📋');
+  let text = el ? (el.innerText || el.textContent) : '';
+
+  if (!text && _globalCloudData && Array.isArray(_globalCloudData.notes)) {
+    const found = _globalCloudData.notes.find(n => n.fbKey === noteId || n.id === noteId);
+    if (found && found.content) text = found.content;
+  }
+  if (!text && Array.isArray(_currentSubjectNotes)) {
+    const found = _currentSubjectNotes.find(n => n.fbKey === noteId || n.id === noteId);
+    if (found && found.content) text = found.content;
+  }
+
+  if (text) {
+    navigator.clipboard.writeText(text).then(() => {
+      showToast('Note copied to clipboard! 📋');
+    }).catch(() => {
+      showToast('📋 Press Ctrl+C to copy note text.');
     });
+  } else {
+    showToast('❌ Note content could not be copied.');
   }
 }
 
@@ -908,7 +937,7 @@ async function deleteNoteLive(fbKey, e) {
   if (!fbKey) return;
 
   if (!isAdminAuthenticated()) {
-    showToast('🔒 Administrator passkey required to delete content.');
+    showToast('🔒 Administrator privileges required to delete content.');
     openAdminModal();
     return;
   }
@@ -917,10 +946,38 @@ async function deleteNoteLive(fbKey, e) {
 
   showToast('⏳ Removing note from cloud...');
   try {
+    let tokenParam = '';
+    if (typeof firebase !== 'undefined' && firebase.auth && firebase.auth().currentUser) {
+      try {
+        const idToken = await firebase.auth().currentUser.getIdToken();
+        tokenParam = `?auth=${encodeURIComponent(idToken)}`;
+      } catch (err) {}
+    }
+
     await Promise.all([
-      fetch(`${FIREBASE_DB}/notes/${fbKey}.json`, { method: 'DELETE' }),
-      fetch(`${FIREBASE_DB}/lectures/${fbKey}.json`, { method: 'DELETE' })
+      fetch(`${FIREBASE_DB}/notes/${encodeURIComponent(fbKey)}.json${tokenParam}`, { method: 'DELETE' }),
+      fetch(`${FIREBASE_DB}/lectures/${encodeURIComponent(fbKey)}.json${tokenParam}`, { method: 'DELETE' })
     ]);
+
+    // Invalidate local in-memory cloud caches
+    if (_globalCloudData) {
+      if (Array.isArray(_globalCloudData.notes)) {
+        _globalCloudData.notes = _globalCloudData.notes.filter(n => n.fbKey !== fbKey && n.id !== fbKey);
+      }
+      if (Array.isArray(_globalCloudData.lectures)) {
+        _globalCloudData.lectures = _globalCloudData.lectures.filter(l => l.fbKey !== fbKey && l.id !== fbKey);
+      }
+    }
+
+    try {
+      const cached = localStorage.getItem('bca_cached_cloud_data');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (parsed.notes) parsed.notes = parsed.notes.filter(n => n.fbKey !== fbKey && n.id !== fbKey);
+        localStorage.setItem('bca_cached_cloud_data', JSON.stringify(parsed));
+      }
+    } catch (err) {}
+
     showToast('🗑️ Note permanently deleted from cloud!');
     const subject = BCA_3RD_SEM_DATA.subjects.find(s => s.id === activeSubjectId) || BCA_3RD_SEM_DATA.subjects[0];
     if (subject) {
@@ -1167,6 +1224,7 @@ function updateActiveDayCard(subject, allLectures, dayActivities) {
 
   const lecture = allLectures.find(l => l.date === selectedCalendarDate);
   const dateFormatted = formatDateLong(selectedCalendarDate);
+  const notesOnDate = (Array.isArray(_currentSubjectNotes) ? _currentSubjectNotes : []).filter(n => n.date === selectedCalendarDate);
 
   if (lecture) {
     titleEl.innerText = `Lecture on ${dateFormatted}`;
@@ -1177,6 +1235,18 @@ function updateActiveDayCard(subject, allLectures, dayActivities) {
       actionsEl.innerHTML = `
         <button class="Button-module-scss-module__f9ZZrG__button Button-module-scss-module__f9ZZrG__primary" style="font-size:0.75rem; height:32px;" onclick="openDayActivitiesModal('${selectedCalendarDate}')">
           <span>📋 View Full Day Summary</span>
+        </button>
+      `;
+    }
+  } else if (notesOnDate.length > 0) {
+    titleEl.innerText = `Published Study Notes (${dateFormatted})`;
+    timeEl.innerText = `${notesOnDate.length} Note${notesOnDate.length > 1 ? 's' : ''} Available`;
+    topicEl.innerText = notesOnDate.map(n => n.title || n.topic).join(' · ');
+    descEl.innerText = `Digital study material published on this date for ${subject.title}.`;
+    if (actionsEl) {
+      actionsEl.innerHTML = `
+        <button class="Button-module-scss-module__f9ZZrG__button Button-module-scss-module__f9ZZrG__primary" style="font-size:0.75rem; height:32px;" onclick="switchWorkspaceTab('notes')">
+          <span>📖 Read Digital Notes (${notesOnDate.length})</span>
         </button>
       `;
     }

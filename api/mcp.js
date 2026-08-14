@@ -859,7 +859,9 @@ function deleteFirebaseData(endpoint, id, authToken = '') {
 
 function fetchSessionToken(token) {
   return new Promise((resolve) => {
-    const url = `https://bca2nd-5c622-default-rtdb.firebaseio.com/bca3/session_tokens/${encodeURIComponent(token)}.json`;
+    const serverSecret = process.env.FIREBASE_DATABASE_SECRET || process.env.ADMIN_SECRET || '';
+    const authQuery = serverSecret ? `?auth=${encodeURIComponent(serverSecret)}` : '';
+    const url = `https://bca2nd-5c622-default-rtdb.firebaseio.com/bca3/session_tokens/${encodeURIComponent(token)}.json${authQuery}`;
     https.get(url, (res) => {
       let data = '';
       res.on('data', chunk => { data += chunk; });
@@ -946,9 +948,19 @@ async function verifySignedIn(authHeader) {
 
 // Main MCP Dispatcher
 async function handleMcpRpc(payload, authHeader = '', authorHeader = '') {
+  if (!payload || typeof payload !== 'object') {
+    return { jsonrpc: "2.0", id: null, error: { code: -32600, message: "Invalid Request: payload must be a JSON object" } };
+  }
+
   const method = payload.method;
   const reqId = payload.id;
   const params = payload.params || {};
+
+  // Handle JSON-RPC notifications (no response required)
+  if (method && method.startsWith('notifications/') || (reqId === undefined && !method)) {
+    return null;
+  }
+
   const token = authHeader ? authHeader.replace(/^Bearer\s+/i, '').trim() : '';
 
   // Resolve admin and signed-in status once upfront
@@ -1023,8 +1035,8 @@ async function handleMcpRpc(payload, authHeader = '', authorHeader = '') {
       };
     }
 
-
-    if (name === "get_syllabus") {
+    // --- TOOL: get_syllabus (aliases: get_subjects, get_curriculum) ---
+    if (name === "get_syllabus" || name === "get_subjects" || name === "get_curriculum") {
       const subId = args.subject_id ? normalizeSubjectId(args.subject_id) : "all";
       if (subId === "all" || !SYLLABUS_INDEX[subId]) {
         return {
@@ -1107,7 +1119,8 @@ async function handleMcpRpc(payload, authHeader = '', authorHeader = '') {
       };
     }
 
-    if (name === "get_digital_notes" || name === "list_digital_notes") {
+    // --- TOOL: get_digital_notes / list_digital_notes / get_notes / list_notes ---
+    if (name === "get_digital_notes" || name === "list_digital_notes" || name === "get_notes" || name === "list_notes") {
       const [rawFbNotes, rawFbLectures] = await Promise.all([
         fetchFirebaseData('notes'),
         fetchFirebaseData('lectures')
@@ -1181,7 +1194,8 @@ async function handleMcpRpc(payload, authHeader = '', authorHeader = '') {
       };
     }
 
-    if (name === "search_digital_notes") {
+    // --- TOOL: search_digital_notes / search_notes / search_curriculum ---
+    if (name === "search_digital_notes" || name === "search_notes" || name === "search_curriculum") {
       const query = (args.query || "").toLowerCase().trim();
       const subId = args.subject_id && args.subject_id !== "all" ? normalizeSubjectId(args.subject_id) : null;
       
@@ -1236,7 +1250,8 @@ async function handleMcpRpc(payload, authHeader = '', authorHeader = '') {
       };
     }
 
-    if (name === "get_note_by_id") {
+    // --- TOOL: get_note_by_id / get_note ---
+    if (name === "get_note_by_id" || name === "get_note") {
       const rawFbNotes = await fetchFirebaseData('notes');
       const note = rawFbNotes.find(n => n.id === args.id || n.fbKey === args.id);
       if (!note) {
@@ -1253,7 +1268,8 @@ async function handleMcpRpc(payload, authHeader = '', authorHeader = '') {
       };
     }
 
-    if (name === "create_and_publish_note" || name === "publish_digital_note") {
+    // --- TOOL: create_and_publish_note / publish_digital_note / create_note / publish_note ---
+    if (name === "create_and_publish_note" || name === "publish_digital_note" || name === "create_note" || name === "publish_note") {
       if (!isAdmin) {
         return {
           jsonrpc: "2.0",
@@ -1342,7 +1358,8 @@ async function handleMcpRpc(payload, authHeader = '', authorHeader = '') {
       };
     }
 
-    if (name === "update_digital_note") {
+    // --- TOOL: update_digital_note / update_note / edit_note ---
+    if (name === "update_digital_note" || name === "update_note" || name === "edit_note") {
       if (!isAdmin) {
         return {
           jsonrpc: "2.0",
@@ -1387,7 +1404,8 @@ async function handleMcpRpc(payload, authHeader = '', authorHeader = '') {
       };
     }
 
-    if (name === "delete_digital_note" || name === "delete_hub_record") {
+    // --- TOOL: delete_digital_note / delete_note / delete_hub_record ---
+    if (name === "delete_digital_note" || name === "delete_note" || name === "delete_hub_record") {
       if (!isAdmin) {
         return {
           jsonrpc: "2.0",
@@ -1779,6 +1797,18 @@ module.exports = async (req, res) => {
   }
 
   if (req.method === 'GET') {
+    // Check if client expects SSE transport
+    if (req.headers.accept && req.headers.accept.includes('text/event-stream')) {
+      res.writeHead(200, {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache, no-transform',
+        'Connection': 'keep-alive',
+        'Access-Control-Allow-Origin': '*'
+      });
+      res.write(`event: endpoint\ndata: ${BASE}/api/mcp\n\n`);
+      return;
+    }
+
     // Advertise OAuth authorization server so MCP clients discover it
     res.setHeader('Link', `<${BASE}/.well-known/oauth-authorization-server>; rel="oauth-authorization-server"`);
     return res.status(200).json({

@@ -837,9 +837,19 @@ function verifyAdmin(authHeader, passkeyArg) {
 
 // Main MCP Dispatcher
 async function handleMcpRpc(payload, authHeader = '') {
+  if (!payload || typeof payload !== 'object') {
+    return { jsonrpc: "2.0", id: null, error: { code: -32600, message: "Invalid Request: payload must be a JSON object" } };
+  }
+
   const method = payload.method;
   const reqId = payload.id;
   const params = payload.params || {};
+
+  // Handle JSON-RPC notifications (no response required)
+  if (method && method.startsWith('notifications/') || (reqId === undefined && !method)) {
+    return null;
+  }
+
   const isAdmin = verifyAdmin(authHeader, params.arguments?.passkey);
 
   // 1. Ping
@@ -876,16 +886,14 @@ async function handleMcpRpc(payload, authHeader = '') {
     return { jsonrpc: "2.0", id: reqId, result: { tools: [...PUBLIC_TOOLS, ...ADMIN_TOOLS] } };
   }
 
-
-
   // 4. Tools Call
   if (method === "tools/call") {
     const name = params.name;
     const args = params.arguments || {};
     const hasAdminAccess = verifyAdmin(authHeader, args.passkey);
 
-    // --- TOOL: get_syllabus ---
-    if (name === "get_syllabus") {
+    // --- TOOL: get_syllabus (aliases: get_subjects, get_curriculum) ---
+    if (name === "get_syllabus" || name === "get_subjects" || name === "get_curriculum") {
       const subId = args.subject_id ? normalizeSubjectId(args.subject_id) : "all";
       if (subId === "all" || !SYLLABUS_INDEX[subId]) {
         return {
@@ -969,8 +977,8 @@ async function handleMcpRpc(payload, authHeader = '') {
       };
     }
 
-    // --- TOOL: get_digital_notes / list_digital_notes ---
-    if (name === "get_digital_notes" || name === "list_digital_notes") {
+    // --- TOOL: get_digital_notes / list_digital_notes / get_notes / list_notes ---
+    if (name === "get_digital_notes" || name === "list_digital_notes" || name === "get_notes" || name === "list_notes") {
       const [rawFbNotes, rawFbLectures] = await Promise.all([
         fetchFirebaseData('notes'),
         fetchFirebaseData('lectures')
@@ -1045,8 +1053,8 @@ async function handleMcpRpc(payload, authHeader = '') {
       };
     }
 
-    // --- TOOL: search_digital_notes ---
-    if (name === "search_digital_notes") {
+    // --- TOOL: search_digital_notes / search_notes / search_curriculum ---
+    if (name === "search_digital_notes" || name === "search_notes" || name === "search_curriculum") {
       const query = (args.query || "").toLowerCase().trim();
       const subId = args.subject_id && args.subject_id !== "all" ? normalizeSubjectId(args.subject_id) : null;
       
@@ -1197,8 +1205,8 @@ async function handleMcpRpc(payload, authHeader = '') {
       };
     }
 
-    // --- TOOL: update_digital_note ---
-    if (name === "update_digital_note") {
+    // --- TOOL: update_digital_note / update_note / edit_note ---
+    if (name === "update_digital_note" || name === "update_note" || name === "edit_note") {
       if (!hasAdminAccess) {
         return {
           jsonrpc: "2.0",
@@ -1236,8 +1244,8 @@ async function handleMcpRpc(payload, authHeader = '') {
       };
     }
 
-    // --- TOOL: delete_digital_note / delete_hub_record ---
-    if (name === "delete_digital_note" || name === "delete_hub_record") {
+    // --- TOOL: delete_digital_note / delete_note / delete_hub_record ---
+    if (name === "delete_digital_note" || name === "delete_note" || name === "delete_hub_record") {
       if (!hasAdminAccess) {
         return {
           jsonrpc: "2.0",
@@ -1652,13 +1660,16 @@ if (isHttp) {
   const rl = readline.createInterface({ input: process.stdin, output: process.stdout, terminal: false });
 
   rl.on('line', async (line) => {
-    if (!line.trim()) return;
+    if (!line || !line.trim()) return;
     try {
+      const payload = JSON.parse(line);
       const auth = ADMIN_PASSKEY ? `Bearer ${ADMIN_PASSKEY}` : '';
       const response = await handleMcpRpc(payload, auth);
-      process.stdout.write(JSON.stringify(response) + '\n');
+      if (response !== null && response !== undefined) {
+        process.stdout.write(JSON.stringify(response) + '\n');
+      }
     } catch (e) {
-      process.stdout.write(JSON.stringify({ jsonrpc: "2.0", id: null, error: { code: -32700, message: "Parse error" } }) + '\n');
+      process.stdout.write(JSON.stringify({ jsonrpc: "2.0", id: null, error: { code: -32700, message: "Parse error: " + e.message } }) + '\n');
     }
   });
 }

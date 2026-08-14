@@ -19,18 +19,15 @@ async function getAuthTokenParam() {
 
 function isPortalAdminAuth() {
   if (typeof firebase !== 'undefined' && firebase.auth && firebase.auth().currentUser) {
-    const email = (firebase.auth().currentUser.email || '').toLowerCase();
-    const ADMIN_EMAILS = [
+    const email = (firebase.auth().currentUser.email || '').toLowerCase().trim();
+    const ADMIN_EMAILS = (typeof FIREBASE !== 'undefined' && FIREBASE.adminEmails) || [
       'baljotchohan23@gmail.com',
       'mehakpreetkaur@gmail.com',
       'mehakpreetsaini26@gmail.com'
     ];
-    if (ADMIN_EMAILS.includes(email)) return true;
+    if (ADMIN_EMAILS.some(ae => ae.toLowerCase() === email)) return true;
   }
-  return sessionStorage.getItem(SESSION_KEY) === 'authenticated' || 
-         sessionStorage.getItem('bca_admin_session') === 'authenticated' ||
-         localStorage.getItem('bca_hub_admin_session') === 'authenticated' ||
-         localStorage.getItem('bca_admin_session') === 'authenticated';
+  return sessionStorage.getItem(SESSION_KEY) === 'authenticated';
 }
 
 // ─── Firebase REST Helpers ────────────────────────────────────────────────────
@@ -55,6 +52,17 @@ async function fbPush(path, data) {
   });
   if (!res.ok) throw new Error(`Firebase POST failed: ${res.status}`);
   return (await res.json()).name; // returns the generated key
+}
+
+async function fbPatch(path, data) {
+  const tokenParam = await getAuthTokenParam();
+  const res = await fetch(`${DB}/${path}.json${tokenParam}`, {
+    method:  'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error(`Firebase PATCH failed: ${res.status}`);
+  return await res.json();
 }
 
 async function fbDelete(path, fbKey) {
@@ -224,17 +232,121 @@ function renderAll() {
 //  0. DIGITAL NOTES
 // ─────────────────────────────────────────────────────────────────────────────
 let _noteFilter = 'all';
+let _editingNoteKey = null;
+
+function autoSaveNoteDraft() {
+  if (_editingNoteKey) return; // Don't overwrite draft when editing existing note
+  try {
+    const draft = {
+      subject: document.getElementById('note-subject')?.value || 'comp-arch',
+      unit: document.getElementById('note-unit')?.value || 'Unit I',
+      title: document.getElementById('note-title')?.value || '',
+      tags: document.getElementById('note-tags')?.value || '',
+      visualTag: document.getElementById('note-visual-tag')?.value || 'none',
+      readTime: document.getElementById('note-readtime')?.value || '',
+      content: document.getElementById('note-content')?.value || '',
+      timestamp: Date.now()
+    };
+    if (draft.title || draft.content) {
+      localStorage.setItem('bca_admin_note_draft', JSON.stringify(draft));
+    }
+  } catch (e) {}
+}
+
+function restoreNoteDraft() {
+  if (_editingNoteKey) return;
+  try {
+    const raw = localStorage.getItem('bca_admin_note_draft');
+    if (!raw) return;
+    const draft = JSON.parse(raw);
+    if (!draft) return;
+    if (document.getElementById('note-subject') && draft.subject) document.getElementById('note-subject').value = draft.subject;
+    if (document.getElementById('note-unit') && draft.unit) document.getElementById('note-unit').value = draft.unit;
+    if (document.getElementById('note-title') && draft.title) document.getElementById('note-title').value = draft.title;
+    if (document.getElementById('note-tags') && draft.tags) document.getElementById('note-tags').value = draft.tags;
+    if (document.getElementById('note-visual-tag') && draft.visualTag) document.getElementById('note-visual-tag').value = draft.visualTag;
+    if (document.getElementById('note-readtime') && draft.readTime) document.getElementById('note-readtime').value = draft.readTime;
+    if (document.getElementById('note-content') && draft.content) document.getElementById('note-content').value = draft.content;
+  } catch (e) {}
+}
 
 function openNoteForm() {
   const f = document.getElementById('note-form');
+  if (!f) return;
   f.style.display = f.style.display === 'none' ? 'flex' : 'none';
-  if (f.style.display === 'flex') document.getElementById('note-title').focus();
+  if (f.style.display === 'flex') {
+    if (!_editingNoteKey) restoreNoteDraft();
+    const titleEl = document.getElementById('note-title');
+    if (titleEl) titleEl.focus();
+  }
 }
 
 function closeNoteForm() {
-  document.getElementById('note-form').style.display = 'none';
+  const f = document.getElementById('note-form');
+  if (f) f.style.display = 'none';
+  _editingNoteKey = null;
+  const saveBtn = document.getElementById('save-note-btn');
+  if (saveBtn) saveBtn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path></svg> Publish Note Live';
   ['note-title','note-tags','note-readtime','note-content'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
-  document.getElementById('note-unit').value = 'Unit I';
+  if (document.getElementById('note-unit')) document.getElementById('note-unit').value = 'Unit I';
+  if (document.getElementById('note-visual-tag')) document.getElementById('note-visual-tag').value = 'none';
+  const previewBox = document.getElementById('note-preview-box');
+  if (previewBox) previewBox.style.display = 'none';
+}
+
+function toggleNotePreview() {
+  const box = document.getElementById('note-preview-box');
+  const btn = document.getElementById('toggle-preview-btn');
+  const content = document.getElementById('note-content')?.value || '';
+  if (!box) return;
+  if (box.style.display === 'none' || !box.style.display) {
+    box.style.display = 'block';
+    if (btn) btn.textContent = '❌ Close Preview';
+    box.innerHTML = `<div style="font-size:0.88rem; line-height:1.6;">${escHtml(content).replace(/\n/g, '<br/>')}</div>`;
+  } else {
+    box.style.display = 'none';
+    if (btn) btn.textContent = '👁️ Toggle Live Preview';
+  }
+}
+
+async function editNote(fbKey) {
+  try {
+    showAdminToast('⏳ Loading note for editing...');
+    const list = await fbGet('notes');
+    const note = list.find(n => n.fbKey === fbKey || n.id === fbKey);
+    if (!note) {
+      showAdminToast('❌ Note not found in cloud.');
+      return;
+    }
+
+    _editingNoteKey = fbKey;
+    const f = document.getElementById('note-form');
+    if (f) f.style.display = 'flex';
+
+    if (document.getElementById('note-subject')) document.getElementById('note-subject').value = note.subject || note.subjectId || 'comp-arch';
+    if (document.getElementById('note-unit')) document.getElementById('note-unit').value = note.unit || 'Unit I';
+    if (document.getElementById('note-title')) document.getElementById('note-title').value = note.title || note.topic || '';
+    if (document.getElementById('note-tags')) document.getElementById('note-tags').value = Array.isArray(note.tags) ? note.tags.join(', ') : (note.tags || '');
+    if (document.getElementById('note-readtime')) document.getElementById('note-readtime').value = note.readTime || '6 min read';
+    if (document.getElementById('note-content')) document.getElementById('note-content').value = note.content || '';
+
+    // Check visual tag
+    const vMatch = (note.content || '').match(/\[visual:([a-z0-9\-]+)\]/i);
+    if (vMatch && document.getElementById('note-visual-tag')) {
+      document.getElementById('note-visual-tag').value = vMatch[1];
+    } else if (document.getElementById('note-visual-tag')) {
+      document.getElementById('note-visual-tag').value = 'none';
+    }
+
+    const saveBtn = document.getElementById('save-note-btn');
+    if (saveBtn) saveBtn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path></svg> Update Digital Note';
+
+    showTab('notes');
+    f.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    showAdminToast('✏️ Loaded note into editor: ' + (note.title || fbKey));
+  } catch (e) {
+    showAdminToast('❌ Failed to load note: ' + e.message);
+  }
 }
 
 async function saveNote() {
@@ -243,31 +355,50 @@ async function saveNote() {
   const title    = document.getElementById('note-title').value.trim();
   const tagsStr  = document.getElementById('note-tags').value.trim();
   const readTime = document.getElementById('note-readtime').value.trim() || '6 min read';
-  const content  = document.getElementById('note-content').value.trim();
+  let content    = document.getElementById('note-content').value.trim();
+  const visualTag = document.getElementById('note-visual-tag')?.value || 'none';
 
   if (!title || !content) {
     showAdminToast('❌ Title and Note Content are required.');
     return;
   }
 
-  showAdminToast('⏳ Publishing digital note to cloud...');
+  // Inject visual simulation tag if selected and not already in content
+  if (visualTag && visualTag !== 'none') {
+    const tagCode = `[visual:${visualTag}]`;
+    if (!content.includes(tagCode)) {
+      content = `${tagCode}\n\n${content}`;
+    }
+  }
+
+  showAdminToast(_editingNoteKey ? '⏳ Updating digital note in cloud...' : '⏳ Publishing digital note to cloud...');
   try {
-    await fbPush('notes', {
+    const payload = {
       subject,
       subjectId: subject,
       unit,
       title,
+      topic: title,
       tags: tagsStr ? tagsStr.split(',').map(t => t.trim()).filter(Boolean) : ['Revision'],
       readTime,
       content,
       isAdminPublished: true,
-      author: 'Admin',
+      author: 'Baljot Chohan',
       date: new Date().toISOString().split('T')[0],
       timestamp: Date.now()
-    });
+    };
+
+    if (_editingNoteKey) {
+      await fbPatch(`notes/${_editingNoteKey}`, payload);
+      showAdminToast('✅ Digital note updated live!');
+    } else {
+      await fbPush('notes', payload);
+      showAdminToast('✅ Digital note published live for all students!');
+    }
+
+    try { localStorage.removeItem('bca_admin_note_draft'); } catch (e) {}
     closeNoteForm();
     await renderNotes(_noteFilter || 'all');
-    showAdminToast('✅ Digital note published live for all students!');
   } catch (e) {
     showAdminToast('❌ Failed: ' + e.message);
   }
@@ -321,6 +452,9 @@ async function renderNotes(filter) {
           ` : ''}
         </div>
         <div class="admin-item-actions">
+          <button class="admin-item-btn" onclick="editNote('${n.fbKey}')" title="Edit Note" style="color:var(--accent-coral);">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+          </button>
           <button class="admin-item-btn delete" onclick="deleteNote('${n.fbKey}')" title="Delete Note">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path></svg>
           </button>
@@ -683,12 +817,17 @@ function formatTime(timeStr) {
   return `${h%12||12}:${String(m).padStart(2,'0')} ${h>=12?'PM':'AM'}`;
 }
 
+let _adminToastTimer = null;
 function showAdminToast(msg) {
   const toast = document.getElementById('admin-toast');
   if (!toast) return;
+  if (_adminToastTimer) clearTimeout(_adminToastTimer);
   toast.textContent = msg;
   toast.classList.add('visible');
-  setTimeout(() => toast.classList.remove('visible'), 3000);
+  _adminToastTimer = setTimeout(() => {
+    toast.classList.remove('visible');
+    _adminToastTimer = null;
+  }, 3200);
 }
 
 // Shake + spin animations
@@ -758,7 +897,7 @@ async function refreshRevenueData() {
               ${o.itemType === 'single_note' ? '⚡ Single Note (₹15)' : `⭐ Pass: ${(o.planTier || '').toUpperCase()} (${o.planTier === 'max' ? '₹49' : '₹19'})`}
             </div>
             <div style="font-size: 0.76rem; color: var(--text-muted); margin-top: 0.15rem;">
-              UID: <code style="color: var(--color-coral);">${o.uid || 'Anonymous'}</code> | Pay ID: <code style="color: var(--text-subtle);">${o.paymentId || 'N/A'}</code>
+              UID: <code style="color: var(--color-coral);">${escHtml(o.uid || 'Anonymous')}</code> | Pay ID: <code style="color: var(--text-subtle);">${escHtml(o.paymentId || 'N/A')}</code>
             </div>
           </div>
           <div style="text-align: right; display: flex; align-items: center; gap: 0.6rem;">
@@ -771,7 +910,7 @@ async function refreshRevenueData() {
               </div>
             </div>
             ${isPaid && o.orderId ? `
-              <button onclick="adminMarkOrderRefunded('${o.orderId}', '${o.uid || ''}')" style="font-size: 0.72rem; padding: 0.25rem 0.55rem; background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 4px; cursor: pointer;" title="Mark as refunded/revoked in DB">
+              <button onclick="adminMarkOrderRefunded('${escHtml(o.orderId)}', '${escHtml(o.uid || '')}')" style="font-size: 0.72rem; padding: 0.25rem 0.55rem; background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 4px; cursor: pointer;" title="Mark as refunded/revoked in DB">
                 Revoke/Refund
               </button>
             ` : ''}
@@ -800,7 +939,7 @@ async function adminMarkOrderRefunded(orderId, uid) {
 
     // 2. If UID is present, downgrade subscription to free
     if (uid && uid !== 'anonymous') {
-      await fetch(`https://bca2nd-5c622-default-rtdb.firebaseio.com/bca3/users/${encodeURIComponent(uid)}/subscription.json`, {
+      await fetch(`https://bca2nd-5c622-default-rtdb.firebaseio.com/bca3/users/${encodeURIComponent(uid)}/subscription.json${tokenParam}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: 'refunded', plan: 'free', validUntil: Date.now() })
@@ -828,21 +967,21 @@ async function adminGrantSubscription() {
 
   try {
     const rawUsers = await _fbFetch('users');
-    const usersObj = rawUsers || {};
+    const usersList = Array.isArray(rawUsers) ? rawUsers : Object.entries(rawUsers || {}).map(([fbKey, val]) => ({ ...val, fbKey }));
 
-    let targetKey = null;
+    let targetUid = null;
 
-    if (typeof usersObj === 'object') {
-      for (const [key, user] of Object.entries(usersObj)) {
-        if (key === userId || (user.email && user.email.toLowerCase() === userId.toLowerCase())) {
-          targetKey = key;
-          break;
-        }
+    for (const u of usersList) {
+      const uKey = u.fbKey || u.id || u.uid;
+      const uEmail = (u.email || '').toLowerCase().trim();
+      if (uKey === userId || uEmail === userId.toLowerCase().trim()) {
+        targetUid = uKey;
+        break;
       }
     }
 
-    if (!targetKey) {
-      targetKey = userId.replace(/[^a-zA-Z0-9]/g, '_');
+    if (!targetUid) {
+      targetUid = userId.includes('@') ? userId.replace(/[^a-zA-Z0-9]/g, '_') : userId;
     }
 
     const now = Date.now();
@@ -858,11 +997,13 @@ async function adminGrantSubscription() {
     };
 
     const tokenParam = await getAuthTokenParam();
-    await fetch(`https://bca2nd-5c622-default-rtdb.firebaseio.com/bca3/users/${targetKey}/subscription.json${tokenParam}`, {
+    const res = await fetch(`https://bca2nd-5c622-default-rtdb.firebaseio.com/bca3/users/${encodeURIComponent(targetUid)}/subscription.json${tokenParam}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(subData)
     });
+
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
     showAdminToast(`Success! Granted ${planTier.toUpperCase()} pass to ${userId}`);
     if (userIdInput) userIdInput.value = '';
@@ -873,4 +1014,16 @@ async function adminGrantSubscription() {
     alert('Failed to grant pass: ' + err.message);
   }
 }
+
+// Auto-save draft triggers
+document.addEventListener('DOMContentLoaded', () => {
+  ['note-subject','note-unit','note-title','note-tags','note-visual-tag','note-readtime','note-content'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.addEventListener('input', autoSaveNoteDraft);
+      el.addEventListener('change', autoSaveNoteDraft);
+    }
+  });
+});
+
 

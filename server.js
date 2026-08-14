@@ -79,6 +79,18 @@ function wrapHandler(handlerModulePath) {
         this.end(JSON.stringify(obj));
         return this;
       };
+      res.send = function (data) {
+        if (typeof data === 'object' && data !== null && !Buffer.isBuffer(data)) {
+          this.setHeader('Content-Type', 'application/json; charset=utf-8');
+          this.end(JSON.stringify(data));
+        } else {
+          if (!this.getHeader('Content-Type')) {
+            this.setHeader('Content-Type', 'text/html; charset=utf-8');
+          }
+          this.end(data);
+        }
+        return this;
+      };
 
       try {
         delete require.cache[require.resolve(handlerModulePath)];

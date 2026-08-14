@@ -180,18 +180,33 @@
               <label class="admin-label">Tags (comma separated)</label>
               <input type="text" id="note-tags" class="admin-input-field" placeholder="e.g. 8086, Registers, Assembly"/>
             </div>
+            <div class="admin-field">
+              <label class="admin-label">Interactive Simulation Tag</label>
+              <select id="note-visual-tag" class="admin-input-field">
+                <option value="none">None (Standard Text &amp; Diagrams)</option>
+                <option value="8086-cpu">[visual:8086-cpu] 8086 CPU Architecture &amp; Registers</option>
+                <option value="btree">[visual:btree] B-Tree Insertion &amp; Node Splitting</option>
+                <option value="linear-regression">[visual:linear-regression] Gradient Descent &amp; Cost Curve</option>
+                <option value="bisection">[visual:bisection] Root Finding Bisection Method</option>
+                <option value="neural-net">[visual:neural-net] Multi-Layer Perceptron Forward Pass</option>
+              </select>
+            </div>
           </div>
           <div class="admin-field">
             <label class="admin-label">Note Title *</label>
             <input type="text" id="note-title" class="admin-input-field" placeholder="e.g. 8086 Addressing Modes &amp; Physical Address Derivation"/>
           </div>
           <div class="admin-field">
-            <label class="admin-label">Note Content (Markdown supported with code blocks, tables, math formulas) *</label>
-            <textarea id="note-content" class="admin-textarea" placeholder="Write markdown notes here... Use ### for subheadings, ```cpp for code blocks, | tables |, etc." rows="10"></textarea>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem;">
+              <label class="admin-label" style="margin-bottom:0;">Note Content (Markdown formatted) *</label>
+              <button type="button" id="toggle-preview-btn" class="admin-item-btn" style="font-size:0.75rem; padding:0.2rem 0.5rem;" onclick="toggleNotePreview()">👁️ Toggle Live Preview</button>
+            </div>
+            <textarea id="note-content" class="admin-textarea" placeholder="Write markdown notes here... Use ### for subheadings, ```cpp for code blocks, | tables |, LaTeX math $x$, etc." rows="10"></textarea>
+            <div id="note-preview-box" class="admin-field" style="display:none; margin-top:0.6rem; padding:0.85rem; border:1px solid var(--border-light); border-radius:8px; background:var(--bg-surface); max-height:250px; overflow-y:auto;"></div>
           </div>
           <div class="admin-form-actions">
-            <button class="admin-action-btn" onclick="closeNoteForm()">Cancel</button>
-            <button class="admin-action-btn primary" onclick="saveNote()">
+            <button type="button" class="admin-action-btn" onclick="closeNoteForm()">Cancel</button>
+            <button type="button" id="save-note-btn" class="admin-action-btn primary" onclick="saveNote()">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path></svg>
               Publish Note Live
             </button>

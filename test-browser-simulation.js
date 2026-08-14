@@ -142,6 +142,7 @@ const windowMock = {
   Boolean,
   RegExp,
   Promise,
+  URLSearchParams: global.URLSearchParams,
   fetch: global.fetch || (() => Promise.resolve({ ok: true, json: () => Promise.resolve([]) }))
 };
 
