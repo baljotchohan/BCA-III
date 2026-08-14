@@ -1350,9 +1350,9 @@ function renderMD(raw) {
 
   h = `<p>${h}</p>`;
 
-  // Restore stashed tokens
+  // Restore stashed tokens reliably
   tokens.forEach((val, i) => {
-    h = h.replace(`%%STASH_${i}%%`, val);
+    h = h.split(`%%STASH_${i}%%`).join(val);
   });
 
   // Clean empty paragraphs around block elements

@@ -84,8 +84,15 @@ window.BCA3_PAYMENTS = {
     // 4. Guest / Non-logged-in User
     const isGuest = !currentUserProfile || !currentUserProfile.uid || String(currentUserProfile.uid).startsWith('guest_');
     if (isGuest) {
+      if (note && !this.isUnitOne(note)) {
+        return {
+          hasAccess: false,
+          reason: 'locked_unit',
+          message: 'Upgrade to Pro (₹19/mo) or Max Lifetime (₹49) to read this note.'
+        };
+      }
       // 1st note in Unit 1 is free preview for guests
-      if (indexInSubject === 0 && (!note || this.isUnitOne(note))) {
+      if (indexInSubject === 0) {
         return { hasAccess: true, reason: 'guest_preview' };
       }
       return {
