@@ -137,6 +137,28 @@ body{font-family:var(--font-sans);background:var(--bg-page);color:var(--text-mai
 .fs-btn:last-child{border-left:1px solid var(--border-color)}
 .fs-label{padding:0 .4rem;font-size:.7rem;font-family:var(--font-mono);color:var(--text-subtle);min-width:32px;text-align:center;line-height:32px}
 
+/* Topic Jump Dropdown */
+.topic-jump-select {
+  background: var(--bg-card);
+  color: var(--text-main);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 0.35rem 0.65rem;
+  font-size: 0.78rem;
+  font-family: var(--font-sans);
+  font-weight: 600;
+  cursor: pointer;
+  max-width: 240px;
+  outline: none;
+  transition: all 0.15s;
+}
+.topic-jump-select:hover, .topic-jump-select:focus {
+  border-color: var(--color-coral);
+}
+@media(max-width:860px){
+  .topic-jump-select { display: none !important; }
+}
+
 /* ──────────── LOADING & ERROR STATES ──────────── */
 #ls{display:none !important;}
 .ls-ring{width:46px;height:46px;border:3px solid var(--border-color);border-top-color:var(--color-coral);border-radius:50%;animation:spin .75s linear infinite}
@@ -553,6 +575,7 @@ body{font-family:var(--font-sans);background:var(--bg-page);color:var(--text-mai
     <a href="/" class="tb-logo">BCA///</a>
     <span class="tb-sep">›</span>
     <span class="tb-crumb" id="tb-crumb">Study Guide</span>
+    <select id="topic-jump-select" class="topic-jump-select" onchange="jumpToSelectedTopic(this.value)" title="Quick Switch Topic" style="display:none;"></select>
   </div>
   <div class="tb-right">
     <!-- Language Toggle -->
@@ -977,7 +1000,7 @@ async function init() {
     if (r.ok) {
       const raw = await r.json();
       if (raw && typeof raw === 'object') {
-        const cloudNotes = Object.entries(raw).map(([k, v]) => ({ ...v, fbKey: k })).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+        const cloudNotes = Object.entries(raw).map(([k, v]) => ({ ...v, fbKey: k })).sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0) || (a.unit || '').localeCompare(b.unit || '') || (a.title || '').localeCompare(b.title || ''));
         if (cloudNotes.length > 0) {
           try { localStorage.setItem('bca_cloud_notes_cache', JSON.stringify(cloudNotes)); } catch(e) {}
           _notes = cloudNotes;
@@ -1491,32 +1514,61 @@ function cpCode(btn) {
 // ── Setup Next / Previous Note Navigation ──
 function setupNav(currentKey) {
   const subjNotes = _notes.filter(n => n.subject === _currentSubjectId || n.subjectId === _currentSubjectId);
-  const pool = subjNotes.length > 1 ? subjNotes : _notes;
+  const pool = subjNotes.length > 0 ? subjNotes : _notes;
   const idx = pool.findIndex(n => n.fbKey === currentKey || n.id === currentKey);
-  if (idx < 0 || pool.length < 2) return;
 
   const footer = document.getElementById('reader-footer');
   const prevBtn = document.getElementById('prev-btn');
   const nextBtn = document.getElementById('next-btn');
-  footer.style.display = 'flex';
+  if (footer) footer.style.display = 'flex';
 
   if (idx > 0) {
     const p = pool[idx - 1];
+    if (prevBtn) {
+      prevBtn.style.display = 'flex';
+      document.getElementById('prev-title').textContent = p.title || 'Previous Topic';
+      prevBtn.href = `/note.html?id=${encodeURIComponent(p.fbKey || p.id)}&subject=${encodeURIComponent(p.subject || p.subjectId || '')}`;
+    }
+  } else if (prevBtn) {
     prevBtn.style.display = 'flex';
-    document.getElementById('prev-title').textContent = p.title;
-    prevBtn.href = `/note.html?id=${encodeURIComponent(p.fbKey || p.id)}&subject=${encodeURIComponent(p.subject || p.subjectId || '')}`;
-  } else {
-    prevBtn.style.display = 'none';
+    document.getElementById('prev-title').textContent = '← Return to Subject Workspace';
+    prevBtn.href = `/?subject=${encodeURIComponent(_currentSubjectId || '')}`;
   }
 
-  if (idx < pool.length - 1) {
+  if (idx >= 0 && idx < pool.length - 1) {
     const n = pool[idx + 1];
+    if (nextBtn) {
+      nextBtn.style.display = 'flex';
+      document.getElementById('next-title').textContent = n.title || 'Next Topic';
+      nextBtn.href = `/note.html?id=${encodeURIComponent(n.fbKey || n.id)}&subject=${encodeURIComponent(n.subject || n.subjectId || '')}`;
+    }
+  } else if (nextBtn) {
     nextBtn.style.display = 'flex';
-    document.getElementById('next-title').textContent = n.title;
-    nextBtn.href = `/note.html?id=${encodeURIComponent(n.fbKey || n.id)}&subject=${encodeURIComponent(n.subject || n.subjectId || '')}`;
-  } else {
-    nextBtn.style.display = 'none';
+    document.getElementById('next-title').textContent = '📖 Open All Notes (Master Guide) →';
+    nextBtn.href = `/note.html?subject=${encodeURIComponent(_currentSubjectId || '')}&mode=master`;
   }
+
+  updateTopicJumpDropdown(pool, idx);
+}
+
+function updateTopicJumpDropdown(pool, currentIdx) {
+  const sel = document.getElementById('topic-jump-select');
+  if (!sel) return;
+  if (!pool || pool.length < 2) {
+    sel.style.display = 'none';
+    return;
+  }
+  sel.style.display = 'inline-block';
+  sel.innerHTML = pool.map((n, i) => {
+    const isSelected = i === currentIdx ? 'selected' : '';
+    const unitPrefix = n.unit ? `[${n.unit}] ` : '';
+    return `<option value="${esc(n.fbKey || n.id)}" ${isSelected}>${i + 1}. ${unitPrefix}${esc(n.title || 'Topic')}</option>`;
+  }).join('');
+}
+
+function jumpToSelectedTopic(noteKey) {
+  if (!noteKey) return;
+  window.location.href = `/note.html?id=${encodeURIComponent(noteKey)}&subject=${encodeURIComponent(_currentSubjectId || '')}`;
 }
 
 function showToast(msg, type = 'info') {
