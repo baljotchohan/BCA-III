@@ -385,7 +385,7 @@ body{font-family:var(--font-sans);background:var(--bg-page);color:var(--text-mai
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
 
 /* ──────────── FOOTER NAVIGATION CARDS ──────────── */
-.reader-footer{max-width:960px;margin:2rem auto 5rem;display:flex;gap:1.25rem}
+.reader-footer{max-width:100%;width:100%;margin:2.5rem 0 5rem;display:flex;gap:1.25rem;box-sizing:border-box}
 .footer-nav-card{
   flex:1;padding:1.15rem 1.5rem;
   border:1px solid var(--border-color);border-radius:var(--radius-lg);
@@ -407,7 +407,7 @@ body{font-family:var(--font-sans);background:var(--bg-page);color:var(--text-mai
 
 @media(max-width:768px){
   .topbar { padding: env(safe-area-inset-top, 0px) .65rem 0 .65rem; gap: .4rem; }
-  .reader-wrap{margin:1rem auto 5rem; width:calc(100% - 1.25rem); padding:1.5rem 1rem calc(5rem + env(safe-area-inset-bottom, 0px)); border-radius:var(--radius-lg); box-sizing: border-box;}
+  .reader-wrap{margin:0 auto 5rem; width:100%; max-width:100%; padding:1.25rem 0.85rem calc(5rem + env(safe-area-inset-bottom, 0px)); border-radius:0; box-sizing: border-box;}
   .tb-crumb,.fs-label{display:none}
   .hide-mobile{display:none}
   .pdf-btn span{display:none}
@@ -521,11 +521,11 @@ body{font-family:var(--font-sans);background:var(--bg-page);color:var(--text-mai
       <button class="lang-btn" data-lang="pa" onclick="setLangMode('pa')">ਪੰਜਾਬੀ</button>
     </div>
 
-    <!-- Font Size Controls -->
-    <div class="fs-control" title="Adjust text size">
-      <button class="fs-btn" onclick="changeFs(-1)" title="Smaller font">A−</button>
+    <!-- Page Width / Margin Adjust Controls -->
+    <div class="fs-control" title="Adjust page reading width & side margins">
+      <button class="fs-btn" onclick="changePageWidth(-1)" title="Narrow width / increase side margins">↔−</button>
       <span class="fs-label" id="fs-label">100%</span>
-      <button class="fs-btn" onclick="changeFs(1)" title="Larger font">A+</button>
+      <button class="fs-btn" onclick="changePageWidth(1)" title="Expand width to 100% full screen">↔+</button>
     </div>
 
     <!-- Download PDF / Print Button -->
@@ -665,17 +665,36 @@ function toggleTheme() {
   } catch (e) {}
 }
 
-// ── Font Size Scaling ──
-function changeFs(dir) {
-  _fsIdx = Math.max(0, Math.min(FS_STEPS.length - 1, _fsIdx + dir));
-  const v = FS_STEPS[_fsIdx];
-  document.documentElement.style.setProperty('--fs-base', v);
+// ── Page Width & Side Margins Adjustment ──
+const PAGE_WIDTH_STEPS = [65, 75, 85, 92, 100];
+let _pageWidthIdx = 4; // Default to 100% Full Width
+
+function changePageWidth(dir) {
+  _pageWidthIdx = Math.max(0, Math.min(PAGE_WIDTH_STEPS.length - 1, _pageWidthIdx + dir));
+  const w = PAGE_WIDTH_STEPS[_pageWidthIdx];
+  document.documentElement.style.setProperty('--page-width', w + '%');
   const label = document.getElementById('fs-label');
-  if (label) label.textContent = Math.round(v * 100) + '%';
+  if (label) label.textContent = w + '%';
   try {
-    localStorage.setItem('bca_reader_fs', String(v));
+    localStorage.setItem('bca_reader_width', String(w));
   } catch (e) {}
 }
+
+(function initReaderWidth() {
+  try {
+    const saved = parseInt(localStorage.getItem('bca_reader_width'));
+    if (saved && PAGE_WIDTH_STEPS.includes(saved)) {
+      _pageWidthIdx = PAGE_WIDTH_STEPS.indexOf(saved);
+      document.documentElement.style.setProperty('--page-width', saved + '%');
+      const label = document.getElementById('fs-label');
+      if (label) label.textContent = saved + '%';
+    } else {
+      document.documentElement.style.setProperty('--page-width', '100%');
+      const label = document.getElementById('fs-label');
+      if (label) label.textContent = '100%';
+    }
+  } catch (e) {}
+})();
 
 // ── Reading Progress Bar ──
 window.addEventListener('scroll', () => {
@@ -1091,7 +1110,7 @@ function renderSingleNote(note) {
     document.getElementById('lang-group').style.display = 'flex';
   } else {
     container.innerHTML = `
-      <div class="prose-content" style="max-width: 1000px; margin: 0 auto;">
+      <div class="prose-content">
         ${renderMD(note.content || '')}
       </div>
     `;
@@ -1110,7 +1129,7 @@ function renderPaywallTeaser(note, accessRes) {
   const noteKey = note.fbKey || note.id;
 
   container.innerHTML = `
-    <div class="note-paywall-teaser" style="max-width: 1000px; margin: 1rem auto; box-sizing: border-box;">
+    <div class="note-paywall-teaser" style="width: 100%; margin: 1.5rem 0; box-sizing: border-box;">
       <div class="note-paywall-blur-content">
         <h2>${esc(note.title)}</h2>
         <p>${esc((note.content || '').slice(0, 260))}...</p>
