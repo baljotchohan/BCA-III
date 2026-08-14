@@ -92,10 +92,13 @@ body{font-family:var(--font-sans);background:var(--bg-page);color:var(--text-mai
 .topbar{
   position:sticky;top:0;z-index:1000;
   display:flex;align-items:center;justify-content:space-between;
-  height:56px;padding:0 1.5rem;gap:1rem;
+  height:calc(56px + env(safe-area-inset-top, 0px));
+  padding:env(safe-area-inset-top, 0px) 1.5rem 0 1.5rem;
+  gap:1rem;
   background:var(--bg-glass);
   backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
   border-bottom:1px solid var(--border-color);
+  box-sizing:border-box;
 }
 .tb-left{display:flex;align-items:center;gap:.75rem;min-width:0;flex:1}
 .tb-back-btn{
@@ -404,8 +407,8 @@ body{font-family:var(--font-sans);background:var(--bg-page);color:var(--text-mai
 }
 
 @media(max-width:768px){
-  .topbar { padding: 0 .65rem; gap: .4rem; }
-  .reader-wrap{margin:1rem auto 5rem; width:calc(100% - 1.25rem); padding:1.5rem 1rem 5rem;border-radius:var(--radius-lg); box-sizing: border-box;}
+  .topbar { padding: env(safe-area-inset-top, 0px) .65rem 0 .65rem; gap: .4rem; }
+  .reader-wrap{margin:1rem auto 5rem; width:calc(100% - 1.25rem); padding:1.5rem 1rem calc(5rem + env(safe-area-inset-bottom, 0px)); border-radius:var(--radius-lg); box-sizing: border-box;}
   .tb-crumb,.fs-label{display:none}
   .hide-mobile{display:none}
   .pdf-btn span{display:none}
@@ -420,10 +423,10 @@ body{font-family:var(--font-sans);background:var(--bg-page);color:var(--text-mai
   .topic-number{width: 36px; height: 36px; font-size: 1rem;}
 }
 @media(max-width:480px){
-  .topbar { padding: 0 .45rem; }
+  .topbar { padding: env(safe-area-inset-top, 0px) .45rem 0 .45rem; }
   .tb-back-btn span{display: none;}
   .tb-back-btn{padding: .35rem .5rem;}
-  .reader-wrap{width:calc(100% - 0.75rem); padding:1.25rem .75rem 4.5rem;}
+  .reader-wrap{width:calc(100% - 0.75rem); padding:1.25rem .75rem calc(4.5rem + env(safe-area-inset-bottom, 0px));}
 }
 
 /* ──────────── PRINT / PDF EXPORT MEDIA QUERY ──────────── */

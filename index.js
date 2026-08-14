@@ -1654,8 +1654,8 @@ if (isHttp) {
   rl.on('line', async (line) => {
     if (!line.trim()) return;
     try {
-      const payload = JSON.parse(line);
-      const response = await handleMcpRpc(payload, `Bearer ${ADMIN_PASSKEY}`);
+      const auth = ADMIN_PASSKEY ? `Bearer ${ADMIN_PASSKEY}` : '';
+      const response = await handleMcpRpc(payload, auth);
       process.stdout.write(JSON.stringify(response) + '\n');
     } catch (e) {
       process.stdout.write(JSON.stringify({ jsonrpc: "2.0", id: null, error: { code: -32700, message: "Parse error" } }) + '\n');

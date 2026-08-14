@@ -1,9 +1,15 @@
 const crypto = require('crypto');
 const https = require('https');
 
+function getFirebaseDbAuth() {
+  const secret = process.env.FIREBASE_DATABASE_SECRET || process.env.ADMIN_SECRET || '';
+  return secret ? `?auth=${encodeURIComponent(secret)}` : '';
+}
+
 function firebasePut(path, body) {
   return new Promise((resolve) => {
-    const url = `https://bca2nd-5c622-default-rtdb.firebaseio.com/bca3/${path}.json`;
+    const authQuery = getFirebaseDbAuth();
+    const url = `https://bca2nd-5c622-default-rtdb.firebaseio.com/bca3/${path}.json${authQuery}`;
     const data = JSON.stringify(body);
     const options = {
       method: 'PUT',
@@ -25,7 +31,8 @@ function firebasePut(path, body) {
 
 function firebasePatch(path, body) {
   return new Promise((resolve) => {
-    const url = `https://bca2nd-5c622-default-rtdb.firebaseio.com/bca3/${path}.json`;
+    const authQuery = getFirebaseDbAuth();
+    const url = `https://bca2nd-5c622-default-rtdb.firebaseio.com/bca3/${path}.json${authQuery}`;
     const data = JSON.stringify(body);
     const options = {
       method: 'PATCH',

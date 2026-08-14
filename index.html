@@ -887,12 +887,13 @@
        ======================================================================== -->
   <div id="profile-modal" class="profile-modal-backdrop" style="display: none;" onclick="if(event.target === this) closeProfileModal()">
     <div class="profile-modal-card">
+      <div class="mobile-sheet-handle"></div>
       <div class="profile-modal-header">
         <div class="profile-modal-title-wrap">
-          <span class="profile-badge" id="profile-role-badge">🎓 Student Scholar</span>
           <h2 class="profile-modal-title">Student Profile Hub</h2>
+          <span class="profile-badge" id="profile-role-badge">🎓 Student Scholar</span>
         </div>
-        <button class="header-icon-btn" onclick="closeProfileModal()" title="Close Profile">✕</button>
+        <button class="header-icon-btn" onclick="closeProfileModal()" title="Close Profile" aria-label="Close Profile">✕</button>
       </div>
 
       <div class="profile-modal-body">
@@ -903,7 +904,7 @@
           </div>
           <div class="profile-user-info">
             <h3 class="profile-user-name" id="profile-user-name">Guest Scholar</h3>
-            <p class="profile-user-email" id="profile-user-email">Sign in with Google to sync bookmarks & study progress</p>
+            <p class="profile-user-email" id="profile-user-email">Sign in with Google to sync bookmarks &amp; study progress</p>
             <div class="profile-user-status">
               <span class="status-dot online"></span>
               <span id="profile-status-text">Guest Mode</span>
@@ -966,12 +967,12 @@
           </div>
         </div>
 
-        <!-- PROFILE NAVIGATION TABS -->
+        <!-- PROFILE NAVIGATION TABS (SEGMENTED) -->
         <div class="profile-tabs-bar">
-          <button class="profile-tab-btn active" data-ptab="bookmarks" onclick="switchProfileTab('bookmarks')">📌 Saved Notes</button>
-          <button class="profile-tab-btn" data-ptab="membership" onclick="switchProfileTab('membership')">💳 Study Pass &amp; Plans</button>
-          <button class="profile-tab-btn" data-ptab="progress" onclick="switchProfileTab('progress')">🎯 Subject Progress</button>
-          <button class="profile-tab-btn" data-ptab="submit" onclick="switchProfileTab('submit')">📤 Share Study Note</button>
+          <button class="profile-tab-btn active" data-ptab="bookmarks" onclick="switchProfileTab('bookmarks')">📌 Saved</button>
+          <button class="profile-tab-btn" data-ptab="membership" onclick="switchProfileTab('membership')">💳 Pass</button>
+          <button class="profile-tab-btn" data-ptab="progress" onclick="switchProfileTab('progress')">🎯 Progress</button>
+          <button class="profile-tab-btn" data-ptab="submit" onclick="switchProfileTab('submit')">📤 Share</button>
         </div>
 
         <!-- TAB 1: SAVED NOTES BOOKMARKS -->
@@ -1122,6 +1123,7 @@
        ======================================================================== -->
   <div id="admin-modal" class="admin-modal-backdrop" style="display: none;" onclick="if(event.target === this) closeAdminModal()">
     <div class="admin-modal-card">
+      <div class="mobile-sheet-handle"></div>
       
       <!-- Modal Header -->
       <div class="admin-modal-header">
@@ -1469,6 +1471,7 @@
        ======================================================================== -->
   <div id="mcp-modal" class="mcp-modal-backdrop" style="display: none;" onclick="if(event.target === this) closeMcpModal()">
     <div class="mcp-modal-card">
+      <div class="mobile-sheet-handle"></div>
       
       <!-- Modal Header -->
       <div class="mcp-modal-header">

@@ -42,35 +42,27 @@
           <span class="brand-hub-badge">Admin</span>
         </div>
       </div>
-      <h1 class="admin-lock-title serif">Admin Access</h1>
-      <p class="admin-lock-subtitle">Restricted to course administrators only</p>
-      <form id="admin-login-form" class="admin-login-form" onsubmit="handleLogin(event)">
-        <div class="admin-input-group">
-          <label class="admin-input-label" for="passkey-input">Admin Passkey</label>
-          <div class="admin-input-wrapper">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="admin-input-icon">
-              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-              <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-            </svg>
-            <input type="password" id="passkey-input" class="admin-input" placeholder="Enter admin passkey..." autocomplete="current-password" autocorrect="off" autocapitalize="off" spellcheck="false"/>
-            <button type="button" class="admin-eye-btn" onclick="togglePasskeyVisibility()" title="Show/Hide passkey">
-              <svg id="eye-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                <circle cx="12" cy="12" r="3"></circle>
-              </svg>
-            </button>
-          </div>
-          <div class="admin-input-error" id="login-error">Incorrect passkey. Access denied.</div>
-        </div>
-        <button type="submit" class="admin-login-btn">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
-            <polyline points="10 17 15 12 10 7"></polyline>
-            <line x1="15" y1="12" x2="3" y2="12"></line>
+      <h1 class="admin-lock-title serif">Admin Access Portal</h1>
+      <p class="admin-lock-subtitle">Authorized Panjab University course administrators &amp; coordinators</p>
+      
+      <div class="admin-auth-action" style="margin: 1.5rem 0 0.85rem 0;">
+        <button type="button" class="google-auth-btn" style="width: 100%; justify-content: center; padding: 0.75rem 1.25rem; font-size: 0.95rem; font-weight: 600; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-surface); color: var(--text-main); cursor: pointer; display: flex; align-items: center; gap: 0.65rem;" onclick="handleLogin(event)">
+          <svg width="20" height="20" viewBox="0 0 24 24">
+            <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/>
+            <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.29v3.15C3.26 21.3 7.33 24 12 24z"/>
+            <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.29C.47 8.21 0 10.05 0 12s.47 3.79 1.29 5.42l3.99-3.15z"/>
+            <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.7 1.29 6.58l3.99 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
           </svg>
-          Authenticate
+          <span>Sign In with Google Admin</span>
         </button>
-      </form>
+      </div>
+      
+      <p style="font-size: 0.78rem; color: var(--text-subtle); line-height: 1.45; margin-bottom: 1.25rem;">
+        Authorized accounts: <strong style="color: var(--text-main);">baljotchohan23@gmail.com</strong>, <strong style="color: var(--text-main);">mehakpreetkaur@gmail.com</strong>
+      </p>
+
+      <div class="admin-input-error" id="login-error" style="margin-bottom: 1rem;">Access denied: Please sign in with an authorized admin Google account.</div>
+
       <a href="../" class="admin-back-link">← Back to Student Hub</a>
     </div>
   </div>

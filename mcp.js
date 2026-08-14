@@ -994,31 +994,29 @@ async function handleMcpRpc(payload, authHeader = '', authorHeader = '') {
   }
 
   if (method === "tools/list") {
-    // List all tools — signed-in users see full tool set, unsigned get only public info
+    // List all tools — public student tools and admin tools
     return {
       jsonrpc: "2.0", id: reqId,
       result: {
-        tools: isSignedIn
-          ? [...PUBLIC_TOOLS, ...ADMIN_TOOLS]
-          : PUBLIC_TOOLS.map(t => ({ ...t, description: t.description + ' [Sign in required to use]' }))
+        tools: [...PUBLIC_TOOLS, ...ADMIN_TOOLS]
       }
     };
   }
 
-
   if (method === "tools/call") {
     const name = params.name;
     const args = params.arguments || {};
+    const adminToolNames = ADMIN_TOOLS.map(t => t.name);
 
-    // Gate: ALL tool calls require a signed-in Google user
-    if (!isSignedIn) {
+    // Gate admin tools specifically: require verified Admin OAuth or valid admin token
+    if (adminToolNames.includes(name) && !isAdmin) {
       return {
         jsonrpc: "2.0",
         id: reqId,
         result: {
           content: [{
             type: "text",
-            text: "🔐 Authentication Required\n\nThis BCA III Hub MCP endpoint requires a signed-in Google account.\n\nTo use these tools:\n1. Visit https://bca-iii.vercel.app and sign in with Google.\n2. Get your Firebase ID Token from the browser's dev console.\n3. Include it as: Authorization: Bearer <your_id_token>\n\nAdmin write operations additionally require the admin-registered email."
+            text: `🔐 Admin Authorization Required\n\nThe administrative tool '${name}' requires verified administrator privileges.\n\nTo execute admin actions:\n1. Sign in with an authorized Google admin account (e.g. baljotchohan23@gmail.com)\n2. Provide the Firebase ID Token in header: Authorization: Bearer <id_token>\n3. Or provide passkey/admin_secret in request parameters.`
           }],
           isError: true
         }

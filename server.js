@@ -93,10 +93,18 @@ function wrapHandler(handlerModulePath) {
 }
 
 const apiRoutes = {
-  '/api/create-order': wrapHandler('./api/create-order.js'),
-  '/api/verify-payment': wrapHandler('./api/verify-payment.js'),
+  '/mcp': wrapHandler('./api/mcp.js'),
+  '/api/mcp': wrapHandler('./api/mcp.js'),
+  '/openapi.json': wrapHandler('./api/openapi.js'),
+  '/api/openapi': wrapHandler('./api/openapi.js'),
+  '/api/authorize': wrapHandler('./api/authorize.js'),
+  '/api/register': wrapHandler('./api/register.js'),
+  '/api/oauth-metadata': wrapHandler('./api/oauth-metadata.js'),
+  '/.well-known/oauth-authorization-server': wrapHandler('./api/oauth-metadata.js'),
+  '/.well-known/oauth-protected-resource': wrapHandler('./api/mcp.js'),
   '/api/token': wrapHandler('./api/token.js'),
-  '/api/mcp': wrapHandler('./api/mcp.js')
+  '/api/create-order': wrapHandler('./api/create-order.js'),
+  '/api/verify-payment': wrapHandler('./api/verify-payment.js')
 };
 
 const server = http.createServer((req, res) => {

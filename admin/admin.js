@@ -115,9 +115,17 @@ function handleLogin(e) {
 function logout() {
   sessionStorage.removeItem(SESSION_KEY);
   sessionStorage.removeItem('bca_admin_session');
-  document.getElementById('admin-dashboard').style.display = 'none';
-  document.getElementById('admin-lock-screen').style.display = 'flex';
-  document.getElementById('passkey-input').value = '';
+  localStorage.removeItem(SESSION_KEY);
+  localStorage.removeItem('bca_admin_session');
+  if (typeof firebase !== 'undefined' && firebase.auth) {
+    firebase.auth().signOut().catch(() => {});
+  }
+  const dash = document.getElementById('admin-dashboard');
+  if (dash) dash.style.display = 'none';
+  const lock = document.getElementById('admin-lock-screen');
+  if (lock) lock.style.display = 'flex';
+  const passkeyInput = document.getElementById('passkey-input');
+  if (passkeyInput) passkeyInput.value = '';
 }
 
 function showDashboard() {
