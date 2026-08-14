@@ -774,12 +774,18 @@ function parseUnitOrder(unitStr) {
   return 99;
 }
 
-// ── Instant Synchronous Note Render (0ms from Built-in Dataset) ──
+// ── Instant Synchronous Note Render (0ms from Cache/Dataset) ──
 function renderInitialNoteSync() {
   const p = new URLSearchParams(location.search);
   _currentKey = p.get('id');
   _currentSubjectId = p.get('subject');
   const modeParam = p.get('mode');
+
+  let cachedNotes = [];
+  try {
+    const raw = localStorage.getItem('bca_cloud_notes_cache');
+    if (raw) cachedNotes = JSON.parse(raw);
+  } catch (e) {}
 
   let staticNotes = [];
   if (typeof BCA_3RD_SEM_DATA !== 'undefined' && BCA_3RD_SEM_DATA.subjects) {
@@ -789,7 +795,7 @@ function renderInitialNoteSync() {
       });
     });
   }
-  _notes = staticNotes;
+  _notes = [...cachedNotes, ...staticNotes.filter(sn => !cachedNotes.some(cn => cn.id === sn.id || cn.fbKey === sn.fbKey))];
 
   _notes.sort((a, b) => {
     const uA = parseUnitOrder(a.unit || a.unitNumber);
@@ -883,7 +889,7 @@ function loadDeferredAssets() {
 
 // ── Main Page Initialization ──
 async function init() {
-  // Step 1: Render immediately from built-in syllabus data
+  // Step 1: Render immediately from cache or built-in syllabus data
   const renderedSync = renderInitialNoteSync();
   hideLoading();
   setTimeout(hideLoading, 50);
@@ -899,7 +905,7 @@ async function init() {
   // Step 3: Background sync of cloud notes from Firebase RTDB
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 3500);
+    const timeoutId = setTimeout(() => controller.abort(), 4000);
     const r = await fetch(`${FIREBASE_DB}/notes.json`, { signal: controller.signal });
     clearTimeout(timeoutId);
     if (r.ok) {
@@ -907,7 +913,8 @@ async function init() {
       if (raw && typeof raw === 'object') {
         const cloudNotes = Object.entries(raw).map(([k, v]) => ({ ...v, fbKey: k })).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
         if (cloudNotes.length > 0) {
-          _notes = [...cloudNotes, ..._notes.filter(sn => !cloudNotes.some(cn => cn.id === sn.id))];
+          try { localStorage.setItem('bca_cloud_notes_cache', JSON.stringify(cloudNotes)); } catch(e) {}
+          _notes = cloudNotes;
           const p = new URLSearchParams(location.search);
           const currentKey = p.get('id');
           const currentSubj = p.get('subject');
@@ -934,6 +941,8 @@ async function init() {
             if (target) {
               renderSingleNote(target);
               setupNav(target.fbKey || target.id);
+            } else if (!renderedSync) {
+              showErr(`No published digital note found for this topic. An admin can create it in the Admin Portal.`);
             }
           }
         }
@@ -941,6 +950,9 @@ async function init() {
     }
   } catch (err) {
     console.warn('Firebase RTDB background sync note:', err);
+    if (!renderedSync) {
+      showErr('Unable to connect to live academic notes database. Please check your internet connection and retry.');
+    }
   }
 
   hideLoading();
@@ -1043,6 +1055,7 @@ function renderPaywallTeaser(note, accessRes) {
         </div>
 
         <div class="paywall-actions">
+          ${isGuest ? `
             <button class="paywall-unlock-btn" style="display: inline-flex; align-items: center; justify-content: center; gap: 0.65rem;" onclick="handleReaderGoogleSignIn()">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
                 <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>

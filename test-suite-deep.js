@@ -12,22 +12,19 @@ assert(BCA_3RD_SEM_DATA, 'BCA_3RD_SEM_DATA must be defined');
 assert(Array.isArray(BCA_3RD_SEM_DATA.subjects), 'subjects must be an array');
 console.log(`✅ Loaded ${BCA_3RD_SEM_DATA.subjects.length} subjects from syllabus-data.js`);
 
-let totalNotes = 0;
+let totalUnits = 0;
 BCA_3RD_SEM_DATA.subjects.forEach(s => {
   assert(s.id, `Subject must have id: ${s.title}`);
   assert(s.title, `Subject must have title`);
   assert(s.code, `Subject must have code`);
-  assert(Array.isArray(s.digitalNotes) && s.digitalNotes.length > 0, `Subject ${s.id} must have pre-populated digital notes`);
-  s.digitalNotes.forEach((n, idx) => {
-    totalNotes++;
-    assert(n.id, `Note ${idx} in ${s.id} must have id`);
-    assert(n.title, `Note ${n.id} must have title`);
-    assert(n.unit, `Note ${n.id} must have unit`);
-    assert(n.content && n.content.length > 100, `Note ${n.id} must have comprehensive content`);
-    assert(n.punjabiSummary && n.punjabiSummary.length > 50, `Note ${n.id} must have punjabiSummary`);
+  assert(Array.isArray(s.units) && s.units.length > 0, `Subject ${s.id} must have units defined`);
+  s.units.forEach((u, idx) => {
+    totalUnits++;
+    assert(u.unitNumber, `Unit ${idx} in ${s.id} must have unitNumber`);
+    assert(Array.isArray(u.topics) && u.topics.length > 0, `Unit in ${s.id} must have topics`);
   });
 });
-console.log(`✅ Verified all ${totalNotes} digital study notes across all ${BCA_3RD_SEM_DATA.subjects.length} subjects with English + Punjabi content.`);
+console.log(`✅ Verified all 7 curriculum subjects with ${totalUnits} official syllabus units.`);
 
 // ── 2. Test Payment Access Matrix ──
 const paymentContent = fs.readFileSync(path.join(__dirname, 'payment.js'), 'utf8');

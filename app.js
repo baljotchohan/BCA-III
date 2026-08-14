@@ -14,6 +14,10 @@ let currentNoteFilter = 'all';
 let _editingItem = null; // { type: 'note'|'lecture'|'announcement', fbKey, collection }
 let _currentSubjectNotes = []; // Cached active notes array for focus reader & export
 let _globalCloudData = { notes: [], lectures: [], announcements: [] }; // Global cache for search indexing
+try {
+  const cached = JSON.parse(localStorage.getItem('bca_cloud_notes_cache') || '[]');
+  if (Array.isArray(cached) && cached.length > 0) _globalCloudData.notes = cached;
+} catch (e) {}
 let _currentlyOpenNoteId = null;
 
 let currentUserProfile = null;
@@ -516,6 +520,13 @@ function renderSubjectNotes(subject) {
     _fbFetch('notes'),
     _fbFetch('lectures')
   ]).then(([rawNotes, rawLectures]) => {
+    if (Array.isArray(rawNotes)) {
+      _globalCloudData.notes = rawNotes;
+      try { localStorage.setItem('bca_cloud_notes_cache', JSON.stringify(rawNotes)); } catch(e) {}
+    }
+    if (Array.isArray(rawLectures)) {
+      _globalCloudData.lectures = rawLectures;
+    }
     if (activeSubjectId === subject.id) {
       buildAndRenderNotes(rawNotes, rawLectures);
     }
