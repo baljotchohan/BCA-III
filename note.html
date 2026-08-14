@@ -548,9 +548,15 @@ body{font-family:var(--font-sans);background:var(--bg-page);color:var(--text-mai
   <div class="reader-wrap">
     <header class="doc-header" id="doc-header">
       <div class="doc-badge-pill" id="doc-badge">ANTIGRAVITY • BILINGUAL STUDY EDITION</div>
-      <h1 class="doc-title" id="doc-title">Loading Note...</h1>
-      <p class="doc-subtitle" id="doc-subtitle">Complete Master Study Guide</p>
-      <div class="doc-meta-row" id="doc-meta"></div>
+      <h1 class="doc-title" id="doc-title">Computer Architecture — Unit I Study Guide</h1>
+      <p class="doc-subtitle" id="doc-subtitle">Complete Master Study Guide · Panjab University</p>
+      <div class="doc-meta-row" id="doc-meta">
+        <span>📚 Unit I</span>
+        <span>•</span>
+        <span>✍️ By Baljot Chohan</span>
+        <span>•</span>
+        <span>⏱️ 6 min read</span>
+      </div>
     </header>
 
     <div id="content-container"></div>
@@ -903,12 +909,20 @@ async function init() {
           _notes = [...cloudNotes, ..._notes.filter(sn => !cloudNotes.some(cn => cn.id === sn.id))];
           const p = new URLSearchParams(location.search);
           const currentKey = p.get('id');
+          const currentSubj = p.get('subject');
+          let target = null;
           if (currentKey) {
-            const updated = _notes.find(n => (n.fbKey === currentKey || n.id === currentKey));
-            if (updated) {
-              renderSingleNote(updated);
-              setupNav(updated.fbKey || updated.id);
-            }
+            target = _notes.find(n => (n.fbKey === currentKey || n.id === currentKey));
+          }
+          if (!target && currentSubj) {
+            target = _notes.find(n => (n.subject === currentSubj || n.subjectId === currentSubj));
+          }
+          if (!target && _notes.length > 0) {
+            target = _notes[0];
+          }
+          if (target) {
+            renderSingleNote(target);
+            setupNav(target.fbKey || target.id);
           }
         }
       }
