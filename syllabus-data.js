@@ -544,13 +544,18 @@ if (typeof BCA_3RD_SEM_DATA !== 'undefined' && BCA_3RD_SEM_DATA.subjects) {
           readTime: `${Math.max(5, (unit.topics || []).length * 2)} min read`,
           date: 'Aug 2026',
           timestamp: 1786600000000 + (uIdx * 86400000),
-          tags: (subject.tags || []).join(', ') || 'PU Exam, NEP-2020',
+          tags: Array.isArray(subject.tags) && subject.tags.length ? [...subject.tags] : ['PU Exam', 'NEP-2020'],
           content: `# ${subject.title}: ${unit.unitNumber} — ${unit.title}\n\n## 📚 Unit Overview\n${unit.summary || 'Comprehensive academic study module aligned with Panjab University NEP-2020 framework.'}\n\n## 🎯 Core Curriculum Topics Covered\n${(unit.topics || []).map((t, idx) => `### ${idx + 1}. ${t}\n- **Concept & Definition:** Essential theoretical and applied principle in ${subject.title} (${subject.code}).\n- **Technical Details:** Key implementation guidelines, operational characteristics, and system dynamics.\n- **Exam Significance:** Standard PU long-answer and short-note questions frequently focus on this topic.`).join('\n\n')}\n\n## 💡 Key Exam Concepts & Formulations\n${(unit.keyPoints || []).map(kp => `> 💡 **Core Formula & Rule:** ${kp}`).join('\n\n')}\n\n## 📝 Examination Tips by Baljot Chohan\n- **1.** Always start long answers with a clear 1-paragraph definition and formal block diagram.\n- **2.** Structure algorithm questions with step-by-step numbered steps and time complexity analysis.\n- **3.** Highlight key architectural terms and write neat labeled pinouts or data flow diagrams.`,
           punjabiSummary: `### 🌟 ਪੰਜਾਬੀ ਅਧਿਐਨ ਸਾਰਾਂਸ਼ (${unit.unitNumber} — ${unit.title})\n\n**ਮੁੱਖ ਵਿਸ਼ੇ (Core Topics):**\n${(unit.topics || []).map(t => `• ${t}`).join('\n')}\n\n**ਮੁੱਖ ਨੁਕਤੇ (Key Concepts):**\n${(unit.keyPoints || []).map(kp => `• ${kp}`).join('\n')}\n\nਇਹ ਨੋਟ ਪੰਜਾਬ ਯੂਨੀਵਰਸਿਟੀ ਬੀ.ਸੀ.ਏ. 3rd ਸਮੈਸਟਰ ਦੇ ਸਿਲੇਬਸ ਅਨੁਸਾਰ ਵਿਸ਼ੇਸ਼ ਤੌਰ 'ਤੇ ਤਿਆਰ ਕੀਤੇ ਗਏ ਹਨ। ਪ੍ਰੀਖਿਆ ਦੀ ਤਿਆਰੀ ਲਈ ਇਹ ਨੁਕਤੇ ਬਹੁਤ ਮਹੱਤਵਪੂਰਨ ਹਨ।`
         };
       });
     }
   });
+}
+
+if (typeof window !== 'undefined') {
+  window.BCA_3RD_SEM_DATA = BCA_3RD_SEM_DATA;
+  window.PU_ACADEMIC_CALENDAR_2026 = typeof PU_ACADEMIC_CALENDAR_2026 !== 'undefined' ? PU_ACADEMIC_CALENDAR_2026 : null;
 }
 
 if (typeof module !== 'undefined' && module.exports) {

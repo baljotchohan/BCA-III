@@ -14,6 +14,29 @@ let currentNoteFilter = 'all';
 let _editingItem = null; // { type: 'note'|'lecture'|'announcement', fbKey, collection }
 let _currentSubjectNotes = []; // Cached active notes array for focus reader & export
 let _globalCloudData = { notes: [], lectures: [], announcements: [] }; // Global cache for search indexing
+let _currentlyOpenNoteId = null;
+
+let currentUserProfile = null;
+try {
+  currentUserProfile = JSON.parse(localStorage.getItem('studiq_user_profile') || localStorage.getItem('bca_user_profile') || 'null');
+} catch (e) {
+  currentUserProfile = null;
+}
+
+let _userBookmarks = [];
+try {
+  _userBookmarks = JSON.parse(localStorage.getItem('bca_user_bookmarks') || '[]');
+} catch (e) {
+  _userBookmarks = [];
+}
+
+let currentCalYear = _todayObj.getFullYear();
+let currentCalMonth = _todayObj.getMonth();
+let selectedCalDate = `${_todayObj.getFullYear()}-${String(_todayObj.getMonth() + 1).padStart(2, '0')}-${String(_todayObj.getDate()).padStart(2, '0')}`;
+let currentDayActivitiesFilter = 'all';
+let _academicCalendarDataCache = { lectures: [], notes: [], announcements: [] };
+let _guestPromptTimer = null;
+let _selectedAvatarSymbol = '🎓';
 
 const FIREBASE_DB = 'https://bca2nd-5c622-default-rtdb.firebaseio.com/bca3';
 
@@ -311,8 +334,6 @@ function toggleTopicCheck(topicKey, checkbox) {
    4. DIGITAL NOTES REPOSITORY (TOPIC CARDS + FULL-PAGE ARTICLE READER)
    ========================================================================== */
 
-let _currentlyOpenNoteId = null;
-
 function renderSubjectNotes(subject) {
   const container = document.getElementById('ws-notes-stream');
   if (!container) return;
@@ -474,7 +495,7 @@ function renderSubjectNotes(subject) {
 
           <div class="note-topic-footer">
             <div class="note-tags-list">
-              ${(note.tags || []).slice(0, 3).map(tag => `<span class="note-topic-tag">${escapeHtml(tag)}</span>`).join('')}
+              ${(Array.isArray(note.tags) ? note.tags : (typeof note.tags === 'string' ? note.tags.split(',') : [])).slice(0, 3).map(tag => `<span class="note-topic-tag">${escapeHtml(String(tag).trim().replace(/^#/, ''))}</span>`).join('')}
             </div>
             <div class="note-read-cta">
               <span>${hasAccess ? 'Read Full Study Notes →' : 'Unlock Note →'}</span>
@@ -1219,12 +1240,6 @@ function renderSubjectLecturesList(subject, allLectures) {
 /* ==========================================================================
    6. DASHBOARD REAL ACADEMIC CALENDAR & DAILY TIMELINES
    ========================================================================== */
-
-let currentCalYear = new Date().getFullYear();
-let currentCalMonth = new Date().getMonth(); // 0-indexed (e.g. 7 = August)
-let selectedCalDate = formatCalDateStr(new Date());
-let currentDayActivitiesFilter = 'all';
-let _academicCalendarDataCache = { lectures: [], notes: [], announcements: [] };
 
 function formatCalDateStr(d) {
   const y = d.getFullYear();
@@ -2477,7 +2492,8 @@ function searchPalette(query) {
   cloudNotes.forEach(n => {
     const subId = n.subject || n.subjectId || 'comp-arch';
     const subName = getSubjectName(subId);
-    if (q && (n.title?.toLowerCase().includes(q) || n.content?.toLowerCase().includes(q) || (n.tags && n.tags.some(t => t.toLowerCase().includes(q))))) {
+    const noteTagsArr = Array.isArray(n.tags) ? n.tags : (typeof n.tags === 'string' ? n.tags.split(',') : []);
+    if (q && (n.title?.toLowerCase().includes(q) || n.content?.toLowerCase().includes(q) || noteTagsArr.some(t => String(t).toLowerCase().includes(q)))) {
       // Avoid duplicate title if already added
       if (!results.some(r => r.title === n.title)) {
         results.push({
@@ -2888,9 +2904,6 @@ document.addEventListener('keydown', (e) => {
    12. GOOGLE AUTHENTICATION & STUDENT PROFILE CONTROLLER
    ========================================================================== */
 
-let currentUserProfile = null;
-let _userBookmarks = JSON.parse(localStorage.getItem('bca_user_bookmarks') || '[]');
-
 /**
  * 🔄 Sync user subscription & purchased notes from Firebase Realtime Database
  * Ensures that paid passes (Pro ₹19, Max ₹49, Single Notes) are NEVER lost upon logout/login!
@@ -3282,7 +3295,6 @@ function updateProfileUI() {
 }
 
 // ── 30-Second Anthropic Guest Visitor Prompt ──
-let _guestPromptTimer = null;
 
 function initGuestPromptTimer() {
   if (typeof window === 'undefined') return;
@@ -3307,8 +3319,6 @@ function dismissGuestPromptBanner() {
 function dismissGuestNudge() {
   dismissGuestPromptBanner();
 }
-
-let _selectedAvatarSymbol = '🎓';
 
 function selectAvatarEmoji(emoji, el) {
   _selectedAvatarSymbol = emoji;
