@@ -732,9 +732,9 @@ const PROMPTS = [
 
 // Helper: Format Firebase REST auth parameter safely
 function formatAuthParam(authToken) {
-  if (!authToken) return '';
-  if (typeof authToken === 'string' && (authToken.startsWith('mcp_sk_') || authToken.startsWith('mcp_rf_'))) {
-    return ''; // Internal session token, do not forward to Firebase RTDB query
+  const serverSecret = process.env.FIREBASE_DATABASE_SECRET || process.env.ADMIN_SECRET || '';
+  if (!authToken || authToken.startsWith('mcp_sk_') || authToken.startsWith('mcp_rf_')) {
+    return serverSecret ? `?auth=${encodeURIComponent(serverSecret)}` : '';
   }
   return `?auth=${encodeURIComponent(authToken)}`;
 }

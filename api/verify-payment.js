@@ -21,7 +21,10 @@ function firebasePut(path, body) {
     const req = https.request(url, options, (res) => {
       let buf = '';
       res.on('data', d => { buf += d; });
-      res.on('end', () => resolve(true));
+      res.on('end', () => {
+        const ok = res.statusCode >= 200 && res.statusCode < 300;
+        resolve(ok);
+      });
     });
     req.on('error', () => resolve(false));
     req.write(data);
@@ -44,7 +47,10 @@ function firebasePatch(path, body) {
     const req = https.request(url, options, (res) => {
       let buf = '';
       res.on('data', d => { buf += d; });
-      res.on('end', () => resolve(true));
+      res.on('end', () => {
+        const ok = res.statusCode >= 200 && res.statusCode < 300;
+        resolve(ok);
+      });
     });
     req.on('error', () => resolve(false));
     req.write(data);

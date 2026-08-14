@@ -3053,8 +3053,12 @@ function initFirebaseAuth() {
 
     firebase.auth().onAuthStateChanged(async (user) => {
       if (user) {
-        const prevNotes = (currentUserProfile && currentUserProfile.purchasedNotes) || (savedLocal ? (JSON.parse(savedLocal).purchasedNotes || {}) : {});
-        const prevSub = (currentUserProfile && currentUserProfile.subscription) || (savedLocal ? (JSON.parse(savedLocal).subscription || null) : null);
+        let parsedSaved = {};
+        try {
+          if (savedLocal) parsedSaved = JSON.parse(savedLocal) || {};
+        } catch (e) {}
+        const prevNotes = (currentUserProfile && currentUserProfile.purchasedNotes) || parsedSaved.purchasedNotes || {};
+        const prevSub = (currentUserProfile && currentUserProfile.subscription) || parsedSaved.subscription || null;
         const adminEmailList = (FIREBASE.adminEmails || [
           'baljotchohan23@gmail.com',
           'mehakpreetkaur@gmail.com',

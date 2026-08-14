@@ -54,6 +54,8 @@ const MIME_TYPES = {
 // Polyfill Vercel-like helpers for handlers
 function wrapHandler(handlerModulePath) {
   return async (req, res) => {
+    const parsedUrl = url.parse(req.url, true);
+    req.query = parsedUrl.query || {};
     let body = '';
     req.on('data', chunk => { body += chunk; });
     req.on('end', async () => {
@@ -128,7 +130,9 @@ const server = http.createServer((req, res) => {
   }
 
   fs.stat(filePath, (err, stats) => {
-    if (err || !stats.isFile()) {
+    if (!err && stats.isDirectory()) {
+      filePath = path.join(filePath, 'index.html');
+    } else if (err || !stats.isFile()) {
       // Fallback for HTML5 SPA navigation or 404
       filePath = path.join(__dirname, 'index.html');
     }

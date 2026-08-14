@@ -63,12 +63,36 @@ async function fbDelete(path, fbKey) {
   if (!res.ok) throw new Error(`Firebase DELETE failed: ${res.status}`);
 }
 
+async function _fbFetch(path) {
+  return await fbGet(path);
+}
+
 // ─── Boot ─────────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
   const theme = localStorage.getItem('bca_hub_theme') || 'light';
   document.documentElement.setAttribute('data-theme', theme);
   updateAdminThemeBtn(theme);
   updateAdminThemeMeta(theme);
+
+  const ADMIN_EMAILS = [
+    'baljotchohan23@gmail.com',
+    'mehakpreetkaur@gmail.com',
+    'mehakpreetsaini26@gmail.com'
+  ];
+
+  if (typeof firebase !== 'undefined' && firebase.auth) {
+    firebase.auth().onAuthStateChanged((user) => {
+      if (user && ADMIN_EMAILS.includes((user.email || '').toLowerCase())) {
+        sessionStorage.setItem(SESSION_KEY, 'authenticated');
+        showDashboard();
+      } else if (!isPortalAdminAuth()) {
+        const dash = document.getElementById('admin-dashboard');
+        if (dash) dash.style.display = 'none';
+        const lock = document.getElementById('admin-lock-screen');
+        if (lock) lock.style.display = 'flex';
+      }
+    });
+  }
 
   if (isPortalAdminAuth()) {
     showDashboard();
@@ -571,7 +595,8 @@ async function saveTodo() {
 
 async function toggleTodoDone(fbKey, current) {
   try {
-    await fetch(`${DB}/todos/${fbKey}.json`, {
+    const tokenParam = await getAuthTokenParam();
+    await fetch(`${DB}/todos/${fbKey}.json${tokenParam}`, {
       method:  'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body:    JSON.stringify({ done: !current }),
@@ -765,8 +790,9 @@ async function adminMarkOrderRefunded(orderId, uid) {
   if (!confirm(`Are you sure you want to mark order ${orderId} as REFUNDED and downgrade user access?`)) return;
 
   try {
+    const tokenParam = await getAuthTokenParam();
     // 1. Update order status
-    await fetch(`https://bca2nd-5c622-default-rtdb.firebaseio.com/bca3/orders/${encodeURIComponent(orderId)}.json`, {
+    await fetch(`https://bca2nd-5c622-default-rtdb.firebaseio.com/bca3/orders/${encodeURIComponent(orderId)}.json${tokenParam}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status: 'REFUNDED', refundedAt: Date.now() })
@@ -831,7 +857,8 @@ async function adminGrantSubscription() {
       grantedByAdmin: true
     };
 
-    await fetch(`https://bca2nd-5c622-default-rtdb.firebaseio.com/bca3/users/${targetKey}/subscription.json`, {
+    const tokenParam = await getAuthTokenParam();
+    await fetch(`https://bca2nd-5c622-default-rtdb.firebaseio.com/bca3/users/${targetKey}/subscription.json${tokenParam}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(subData)

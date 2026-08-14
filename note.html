@@ -12,6 +12,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,300..700;1,6..72,300..700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css"/>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/tokyo-night-dark.min.css"/>
+<link rel="stylesheet" href="styles.css?v=5.0"/>
 
 <style>
 :root{
@@ -766,10 +767,10 @@ function showErr(msg) {
 function parseUnitOrder(unitStr) {
   if (!unitStr) return 1;
   const s = String(unitStr).toLowerCase().trim();
-  if (s.includes('unit 1') || s.includes('unit i') || s === '1' || s === 'i' || s === 'general') return 1;
-  if (s.includes('unit 2') || s.includes('unit ii') || s === '2' || s === 'ii') return 2;
-  if (s.includes('unit 3') || s.includes('unit iii') || s === '3' || s === 'iii') return 3;
   if (s.includes('unit 4') || s.includes('unit iv') || s === '4' || s === 'iv') return 4;
+  if (s.includes('unit 3') || s.includes('unit iii') || s === '3' || s === 'iii') return 3;
+  if (s.includes('unit 2') || s.includes('unit ii') || s === '2' || s === 'ii') return 2;
+  if (s.includes('unit 1') || s.includes('unit i') || s === '1' || s === 'i' || s === 'general') return 1;
   return 99;
 }
 
@@ -910,19 +911,30 @@ async function init() {
           const p = new URLSearchParams(location.search);
           const currentKey = p.get('id');
           const currentSubj = p.get('subject');
-          let target = null;
-          if (currentKey) {
-            target = _notes.find(n => (n.fbKey === currentKey || n.id === currentKey));
-          }
-          if (!target && currentSubj) {
-            target = _notes.find(n => (n.subject === currentSubj || n.subjectId === currentSubj));
-          }
-          if (!target && _notes.length > 0) {
-            target = _notes[0];
-          }
-          if (target) {
-            renderSingleNote(target);
-            setupNav(target.fbKey || target.id);
+          const modeParam = p.get('mode');
+
+          if (modeParam === 'master') {
+            const subjNotes = _notes.filter(n => (n.subject === currentSubj || n.subjectId === currentSubj));
+            let activeSubject = null;
+            if (currentSubj && typeof BCA_3RD_SEM_DATA !== 'undefined') {
+              activeSubject = BCA_3RD_SEM_DATA.subjects.find(s => s.id === currentSubj);
+            }
+            renderMasterGuide(activeSubject || { id: currentSubj, title: 'BCA III Subject', code: 'BCA 301' }, subjNotes);
+          } else {
+            let target = null;
+            if (currentKey) {
+              target = _notes.find(n => (n.fbKey === currentKey || n.id === currentKey));
+            }
+            if (!target && currentSubj) {
+              target = _notes.find(n => (n.subject === currentSubj || n.subjectId === currentSubj));
+            }
+            if (!target && _notes.length > 0) {
+              target = _notes[0];
+            }
+            if (target) {
+              renderSingleNote(target);
+              setupNav(target.fbKey || target.id);
+            }
           }
         }
       }
@@ -937,6 +949,8 @@ async function init() {
 // ── Render Single Note View ──
 function renderSingleNote(note) {
   _mode = 'single';
+  _currentKey = note.fbKey || note.id || _currentKey;
+  _currentSubjectId = note.subject || note.subjectId || _currentSubjectId;
   document.title = `${note.title || 'Note'} — BCA III Academic Hub`;
   
   const subjName = note.subjectTitle || (typeof getSubjectName === 'function' ? getSubjectName(note.subject) : (note.subject || 'Academic Notes'));
@@ -956,7 +970,8 @@ function renderSingleNote(note) {
   const container = document.getElementById('content-container');
 
   // Verify User Access via Payment Module
-  const noteIndex = _notes.findIndex(n => (n.fbKey === note.fbKey || n.id === note.id));
+  const subjNotes = _notes.filter(n => (n.subject === _currentSubjectId || n.subjectId === _currentSubjectId));
+  const noteIndex = subjNotes.findIndex(n => (n.fbKey === note.fbKey || n.id === note.id));
   const accessRes = (window.BCA3_PAYMENTS && typeof window.BCA3_PAYMENTS.hasNoteAccess === 'function')
     ? window.BCA3_PAYMENTS.hasNoteAccess(note, Math.max(0, noteIndex))
     : { hasAccess: true };
@@ -1079,6 +1094,8 @@ function renderMasterGuide(subject, notes) {
   `;
 
   const container = document.getElementById('content-container');
+  const langGrp = document.getElementById('lang-group');
+  if (langGrp) langGrp.style.display = 'flex';
 
   if (!notes || notes.length === 0) {
     container.innerHTML = `
@@ -1093,32 +1110,68 @@ function renderMasterGuide(subject, notes) {
 
   container.innerHTML = `
     <div class="master-topics-stack">
-      ${notes.map((note, idx) => `
-        <article class="topic-card" id="topic-section-${idx}">
-          <div class="topic-header">
-            <div class="topic-number">${idx + 1}</div>
-            <div class="topic-title-wrap">
-              <div class="topic-meta-tag">${esc(note.unit || 'Unit I')} • ${esc(note.readTime || '6 min read')} • By ${esc(note.author || 'Baljot Chohan')}</div>
-              <h2 class="topic-title">${esc(note.title)}</h2>
-            </div>
-          </div>
+      ${notes.map((note, idx) => {
+        const accessRes = (window.BCA3_PAYMENTS && typeof window.BCA3_PAYMENTS.hasNoteAccess === 'function')
+          ? window.BCA3_PAYMENTS.hasNoteAccess(note, idx)
+          : { hasAccess: true };
 
-          <div class="bilingual-grid">
-            <div class="col-english">
-              <div class="col-header en">📖 Easy English Study Notes</div>
-              <div class="prose-content">
-                ${renderMD(note.content || '')}
+        if (!accessRes.hasAccess) {
+          const isGuest = accessRes.reason === 'requires_signin';
+          return `
+            <article class="topic-card locked-topic" id="topic-section-${idx}">
+              <div class="topic-header">
+                <div class="topic-number">${idx + 1}</div>
+                <div class="topic-title-wrap">
+                  <div class="topic-meta-tag">${esc(note.unit || 'Unit I')} • 🔒 Pro Pass Required</div>
+                  <h2 class="topic-title">${esc(note.title)}</h2>
+                </div>
+              </div>
+              <div class="note-paywall-teaser" style="margin: 1rem 0;">
+                <div class="note-paywall-blur-content">
+                  <p>${esc((note.content || '').slice(0, 200))}...</p>
+                </div>
+                <div class="note-paywall-overlay">
+                  <div class="paywall-icon">🔒</div>
+                  <h4 style="margin: 0.25rem 0 0.5rem; color: #fff;">${isGuest ? 'Sign In to Unlock' : 'Pro or Max Pass Required'}</h4>
+                  <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.85rem;">
+                    ${isGuest ? 'Sign in with Google to unlock notes.' : 'Upgrade to Pro (₹19/mo) or Max Lifetime (₹49) to read this unit.'}
+                  </p>
+                  <button class="tb-btn" style="height: 38px; padding: 0 1.25rem; font-weight: 700; background: var(--color-coral); color: #fff; border: none; cursor: pointer;" onclick="handleReaderPaywallAction('${accessRes.reason}')">
+                    ${isGuest ? '🔑 Sign In with Google' : '⭐ Unlock Full Notes'}
+                  </button>
+                </div>
+              </div>
+            </article>
+          `;
+        }
+
+        return `
+          <article class="topic-card" id="topic-section-${idx}">
+            <div class="topic-header">
+              <div class="topic-number">${idx + 1}</div>
+              <div class="topic-title-wrap">
+                <div class="topic-meta-tag">${esc(note.unit || 'Unit I')} • ${esc(note.readTime || '6 min read')} • By ${esc(note.author || 'Baljot Chohan')}</div>
+                <h2 class="topic-title">${esc(note.title)}</h2>
               </div>
             </div>
-            <div class="col-punjabi">
-              <div class="col-header pa">🌟 ਆਸਾਨ ਪੰਜਾਬੀ ਅਨੁਵਾਦ / Key Summary</div>
-              <div class="prose-content">
-                ${renderMD(note.punjabiSummary || note.content || '')}
+
+            <div class="bilingual-grid">
+              <div class="col-english">
+                <div class="col-header en">📖 Easy English Study Notes</div>
+                <div class="prose-content">
+                  ${renderMD(note.content || '')}
+                </div>
+              </div>
+              <div class="col-punjabi">
+                <div class="col-header pa">🌟 ਆਸਾਨ ਪੰਜਾਬੀ ਅਨੁਵਾਦ / Key Summary</div>
+                <div class="prose-content">
+                  ${renderMD(note.punjabiSummary || note.content || '')}
+                </div>
               </div>
             </div>
-          </div>
-        </article>
-      `).join('')}
+          </article>
+        `;
+      }).join('')}
     </div>
   `;
 
@@ -1194,13 +1247,15 @@ async function renderAllMermaid() {
 
 async function renderMermaidNode(node, wrap) {
   if (typeof mermaid === 'undefined') return;
-  const code = node.textContent || '';
+  const code = (node && node.textContent) ? node.textContent : (wrap ? wrap.getAttribute('data-mermaid-src') : '');
+  if (!code) return;
   try {
+    wrap.setAttribute('data-mermaid-src', code);
     const id = 'm' + Math.random().toString(36).substring(2, 9);
     const { svg } = await mermaid.render(id, code);
-    wrap.innerHTML = svg;
+    wrap.innerHTML = `<div class="mermaid-svg-wrap">${svg}</div><div class="mermaid-src" style="display:none">${esc(code)}</div>`;
   } catch (e) {
-    wrap.innerHTML = `<pre style="color:#f87171;font-size:.78rem;padding:1rem;overflow:auto;max-height:240px">[Diagram render note: ${esc(e.message||'Check syntax')}]\n\n${esc(code)}</pre>`;
+    wrap.innerHTML = `<pre style="color:#f87171;font-size:.78rem;padding:1rem;overflow:auto;max-height:240px">[Diagram render note: ${esc(e.message||'Check syntax')}]\n\n${esc(code)}</pre><div class="mermaid-src" style="display:none">${esc(code)}</div>`;
   }
 }
 
@@ -1219,56 +1274,63 @@ function initKatex() {
   }
 }
 
-// ── Markdown Parser Engine ──
+// ── Markdown Parser Engine (Token Stashing for Pure Syntax & Math) ──
 function renderMD(raw) {
   if (!raw) return '';
   let h = raw.replace(/\r\n/g, '\n');
 
-  // Mount interactive visual simulation placeholders
-  h = h.replace(/(?:@\[visual:|\[visual:)([a-zA-Z0-9_-]+)\]/gi, (m, visualId) => {
-    return `<div class="manim-visual-mount" data-manim-visual="${esc(visualId)}"></div>`;
-  });
+  const tokens = [];
+  function stash(html) {
+    const key = `%%STASH_${tokens.length}%%`;
+    tokens.push(html);
+    return key;
+  }
 
-  // Mermaid diagrams
-  h = h.replace(/```mermaid\s*\n([\s\S]*?)```/gi, (m, c) => {
-    return `<div class="mermaid-wrap"><div class="mermaid-head"><span class="mermaid-head-label">📊 Architecture Diagram</span></div><div class="mermaid-body"><div class="mermaid-src" style="display:none">${esc(c.trim())}</div></div></div>`;
-  });
+  // 1. Math Blocks ($$...$$ and \[...\])
+  h = h.replace(/(\$\$[\s\S]*?\$\$|\\\[[\s\S]*?\\\])/g, m => stash(m));
 
-  // Fenced code blocks
+  // 2. Fenced Code Blocks & Diagrams
   h = h.replace(/```([a-zA-Z0-9_+-]*)\s*\n([\s\S]*?)```/g, (m, lang, code) => {
-    if (!code.trim()) return '';
-    const l = (lang || 'code').trim().toLowerCase();
+    const l = (lang || '').trim().toLowerCase();
+    if (l === 'mermaid') {
+      return stash(`<div class="mermaid-wrap"><div class="mermaid-head"><span class="mermaid-head-label">📊 Architecture Diagram</span></div><div class="mermaid-body"><div class="mermaid-src" style="display:none">${esc(code.trim())}</div></div></div>`);
+    }
     const colors = { python: '#3b82f6', cpp: '#f59e0b', c: '#f59e0b', javascript: '#f59e0b', js: '#f59e0b', java: '#ef4444', sql: '#8b5cf6', asm: '#10b981', x86: '#10b981' };
     const col = colors[l] || 'var(--color-indigo)';
-    return `<div class="code-wrap"><div class="code-head"><span class="code-lang" style="color:${col}"><span class="dot" style="background:${col}"></span>${esc(l).toUpperCase()}</span><button class="code-copy-btn" onclick="cpCode(this)">📋 Copy</button></div><pre><code class="language-${esc(l)}">${esc(code.trim())}</code></pre></div>`;
+    return stash(`<div class="code-wrap"><div class="code-head"><span class="code-lang" style="color:${col}"><span class="dot" style="background:${col}"></span>${esc(l || 'CODE').toUpperCase()}</span><button class="code-copy-btn" onclick="cpCode(this)">📋 Copy</button></div><pre><code class="language-${esc(l || 'plaintext')}">${esc(code.trim())}</code></pre></div>`);
   });
 
-  // Tables
+  // 3. Mount interactive visual simulation placeholders
+  h = h.replace(/(?:@\[visual:|\[visual:)([a-zA-Z0-9_-]+)\]/gi, (m, visualId) => {
+    return stash(`<div class="manim-visual-mount" data-manim-visual="${esc(visualId)}"></div>`);
+  });
+
+  // 4. Tables
   h = h.replace(/\|(.+)\|\n\|[-|\s:]+\|\n((?:\|.+\|\n?)+)/g, (m, header, rows) => {
     const ths = header.split('|').filter(x => x.trim()).map(x => `<th>${x.trim()}</th>`).join('');
     const trs = rows.trim().split('\n').map(r => `<tr>${r.split('|').filter(x => x.trim()).map(x => `<td>${x.trim()}</td>`).join('')}</tr>`).join('');
-    return `<div class="table-wrap"><table class="note-table"><thead><tr>${ths}</tr></thead><tbody>${trs}</tbody></table></div>`;
+    return stash(`<div class="table-wrap"><table class="note-table"><thead><tr>${ths}</tr></thead><tbody>${trs}</tbody></table></div>`);
   });
 
-  // Callouts > 💡 Tip
+  // 5. Callouts
   h = h.replace(/^>\s*(💡|⚡|✅|⚠️|🚨|ℹ️|📌|📝)?\s*(.+)$/gm, (m, icon, text) => {
     const t = { ['💡']: 'tip', ['⚡']: 'tip', ['✅']: 'tip', ['⚠️']: 'warn', ['🚨']: 'warn', ['ℹ️']: 'info', ['📌']: 'note', ['📝']: 'note' }[icon] || 'note';
-    return `<div class="callout ${t}"><span class="callout-icon">${icon || '💡'}</span><div>${text}</div></div>`;
+    return stash(`<div class="callout ${t}"><span class="callout-icon">${icon || '💡'}</span><div>${text}</div></div>`);
   });
 
-  // Headings
+  // 6. Headings & Rules
   h = h.replace(/^#### (.+)$/gim, '<h4>$1</h4>');
   h = h.replace(/^### (.+)$/gim, '<h3>$1</h3>');
   h = h.replace(/^## (.+)$/gim, '<h2>$1</h2>');
   h = h.replace(/^# (.+)$/gim, '<h1>$1</h1>');
   h = h.replace(/^---$/gm, '<hr/>');
 
-  // Inline formatting
+  // 7. Inline Formatting
   h = h.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
   h = h.replace(/\*(.+?)\*/g, '<em>$1</em>');
   h = h.replace(/`([^`\n]+)`/g, '<code>$1</code>');
 
-  // Lists
+  // 8. Lists
   h = h.replace(/((?:^[-*] .+\n?)+)/gm, b => {
     const items = b.trim().split('\n').map(l => `<li>${l.replace(/^[-*] /, '')}</li>`).join('');
     return `<ul>${items}</ul>`;
@@ -1278,17 +1340,27 @@ function renderMD(raw) {
     return `<ol>${items}</ol>`;
   });
 
-  // Images
+  // 9. Images & Links
   h = h.replace(/!\[(.+?)\]\((.+?)\)/g, (m, alt, url) => `<figure style="margin:2rem 0;border-radius:var(--radius-md);overflow:hidden;border:1px solid var(--border-color)"><img src="${url}" alt="${esc(alt)}" style="width:100%;display:block" loading="lazy"/><figcaption style="padding:.5rem 1rem;font-size:.75rem;color:var(--text-subtle)">${esc(alt)}</figcaption></figure>`);
-
-  // Links
   h = h.replace(/\[(.+?)\]\((.+?)\)/g, '<a href="$2" target="_blank" rel="noopener">$1 ↗</a>');
 
-  // Paragraphs
+  // 10. Paragraphs & Line Breaks
   h = h.replace(/\n{2,}/g, '</p><p>');
   h = h.replace(/(?<!\>)\n/g, '<br/>');
 
-  return `<p>${h}</p>`;
+  h = `<p>${h}</p>`;
+
+  // Restore stashed tokens
+  tokens.forEach((val, i) => {
+    h = h.replace(`%%STASH_${i}%%`, val);
+  });
+
+  // Clean empty paragraphs around block elements
+  h = h.replace(/<p>\s*<\/p>/g, '');
+  h = h.replace(/<p>\s*(<div|<figure|<table|<hr|<ul|<ol|<h[1-6])/g, '$1');
+  h = h.replace(/(<\/div>|<\/figure>|<\/table>|<\/hr>|<\/ul>|<\/ol>|<\/h[1-6]>)\s*<\/p>/g, '$1');
+
+  return h;
 }
 
 function esc(s) {
@@ -1401,22 +1473,55 @@ async function handleReaderGoogleSignIn() {
     const provider = new firebase.auth.GoogleAuthProvider();
     const res = await firebase.auth().signInWithPopup(provider);
     if (res && res.user) {
+      let existing = {};
+      try {
+        existing = JSON.parse(localStorage.getItem('studiq_user_profile') || '{}');
+      } catch (e) {}
       const profile = {
+        ...existing,
         uid: res.user.uid,
         email: res.user.email,
-        name: res.user.displayName || 'BCA Scholar',
-        photo: res.user.photoURL,
+        name: res.user.displayName || existing.name || 'BCA Scholar',
+        photo: res.user.photoURL || existing.photo || '',
         isAdmin: ['baljotchohan23@gmail.com', 'mehakpreetkaur@gmail.com', 'mehakpreetsaini26@gmail.com'].includes((res.user.email || '').toLowerCase())
       };
+      if (profile.isAdmin) {
+        profile.subscription = { plan: 'max', status: 'active', validUntil: Date.now() + 3650*24*60*60*1000 };
+      }
+      currentUserProfile = profile;
       localStorage.setItem('studiq_user_profile', JSON.stringify(profile));
       localStorage.setItem('bca_user_profile', JSON.stringify(profile));
-      location.reload();
+      showToast(`Welcome, ${profile.name}! 🎉`, 'success');
+      
+      const p = new URLSearchParams(location.search);
+      const currentKey = p.get('id');
+      const currentSubj = p.get('subject');
+      let target = _notes.find(n => (n.fbKey === currentKey || n.id === currentKey));
+      if (!target && currentSubj) target = _notes.find(n => (n.subject === currentSubj || n.subjectId === currentSubj));
+      if (target) {
+        renderSingleNote(target);
+      } else {
+        location.reload();
+      }
     }
   } catch (err) {
     console.error('Reader Google sign in error:', err);
     window.location.href = '/?action=signin';
   }
 }
+
+document.addEventListener('keydown', (e) => {
+  if (e.target && ['INPUT', 'TEXTAREA'].includes(e.target.tagName)) return;
+  if (e.key === 'ArrowLeft') {
+    const prev = document.getElementById('prev-btn');
+    if (prev && prev.style.display !== 'none') prev.click();
+  } else if (e.key === 'ArrowRight') {
+    const next = document.getElementById('next-btn');
+    if (next && next.style.display !== 'none') next.click();
+  } else if (e.key === 'Escape') {
+    handleBackNavigation();
+  }
+});
 
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', init);

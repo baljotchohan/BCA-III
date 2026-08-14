@@ -54,6 +54,8 @@ window.BCA3_PAYMENTS = {
       note = noteOrId;
     } else if (typeof _currentSubjectNotes !== 'undefined' && Array.isArray(_currentSubjectNotes)) {
       note = _currentSubjectNotes.find(n => (n.fbKey === noteOrId || n.id === noteOrId));
+    } else if (typeof _notes !== 'undefined' && Array.isArray(_notes)) {
+      note = _notes.find(n => (n.fbKey === noteOrId || n.id === noteOrId));
     }
 
     const noteId = (note && (note.fbKey || note.id)) || (typeof noteOrId === 'string' ? noteOrId : '');
@@ -80,7 +82,7 @@ window.BCA3_PAYMENTS = {
     }
 
     // 4. Guest / Non-logged-in User
-    const isGuest = !currentUserProfile || !currentUserProfile.uid || currentUserProfile.uid.startsWith('guest_');
+    const isGuest = !currentUserProfile || !currentUserProfile.uid || String(currentUserProfile.uid).startsWith('guest_');
     if (isGuest) {
       // 1st note in Unit 1 is free preview for guests
       if (indexInSubject === 0 && (!note || this.isUnitOne(note))) {
@@ -450,7 +452,18 @@ window.BCA3_PAYMENTS = {
   },
 
   updatePricingModalUI: function () {
-    const activePlan = (currentUserProfile && currentUserProfile.subscription ? currentUserProfile.subscription.plan : 'free');
+    const sub = currentUserProfile && currentUserProfile.subscription ? currentUserProfile.subscription : null;
+    let activePlan = 'free';
+    if (sub && (sub.status === 'active' || !sub.status)) {
+      if (sub.plan === 'max') {
+        activePlan = 'max';
+      } else if (sub.plan === 'pro' || sub.plan === 'plus') {
+        if (!sub.validUntil || sub.validUntil > Date.now()) {
+          activePlan = 'pro';
+        }
+      }
+    }
+
     const isAdmin = Boolean(
       currentUserProfile &&
       currentUserProfile.email &&
