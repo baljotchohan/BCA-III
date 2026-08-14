@@ -387,12 +387,28 @@ body{font-family:var(--font-sans);background:var(--bg-page);color:var(--text-mai
 .mermaid-body svg{max-width:100%;height:auto;display:block;margin:0 auto}
 
 /* ──────────── CALLOUT BOXES ──────────── */
-.callout{display:flex;align-items:flex-start;gap:.85rem;padding:1rem 1.25rem;margin:1.6rem 0;border-radius:var(--radius-md);border:1px solid;font-family:var(--font-sans);font-size:.9rem;line-height:1.65}
-.callout.tip{border-color:rgba(52,211,153,.3);background:rgba(52,211,153,.06);color:#34d399}
-.callout.warn{border-color:rgba(251,191,36,.3);background:rgba(251,191,36,.06);color:#fbbf24}
-.callout.info{border-color:var(--color-indigo-border);background:var(--color-indigo-dim);color:var(--color-indigo)}
-.callout.note{border-color:var(--border-color);background:var(--bg-card);color:var(--text-muted)}
-.callout-icon{font-size:1.15rem;flex-shrink:0;margin-top:.05rem}
+.callout{
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  padding: 0.85rem 1.15rem;
+  margin: 1.25rem 0;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  font-family: var(--font-sans);
+  font-size: 0.92rem;
+  line-height: 1.6;
+  color: var(--text-main);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+.callout.tip{border-left: 4px solid #34d399; background: rgba(52, 211, 153, 0.06); color: var(--text-main);}
+.callout.warn{border-left: 4px solid #fbbf24; background: rgba(251, 191, 36, 0.06); color: var(--text-main);}
+.callout.info{border-left: 4px solid var(--color-indigo); background: var(--color-indigo-dim); color: var(--text-main);}
+.callout.note{border-left: 4px solid var(--color-coral); background: var(--color-coral-dim); color: var(--text-main);}
+.callout-icon{font-size: 1.1rem; flex-shrink: 0; margin-top: 0.1rem;}
+.callout-content{flex: 1; min-width: 0;}
+.callout-content strong{color: var(--text-main); font-weight: 700;}
 
 /* ──────────── TABLES ──────────── */
 .table-wrap{overflow-x:auto;margin:1.85rem 0;border-radius:var(--radius-md);border:1px solid var(--border-color)}
@@ -1375,47 +1391,71 @@ function renderMD(raw) {
     return stash(`<div class="table-wrap"><table class="note-table"><thead><tr>${ths}</tr></thead><tbody>${trs}</tbody></table></div>`);
   });
 
-  // 5. Callouts
-  h = h.replace(/^>\s*(💡|⚡|✅|⚠️|🚨|ℹ️|📌|📝)?\s*(.+)$/gm, (m, icon, text) => {
-    const t = { ['💡']: 'tip', ['⚡']: 'tip', ['✅']: 'tip', ['⚠️']: 'warn', ['🚨']: 'warn', ['ℹ️']: 'info', ['📌']: 'note', ['📝']: 'note' }[icon] || 'note';
-    return stash(`<div class="callout ${t}"><span class="callout-icon">${icon || '💡'}</span><div>${text}</div></div>`);
+  // Helper for inline markdown formatting
+  function parseInline(text) {
+    if (!text) return '';
+    let s = text;
+    s = s.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    s = s.replace(/__([^_]+)__/g, '<strong>$1</strong>');
+    s = s.replace(/(?<!\*)\*([^*\n]+?)\*(?!\*)/g, '<em>$1</em>');
+    s = s.replace(/(?<!_)_([^_\n]+?)_(?!_)/g, '<em>$1</em>');
+    s = s.replace(/`([^`\n]+)`/g, '<code>$1</code>');
+    s = s.replace(/!\[(.+?)\]\((.+?)\)/g, (m, alt, url) => {
+      const safeUrl = url.trim().replace(/^javascript:/i, '#');
+      return `<figure style="margin:2rem 0;border-radius:var(--radius-md);overflow:hidden;border:1px solid var(--border-color)"><img src="${safeUrl}" alt="${esc(alt)}" style="width:100%;display:block" loading="lazy"/><figcaption style="padding:.5rem 1rem;font-size:.75rem;color:var(--text-subtle)">${esc(alt)}</figcaption></figure>`;
+    });
+    s = s.replace(/\[(.+?)\]\((.+?)\)/g, (m, label, url) => {
+      const safeUrl = url.trim().replace(/^javascript:/i, '#');
+      return `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer">${label} ↗</a>`;
+    });
+    return s;
+  }
+
+  // 5. Blockquotes & Callout Blocks (Group consecutive > lines together)
+  h = h.replace(/((?:^>\s*.+\n?)+)/gm, (block) => {
+    const rawLines = block.trim().split('\n').map(l => l.replace(/^>\s*/, '').trim());
+    const fullText = rawLines.join(' ');
+    
+    const iconMatch = fullText.match(/^(💡|⚡|✅|⚠️|🚨|ℹ️|📌|📝)\s*(.*)$/);
+    let icon = '💡';
+    let bodyText = fullText;
+    let type = 'tip';
+
+    if (iconMatch) {
+      icon = iconMatch[1];
+      bodyText = iconMatch[2];
+      const typeMap = { ['💡']: 'tip', ['⚡']: 'tip', ['✅']: 'tip', ['⚠️']: 'warn', ['🚨']: 'warn', ['ℹ️']: 'info', ['📌']: 'note', ['📝']: 'note' };
+      type = typeMap[icon] || 'note';
+    }
+
+    bodyText = bodyText.replace(/^>\s*/, '').trim();
+
+    return stash(`<div class="callout ${type}"><span class="callout-icon">${icon}</span><div class="callout-content">${parseInline(bodyText)}</div></div>`);
   });
 
   // 6. Headings & Special Language Ribbons
   h = h.replace(/^###\s*(?:📖\s*)?English\s*(?:Summary|Notes)?\s*$/gim, '<div class="lang-section-badge en">📖 English Study Notes</div>');
   h = h.replace(/^###\s*(?:🌟\s*)?ਪੰਜਾਬੀ\s*(?:ਅਨੁਵਾਦ|Summary)?\s*$/gim, '<div class="lang-section-badge pa">🌟 ਪੰਜਾਬੀ ਅਨੁਵਾਦ (Key Explanation)</div>');
-  h = h.replace(/^#### (.+)$/gim, '<h4>$1</h4>');
-  h = h.replace(/^### (.+)$/gim, '<h3>$1</h3>');
-  h = h.replace(/^## (.+)$/gim, '<h2>$1</h2>');
-  h = h.replace(/^# (.+)$/gim, '<h1>$1</h1>');
+  h = h.replace(/^#### (.+)$/gim, (m, t) => `<h4>${parseInline(t)}</h4>`);
+  h = h.replace(/^### (.+)$/gim, (m, t) => `<h3>${parseInline(t)}</h3>`);
+  h = h.replace(/^## (.+)$/gim, (m, t) => `<h2>${parseInline(t)}</h2>`);
+  h = h.replace(/^# (.+)$/gim, (m, t) => `<h1>${parseInline(t)}</h1>`);
   h = h.replace(/^---$/gm, '<hr/>');
 
-  // 7. Inline Formatting
-  h = h.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-  h = h.replace(/\*(.+?)\*/g, '<em>$1</em>');
-  h = h.replace(/`([^`\n]+)`/g, '<code>$1</code>');
-
-  // 8. Lists
+  // 7. Lists
   h = h.replace(/((?:^[-*] .+\n?)+)/gm, b => {
-    const items = b.trim().split('\n').map(l => `<li>${l.replace(/^[-*] /, '')}</li>`).join('');
+    const items = b.trim().split('\n').map(l => `<li>${parseInline(l.replace(/^[-*] /, ''))}</li>`).join('');
     return `<ul>${items}</ul>`;
   });
   h = h.replace(/((?:^\d+\. .+\n?)+)/gm, b => {
-    const items = b.trim().split('\n').map(l => `<li>${l.replace(/^\d+\. /, '')}</li>`).join('');
+    const items = b.trim().split('\n').map(l => `<li>${parseInline(l.replace(/^\d+\. /, ''))}</li>`).join('');
     return `<ol>${items}</ol>`;
   });
 
-  // 9. Images & Links (with URL sanitization)
-  h = h.replace(/!\[(.+?)\]\((.+?)\)/g, (m, alt, url) => {
-    const safeUrl = url.trim().replace(/^javascript:/i, '#');
-    return `<figure style="margin:2rem 0;border-radius:var(--radius-md);overflow:hidden;border:1px solid var(--border-color)"><img src="${safeUrl}" alt="${esc(alt)}" style="width:100%;display:block" loading="lazy"/><figcaption style="padding:.5rem 1rem;font-size:.75rem;color:var(--text-subtle)">${esc(alt)}</figcaption></figure>`;
-  });
-  h = h.replace(/\[(.+?)\]\((.+?)\)/g, (m, text, url) => {
-    const safeUrl = url.trim().replace(/^javascript:/i, '#');
-    return `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer">${text} ↗</a>`;
-  });
+  // 8. Inline formatting on remaining text
+  h = parseInline(h);
 
-  // 10. Paragraphs & Line Breaks
+  // 9. Paragraphs & Line Breaks
   h = h.replace(/\n{2,}/g, '</p><p>');
   h = h.replace(/(?<!\>)\n/g, '<br/>');
 
