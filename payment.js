@@ -260,8 +260,14 @@ window.BCA3_PAYMENTS = {
    */
   payForSubscription: async function (planTier, planName, priceInRs) {
     try {
+      await this.ensureRazorpaySDK();
+
       if (typeof Razorpay === 'undefined') {
-        alert('Razorpay Payment Gateway SDK is loading. Please check your internet connection and try again.');
+        if (typeof showToast === 'function') {
+          showToast('Payment gateway is initializing. Please retry in a moment.', 'info');
+        } else {
+          alert('Razorpay Payment Gateway SDK is loading. Please check your internet connection and try again.');
+        }
         return;
       }
 
