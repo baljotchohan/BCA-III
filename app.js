@@ -313,7 +313,7 @@ function toggleTopicCheck(topicKey, checkbox) {
 
 let _currentlyOpenNoteId = null;
 
-async function renderSubjectNotes(subject) {
+function renderSubjectNotes(subject) {
   const container = document.getElementById('ws-notes-stream');
   if (!container) return;
 
@@ -325,177 +325,180 @@ async function renderSubjectNotes(subject) {
     readerSubView.style.display = 'none';
   }
 
-  // Fetch live digital notes from Firebase 'notes' collection (and fallback check 'lectures' for legacy items)
-  const [rawFbNotes, rawFbLectures] = await Promise.all([
-    _fbFetch('notes'),
-    _fbFetch('lectures')
-  ]);
-
   const subjectId = subject.id;
-  const fbNotes = rawFbNotes.filter(n => (n.subject === subjectId || n.subjectId === subjectId));
-  
-  // Also include any notes that were previously stored in lectures collection
-  const legacyLectureNotes = rawFbLectures
-    .filter(l => (l.subject === subjectId || l.subjectId === subjectId) && (l.isAdminPublished || (l.content && !l.topic) || l.readTime))
-    .map(l => ({
-      id: l.id || l.fbKey,
-      fbKey: l.fbKey,
-      unit: l.unit || 'General',
-      title: l.title || l.topic || 'Digital Note',
-      content: l.content || l.notes || l.description || '',
-      date: l.date,
-      readTime: l.readTime || '6 min read',
-      tags: l.tags || ['Study Guide'],
-      author: l.author || 'Baljot Chohan',
-      isAdminPublished: true
-    }));
 
-  const combinedCloudNotes = [
-    ...fbNotes,
-    ...legacyLectureNotes.filter(ln => !fbNotes.some(fn => fn.fbKey === ln.fbKey || fn.id === ln.id))
-  ];
+  // Helper: Synchronously build combined notes list from memory & cache
+  function buildAndRenderNotes(cloudNotesList = [], cloudLecturesList = []) {
+    const fbNotes = (cloudNotesList || []).filter(n => (n.subject === subjectId || n.subjectId === subjectId));
+    const legacyLectureNotes = (cloudLecturesList || [])
+      .filter(l => (l.subject === subjectId || l.subjectId === subjectId) && (l.isAdminPublished || (l.content && !l.topic) || l.readTime))
+      .map(l => ({
+        id: l.id || l.fbKey,
+        fbKey: l.fbKey,
+        unit: l.unit || 'General',
+        title: l.title || l.topic || 'Digital Note',
+        content: l.content || l.notes || l.description || '',
+        date: l.date,
+        readTime: l.readTime || '6 min read',
+        tags: l.tags || ['Study Guide'],
+        author: l.author || 'Baljot Chohan',
+        isAdminPublished: true
+      }));
 
-  const allNotes = [...(subject.digitalNotes || []), ...combinedCloudNotes];
+    const combinedCloudNotes = [
+      ...fbNotes,
+      ...legacyLectureNotes.filter(ln => !fbNotes.some(fn => fn.fbKey === ln.fbKey || fn.id === ln.id))
+    ];
 
-  // Helper to parse unit number for chronological syllabus sorting
-  function parseUnitOrder(unitStr) {
-    if (!unitStr) return 1;
-    const s = String(unitStr).toLowerCase().trim();
-    if (s.includes('unit 1') || s.includes('unit i') || s === '1' || s === 'i' || s === 'general') return 1;
-    if (s.includes('unit 2') || s.includes('unit ii') || s === '2' || s === 'ii') return 2;
-    if (s.includes('unit 3') || s.includes('unit iii') || s === '3' || s === 'iii') return 3;
-    if (s.includes('unit 4') || s.includes('unit iv') || s === '4' || s === 'iv') return 4;
-    return 99;
-  }
+    const allNotes = [...(subject.digitalNotes || []), ...combinedCloudNotes];
 
-  // Sort notes: Unit I first, Unit II second, Unit III third, Unit IV fourth
-  allNotes.sort((a, b) => {
-    const uA = parseUnitOrder(a.unit || a.unitNumber);
-    const uB = parseUnitOrder(b.unit || b.unitNumber);
-    if (uA !== uB) return uA - uB;
-    // Secondary sort: preserve creation order or title
-    return (a.timestamp || 0) - (b.timestamp || 0) || (a.title || '').localeCompare(b.title || '');
-  });
-
-  _currentSubjectNotes = allNotes;
-
-  if (!allNotes.length) {
-    container.innerHTML = `
-      <div class="empty-state" style="text-align: center; padding: 3rem 1rem; color: var(--text-subtle);">
-        <p style="font-size: 1rem; margin-bottom: 1rem;">No digital notes published yet for ${escapeHtml(subject.title)}.</p>
-        <button class="admin-submit-btn" style="display: inline-flex; width: auto; padding: 0.6rem 1.25rem;" onclick="openAdminModal()">
-          <span>+ Create &amp; Publish Note as Admin</span>
-        </button>
-      </div>
-    `;
-    return;
-  }
-
-  let filtered = allNotes;
-  if (currentNoteFilter && currentNoteFilter !== 'all') {
-    filtered = allNotes.filter(n => {
-      const u = (n.unit || '').toLowerCase();
-      const f = currentNoteFilter.toLowerCase();
-      return u === f || (f === 'unit i' && (u === 'unit 1' || u === 'unit i' || u === 'general')) ||
-             (f === 'unit ii' && (u === 'unit 2' || u === 'unit ii')) ||
-             (f === 'unit iii' && (u === 'unit 3' || u === 'unit iii')) ||
-             (f === 'unit iv' && (u === 'unit 4' || u === 'unit iv'));
-    });
-  }
-
-  if (!filtered.length) {
-    container.innerHTML = `
-      <div class="empty-state" style="text-align: center; padding: 2.5rem 1rem; color: var(--text-subtle);">
-        <p style="font-size: 0.95rem; margin-bottom: 1rem;">No notes found under <strong>${escapeHtml(currentNoteFilter)}</strong>.</p>
-        <button class="note-filter-btn active" onclick="filterNotesByUnit('all', document.querySelector('#ws-notes-filter-bar .note-filter-btn'))">Show All Topics</button>
-      </div>
-    `;
-    return;
-  }
-
-  // Calculate sequential topic numbers grouped by unit
-  const unitCounters = {};
-  filtered.forEach(n => {
-    const u = n.unit || 'Unit I';
-    unitCounters[u] = (unitCounters[u] || 0) + 1;
-    n._topicSeq = unitCounters[u];
-  });
-
-  // Render sleek, compact Topic Cards organized chronologically
-  container.innerHTML = filtered.map((note, index) => {
-    const noteKey = note.fbKey || note.id;
-    const isCloud = Boolean(note.fbKey);
-    const authorName = note.author || 'Baljot Chohan';
-    const excerpt = getPlainExcerpt(note.content, 140, note.title);
-    const accessRes = window.BCA3_PAYMENTS ? window.BCA3_PAYMENTS.hasNoteAccess(note, index) : { hasAccess: true };
-    const hasAccess = accessRes.hasAccess;
-    const isPinned = _userBookmarks.includes(noteKey);
-
-    let accessBadgeHtml = '';
-    if (hasAccess) {
-      if (accessRes.reason === 'free_unit_1') {
-        accessBadgeHtml = '<span style="font-size: 0.72rem; color: #10b981; font-weight: 700; background: rgba(16,185,129,0.12); padding: 0.15rem 0.5rem; border-radius: 999px; border: 1px solid rgba(16,185,129,0.25);">🔓 Free Unit 1</span>';
-      } else if (accessRes.reason === 'max_lifetime') {
-        accessBadgeHtml = '<span style="font-size: 0.72rem; color: #c25e3e; font-weight: 700; background: rgba(194,94,62,0.12); padding: 0.15rem 0.5rem; border-radius: 999px; border: 1px solid rgba(194,94,62,0.25);">🌟 Max Lifetime</span>';
-      } else if (accessRes.reason === 'pro_active') {
-        accessBadgeHtml = '<span style="font-size: 0.72rem; color: #a78bfa; font-weight: 700; background: rgba(124,58,237,0.12); padding: 0.15rem 0.5rem; border-radius: 999px; border: 1px solid rgba(124,58,237,0.25);">⭐ Pro Pass</span>';
-      } else {
-        accessBadgeHtml = '<span style="font-size: 0.72rem; color: #10b981; font-weight: 700; background: rgba(16,185,129,0.12); padding: 0.15rem 0.5rem; border-radius: 999px; border: 1px solid rgba(16,185,129,0.25);">🔓 Unlocked</span>';
-      }
-    } else {
-      if (accessRes.reason === 'requires_signin') {
-        accessBadgeHtml = '<span style="font-size: 0.72rem; color: #f59e0b; font-weight: 700; background: rgba(245,158,11,0.12); padding: 0.15rem 0.5rem; border-radius: 999px; border: 1px solid rgba(245,158,11,0.25);">🔒 Sign In to Unlock</span>';
-      } else {
-        accessBadgeHtml = '<span style="font-size: 0.72rem; color: #c25e3e; font-weight: 700; background: rgba(194,94,62,0.12); padding: 0.15rem 0.5rem; border-radius: 999px; border: 1px solid rgba(194,94,62,0.25);">🔒 Pro (₹19) / Max (₹49)</span>';
-      }
+    function parseUnitOrder(unitStr) {
+      if (!unitStr) return 1;
+      const s = String(unitStr).toLowerCase().trim();
+      if (s.includes('unit 4') || s.includes('unit iv') || s === '4' || s === 'iv') return 4;
+      if (s.includes('unit 3') || s.includes('unit iii') || s === '3' || s === 'iii') return 3;
+      if (s.includes('unit 2') || s.includes('unit ii') || s === '2' || s === 'ii') return 2;
+      if (s.includes('unit 1') || s.includes('unit i') || s === '1' || s === 'i' || s === 'general') return 1;
+      return 99;
     }
 
-    const unitLabel = note.unit || 'Unit I';
-    const topicNumberTag = note._topicSeq ? `Topic ${note._topicSeq}` : `Topic ${index + 1}`;
+    allNotes.sort((a, b) => {
+      const uA = parseUnitOrder(a.unit || a.unitNumber);
+      const uB = parseUnitOrder(b.unit || b.unitNumber);
+      if (uA !== uB) return uA - uB;
+      return (a.timestamp || 0) - (b.timestamp || 0) || (a.title || '').localeCompare(b.title || '');
+    });
 
-    return `
-      <div class="note-topic-card" onclick="handleNoteCardClick('${noteKey}', ${index})">
-        <div class="note-topic-header">
-          <div class="note-meta-left" style="display: flex; align-items: center; gap: 0.45rem; flex-wrap: wrap;">
-            <span class="note-unit-badge">${escapeHtml(unitLabel)} • ${topicNumberTag}</span>
-            ${accessBadgeHtml}
-            <span class="note-author-pill">✍️ By ${escapeHtml(authorName)}</span>
-            <span class="note-read-time">⏱️ ${escapeHtml(note.readTime || '6 min read')}</span>
-            ${note.date ? `<span style="font-size: 0.72rem; color: var(--text-subtle);">📅 ${escapeHtml(note.date)}</span>` : ''}
-          </div>
-          <div class="note-actions-bar" onclick="event.stopPropagation()">
-            <button class="note-tool-btn ${isPinned ? 'active pinned' : ''}" onclick="toggleBookmark('${noteKey}'); event.stopPropagation();" title="${isPinned ? 'Unpin from Profile' : 'Pin / Save Note to Profile'}">
-              <span>${isPinned ? '📌 Pinned' : '📌 Save'}</span>
-            </button>
-            ${isAdminAuthenticated() && isCloud ? `
-              <button class="note-tool-btn" onclick="deleteNoteLive('${note.fbKey}', event)" title="Admin: Delete Note" style="color: #d44f4f; border-color: rgba(212,79,79,0.3); background: rgba(212,79,79,0.06);">
-                <span>🗑️ Delete</span>
-              </button>
-            ` : ''}
-            <button class="note-tool-btn" onclick="copyNoteContent('${noteKey}'); event.stopPropagation();" title="Copy note">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-              <span>Copy</span>
-            </button>
-          </div>
-        </div>
+    _currentSubjectNotes = allNotes;
 
-        <div class="note-topic-title-row">
-          <h3 class="note-topic-title">${escapeHtml(note.title)}</h3>
-        </div>
-
-        ${excerpt ? `<p class="note-topic-excerpt">${escapeHtml(excerpt)}</p>` : ''}
-
-        <div class="note-topic-footer">
-          <div class="topic-tags-row" style="margin: 0;">
-            ${(note.tags || []).slice(0, 3).map(t => `<span class="topic-tag-pill">${escapeHtml(t.replace(/^#/, ''))}</span>`).join('')}
-          </div>
-          <button class="note-read-btn">
-            <span>${hasAccess ? '📖 Read Full Note ➔' : '🔒 View Study Pass ➔'}</span>
+    if (!allNotes.length) {
+      container.innerHTML = `
+        <div class="empty-state" style="text-align: center; padding: 3rem 1rem; color: var(--text-subtle);">
+          <p style="font-size: 1rem; margin-bottom: 1rem;">No digital notes published yet for ${escapeHtml(subject.title)}.</p>
+          <button class="admin-submit-btn" style="display: inline-flex; width: auto; padding: 0.6rem 1.25rem;" onclick="openAdminModal()">
+            <span>+ Create &amp; Publish Note as Admin</span>
           </button>
         </div>
-      </div>
-    `;
-  }).join('');
+      `;
+      return;
+    }
+
+    let filtered = allNotes;
+    if (currentNoteFilter && currentNoteFilter !== 'all') {
+      filtered = allNotes.filter(n => {
+        const u = (n.unit || '').toLowerCase();
+        const f = currentNoteFilter.toLowerCase();
+        return u === f || (f === 'unit i' && (u === 'unit 1' || u === 'unit i' || u === 'general')) ||
+               (f === 'unit ii' && (u === 'unit 2' || u === 'unit ii')) ||
+               (f === 'unit iii' && (u === 'unit 3' || u === 'unit iii')) ||
+               (f === 'unit iv' && (u === 'unit 4' || u === 'unit iv'));
+      });
+    }
+
+    if (!filtered.length) {
+      container.innerHTML = `
+        <div class="empty-state" style="text-align: center; padding: 2.5rem 1rem; color: var(--text-subtle);">
+          <p style="font-size: 0.95rem; margin-bottom: 1rem;">No notes found under <strong>${escapeHtml(currentNoteFilter)}</strong>.</p>
+          <button class="note-filter-btn active" onclick="filterNotesByUnit('all', document.querySelector('#ws-notes-filter-bar .note-filter-btn'))">Show All Topics</button>
+        </div>
+      `;
+      return;
+    }
+
+    const unitCounters = {};
+    filtered.forEach(n => {
+      const u = n.unit || 'Unit I';
+      unitCounters[u] = (unitCounters[u] || 0) + 1;
+      n._topicSeq = unitCounters[u];
+    });
+
+    container.innerHTML = filtered.map((note, index) => {
+      const noteKey = note.fbKey || note.id;
+      const isCloud = Boolean(note.fbKey);
+      const authorName = note.author || 'Baljot Chohan';
+      const excerpt = getPlainExcerpt(note.content, 140, note.title);
+      const accessRes = window.BCA3_PAYMENTS ? window.BCA3_PAYMENTS.hasNoteAccess(note, index) : { hasAccess: true };
+      const hasAccess = accessRes.hasAccess;
+      const isPinned = _userBookmarks.includes(noteKey);
+
+      let accessBadgeHtml = '';
+      if (hasAccess) {
+        if (accessRes.reason === 'free_unit_1') {
+          accessBadgeHtml = '<span style="font-size: 0.72rem; color: #10b981; font-weight: 700; background: rgba(16,185,129,0.12); padding: 0.15rem 0.5rem; border-radius: 999px; border: 1px solid rgba(16,185,129,0.25);">🔓 Free Unit 1</span>';
+        } else if (accessRes.reason === 'max_lifetime') {
+          accessBadgeHtml = '<span style="font-size: 0.72rem; color: #c25e3e; font-weight: 700; background: rgba(194,94,62,0.12); padding: 0.15rem 0.5rem; border-radius: 999px; border: 1px solid rgba(194,94,62,0.25);">🌟 Max Lifetime</span>';
+        } else if (accessRes.reason === 'pro_active') {
+          accessBadgeHtml = '<span style="font-size: 0.72rem; color: #a78bfa; font-weight: 700; background: rgba(124,58,237,0.12); padding: 0.15rem 0.5rem; border-radius: 999px; border: 1px solid rgba(124,58,237,0.25);">⭐ Pro Pass</span>';
+        } else {
+          accessBadgeHtml = '<span style="font-size: 0.72rem; color: #10b981; font-weight: 700; background: rgba(16,185,129,0.12); padding: 0.15rem 0.5rem; border-radius: 999px; border: 1px solid rgba(16,185,129,0.25);">🔓 Unlocked</span>';
+        }
+      } else {
+        if (accessRes.reason === 'requires_signin') {
+          accessBadgeHtml = '<span style="font-size: 0.72rem; color: #f59e0b; font-weight: 700; background: rgba(245,158,11,0.12); padding: 0.15rem 0.5rem; border-radius: 999px; border: 1px solid rgba(245,158,11,0.25);">🔒 Sign In to Unlock</span>';
+        } else {
+          accessBadgeHtml = '<span style="font-size: 0.72rem; color: #c25e3e; font-weight: 700; background: rgba(194,94,62,0.12); padding: 0.15rem 0.5rem; border-radius: 999px; border: 1px solid rgba(194,94,62,0.25);">🔒 Pro (₹19) / Max (₹49)</span>';
+        }
+      }
+
+      const unitLabel = note.unit || 'Unit I';
+      const topicNumberTag = note._topicSeq ? `Topic ${note._topicSeq}` : `Topic ${index + 1}`;
+
+      return `
+        <div class="note-topic-card" onclick="handleNoteCardClick('${noteKey}', ${index})">
+          <div class="note-topic-header">
+            <div class="note-meta-left" style="display: flex; align-items: center; gap: 0.45rem; flex-wrap: wrap;">
+              <span class="note-unit-badge">${escapeHtml(unitLabel)} • ${topicNumberTag}</span>
+              ${accessBadgeHtml}
+              <span class="note-author-pill">✍️ By ${escapeHtml(authorName)}</span>
+              <span class="note-read-time">⏱️ ${escapeHtml(note.readTime || '6 min read')}</span>
+              ${note.date ? `<span style="font-size: 0.72rem; color: var(--text-subtle);">📅 ${escapeHtml(note.date)}</span>` : ''}
+            </div>
+            <div class="note-actions-bar" onclick="event.stopPropagation()">
+              <button class="note-tool-btn ${isPinned ? 'active pinned' : ''}" onclick="toggleBookmark('${noteKey}'); event.stopPropagation();" title="${isPinned ? 'Unpin from Profile' : 'Pin / Save Note to Profile'}">
+                <span>${isPinned ? '📌 Pinned' : '📌 Save'}</span>
+              </button>
+              ${isAdminAuthenticated() && isCloud ? `
+                <button class="note-tool-btn" onclick="deleteNoteLive('${note.fbKey}', event)" title="Admin: Delete Note" style="color: #d44f4f; border-color: rgba(212,79,79,0.3); background: rgba(212,79,79,0.06);">
+                  <span>🗑️ Delete</span>
+                </button>
+              ` : ''}
+              <button class="note-tool-btn" onclick="copyNoteContent('${noteKey}'); event.stopPropagation();" title="Copy note">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                <span>Copy</span>
+              </button>
+            </div>
+          </div>
+
+          <h3 class="note-topic-title">${escapeHtml(note.title)}</h3>
+          <p class="note-topic-excerpt">${escapeHtml(excerpt)}</p>
+
+          <div class="note-topic-footer">
+            <div class="note-tags-list">
+              ${(note.tags || []).slice(0, 3).map(tag => `<span class="note-topic-tag">${escapeHtml(tag)}</span>`).join('')}
+            </div>
+            <div class="note-read-cta">
+              <span>${hasAccess ? 'Read Full Study Notes →' : 'Unlock Note →'}</span>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  // Step 1: Render synchronously with cached data in 0ms!
+  const cachedNotes = (_globalCloudData && _globalCloudData['notes']) || [];
+  const cachedLectures = (_globalCloudData && _globalCloudData['lectures']) || [];
+  buildAndRenderNotes(cachedNotes, cachedLectures);
+
+  // Step 2: Background refresh without blocking UI
+  Promise.all([
+    _fbFetch('notes'),
+    _fbFetch('lectures')
+  ]).then(([rawNotes, rawLectures]) => {
+    if (activeSubjectId === subject.id) {
+      buildAndRenderNotes(rawNotes, rawLectures);
+    }
+  }).catch(() => {});
 }
 
 function handleNoteCardClick(noteKey, index = 0) {
