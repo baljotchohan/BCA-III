@@ -850,12 +850,16 @@ function exportCurrentSubjectNotes() {
 
 async function _fbFetch(path) {
   try {
-    const res = await fetch(`${FIREBASE_DB}/${path}.json`);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3500);
+    const res = await fetch(`${FIREBASE_DB}/${path}.json`, { signal: controller.signal });
+    clearTimeout(timeoutId);
+    if (!res.ok) return [];
     const data = await res.json();
     if (!data || data.error) return [];
     const list = Object.entries(data).map(([fbKey, val]) => ({ ...val, fbKey }))
       .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-    if (_globalCloudData[path]) {
+    if (_globalCloudData && _globalCloudData[path]) {
       _globalCloudData[path] = list;
     }
     return list;
@@ -988,7 +992,7 @@ function goToTodaySubjectCal() {
   if (subject) renderSubjectCalendar(subject);
 }
 
-async function renderSubjectCalendar(subject) {
+function renderSubjectCalendar(subject) {
   const calGrid = document.getElementById('ws-calendar-grid');
   const monthTitle = document.querySelector('.calendar-month-title');
   const quickDatesBar = document.getElementById('ws-quick-dates-bar');
@@ -999,13 +1003,26 @@ async function renderSubjectCalendar(subject) {
     monthTitle.textContent = `${getMonthName(currentSubjectCalMonth)} ${currentSubjectCalYear}`;
   }
 
-  // Fetch live lectures & notes from Firebase
-  let fbLectures = await _fbFetch('lectures');
+  // Use synchronous in-memory cache for instant 0ms date switching
+  let fbLectures = (_globalCloudData && _globalCloudData.lectures && _globalCloudData.lectures.length)
+    ? _globalCloudData.lectures
+    : ((_academicCalendarDataCache && _academicCalendarDataCache.lectures) || []);
   fbLectures = fbLectures.filter(l => (l.subject === subject.id || l.subjectId === subject.id));
   const allLectures = [...fbLectures, ...(subject.lectures || [])];
 
-  let fbNotes = await _fbFetch('notes');
+  let fbNotes = (_globalCloudData && _globalCloudData.notes && _globalCloudData.notes.length)
+    ? _globalCloudData.notes
+    : ((_academicCalendarDataCache && _academicCalendarDataCache.notes) || []);
   fbNotes = fbNotes.filter(n => (n.subject === subject.id || n.subjectId === subject.id));
+
+  // If cache is not populated yet, fetch in background without blocking UI
+  if (!_globalCloudData.lectures || !_globalCloudData.lectures.length) {
+    _fbFetch('lectures').then(list => {
+      if (list && list.length && activeSubjectId === subject.id) {
+        renderSubjectCalendar(subject);
+      }
+    });
+  }
 
   // Map of active dates
   const dateMap = {};

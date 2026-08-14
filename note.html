@@ -10,17 +10,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,300..700;1,6..72,300..700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
-<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css"/>
-<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
-<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" onload="initKatex()"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/tokyo-night-dark.min.css"/>
-<script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/core.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/languages/c.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/languages/cpp.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/languages/python.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/languages/javascript.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/languages/x86asm.min.js"></script>
 
 <style>
 :root{
@@ -765,129 +756,168 @@ function showErr(msg) {
   }
 }
 
-// ── Mermaid Initialization ──
-try {
-  if (typeof mermaid !== 'undefined') {
-    mermaid.initialize({
-      theme: savedTheme === 'dark' ? 'dark' : 'base',
-      startOnLoad: false,
-      securityLevel: 'loose',
-      fontFamily: 'Plus Jakarta Sans, Inter, sans-serif',
-      fontSize: 14,
-    });
-  }
-} catch (mErr) {
-  console.warn('Mermaid initialization notice:', mErr);
+// ── Helper to parse unit order ──
+function parseUnitOrder(unitStr) {
+  if (!unitStr) return 1;
+  const s = String(unitStr).toLowerCase().trim();
+  if (s.includes('unit 1') || s.includes('unit i') || s === '1' || s === 'i' || s === 'general') return 1;
+  if (s.includes('unit 2') || s.includes('unit ii') || s === '2' || s === 'ii') return 2;
+  if (s.includes('unit 3') || s.includes('unit iii') || s === '3' || s === 'iii') return 3;
+  if (s.includes('unit 4') || s.includes('unit iv') || s === '4' || s === 'iv') return 4;
+  return 99;
 }
 
-// ── Main Page Initialization ──
-async function init() {
+// ── Instant Synchronous Note Render (0ms from Built-in Dataset) ──
+function renderInitialNoteSync() {
   const p = new URLSearchParams(location.search);
   _currentKey = p.get('id');
   _currentSubjectId = p.get('subject');
   const modeParam = p.get('mode');
 
-  try {
-    // 1. Gather Built-in Notes from BCA_3RD_SEM_DATA immediately
-    let staticNotes = [];
-    if (typeof BCA_3RD_SEM_DATA !== 'undefined' && BCA_3RD_SEM_DATA.subjects) {
-      BCA_3RD_SEM_DATA.subjects.forEach(s => {
-        (s.digitalNotes || []).forEach(n => {
-          staticNotes.push({ ...n, subjectId: s.id, subjectTitle: s.title, subjectCode: s.code });
-        });
+  let staticNotes = [];
+  if (typeof BCA_3RD_SEM_DATA !== 'undefined' && BCA_3RD_SEM_DATA.subjects) {
+    BCA_3RD_SEM_DATA.subjects.forEach(s => {
+      (s.digitalNotes || []).forEach(n => {
+        staticNotes.push({ ...n, subjectId: s.id, subjectTitle: s.title, subjectCode: s.code });
       });
-    }
-
-    // 2. Fetch Cloud Notes from Firebase RTDB with a strict 3.5s timeout
-    let cloudNotes = [];
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 3500);
-      const r = await fetch(`${FIREBASE_DB}/notes.json`, { signal: controller.signal });
-      clearTimeout(timeoutId);
-      if (r.ok) {
-        const raw = await r.json();
-        if (raw && typeof raw === 'object') {
-          cloudNotes = Object.entries(raw).map(([k, v]) => ({ ...v, fbKey: k })).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-        }
-      }
-    } catch (err) {
-      console.warn('Firebase RTDB notes fetch fallback:', err);
-    }
-
-    _notes = [...cloudNotes, ...staticNotes];
-
-    // Helper to parse unit order
-    function parseUnitOrder(unitStr) {
-      if (!unitStr) return 1;
-      const s = String(unitStr).toLowerCase().trim();
-      if (s.includes('unit 1') || s.includes('unit i') || s === '1' || s === 'i' || s === 'general') return 1;
-      if (s.includes('unit 2') || s.includes('unit ii') || s === '2' || s === 'ii') return 2;
-      if (s.includes('unit 3') || s.includes('unit iii') || s === '3' || s === 'iii') return 3;
-      if (s.includes('unit 4') || s.includes('unit iv') || s === '4' || s === 'iv') return 4;
-      return 99;
-    }
-
-    // Sort notes logically: Unit I -> Unit II -> Unit III -> Unit IV
-    _notes.sort((a, b) => {
-      const uA = parseUnitOrder(a.unit || a.unitNumber);
-      const uB = parseUnitOrder(b.unit || b.unitNumber);
-      if (uA !== uB) return uA - uB;
-      return (a.timestamp || 0) - (b.timestamp || 0) || (a.title || '').localeCompare(b.title || '');
     });
+  }
+  _notes = staticNotes;
 
-    // Determine subject metadata
-    let activeSubject = null;
-    if (_currentSubjectId && typeof BCA_3RD_SEM_DATA !== 'undefined') {
-      activeSubject = BCA_3RD_SEM_DATA.subjects.find(s => s.id === _currentSubjectId);
-    }
+  _notes.sort((a, b) => {
+    const uA = parseUnitOrder(a.unit || a.unitNumber);
+    const uB = parseUnitOrder(b.unit || b.unitNumber);
+    if (uA !== uB) return uA - uB;
+    return (a.timestamp || 0) - (b.timestamp || 0) || (a.title || '').localeCompare(b.title || '');
+  });
 
-    // If mode=master explicitly requested, render Master Study Guide
-    if (modeParam === 'master') {
-      _mode = 'master';
-      const subjNotes = _notes.filter(n => (n.subject === _currentSubjectId || n.subjectId === _currentSubjectId));
-      renderMasterGuide(activeSubject || { id: _currentSubjectId, title: 'BCA III Subject', code: 'BCA 301' }, subjNotes);
-      hideLoading();
-      return;
-    }
+  let activeSubject = null;
+  if (_currentSubjectId && typeof BCA_3RD_SEM_DATA !== 'undefined') {
+    activeSubject = BCA_3RD_SEM_DATA.subjects.find(s => s.id === _currentSubjectId);
+  }
 
-    // Otherwise render Single Note Focus View (Unit 1 Topic 1 by default)
-    let targetNote = _notes.find(n => (n.fbKey === _currentKey || n.id === _currentKey));
-    if (!targetNote && _currentKey) {
-      try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 3000);
-        const r2 = await fetch(`${FIREBASE_DB}/lectures/${_currentKey}.json`, { signal: controller.signal });
-        clearTimeout(timeoutId);
-        if (r2.ok) {
-          const lr = await r2.json();
-          if (lr && !lr.error) targetNote = { ...lr, fbKey: _currentKey };
-        }
-      } catch (e) {}
-    }
+  if (modeParam === 'master') {
+    _mode = 'master';
+    const subjNotes = _notes.filter(n => (n.subject === _currentSubjectId || n.subjectId === _currentSubjectId));
+    renderMasterGuide(activeSubject || { id: _currentSubjectId, title: 'BCA III Subject', code: 'BCA 301' }, subjNotes);
+    hideLoading();
+    return true;
+  }
 
-    if (!targetNote) {
-      const subjNotes = _currentSubjectId
-        ? _notes.filter(n => (n.subject === _currentSubjectId || n.subjectId === _currentSubjectId))
-        : _notes;
-      if (subjNotes.length > 0) {
-        targetNote = subjNotes[0];
-      } else if (_notes.length > 0) {
-        targetNote = _notes[0];
-      } else {
-        showErr('Note not found. Please return to the dashboard and select a topic.');
-        return;
-      }
-    }
+  let targetNote = _notes.find(n => (n.fbKey === _currentKey || n.id === _currentKey));
+  if (!targetNote) {
+    const subjNotes = _currentSubjectId
+      ? _notes.filter(n => (n.subject === _currentSubjectId || n.subjectId === _currentSubjectId))
+      : _notes;
+    if (subjNotes.length > 0) targetNote = subjNotes[0];
+    else if (_notes.length > 0) targetNote = _notes[0];
+  }
 
+  if (targetNote) {
     renderSingleNote(targetNote);
     setupNav(targetNote.fbKey || targetNote.id);
     hideLoading();
-
-  } catch (e) {
-    console.error('Note reader initialization error:', e);
-    showErr('Could not load note content: ' + e.message);
+    return true;
   }
+  return false;
+}
+
+// ── Non-Blocking Deferred CDN Assets Loader ──
+function loadDeferredAssets() {
+  // 1. Mermaid
+  if (typeof mermaid === 'undefined') {
+    const mScript = document.createElement('script');
+    mScript.src = 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js';
+    mScript.onload = () => {
+      try {
+        mermaid.initialize({
+          theme: savedTheme === 'dark' ? 'dark' : 'base',
+          startOnLoad: false,
+          securityLevel: 'loose',
+          fontFamily: 'Plus Jakarta Sans, Inter, sans-serif',
+          fontSize: 14,
+        });
+        renderAllMermaid();
+      } catch (e) {}
+    };
+    document.body.appendChild(mScript);
+  }
+
+  // 2. KaTeX
+  if (typeof renderMathInElement === 'undefined') {
+    const kScript = document.createElement('script');
+    kScript.src = 'https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js';
+    kScript.onload = () => {
+      const kaScript = document.createElement('script');
+      kaScript.src = 'https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js';
+      kaScript.onload = () => initKatex();
+      document.body.appendChild(kaScript);
+    };
+    document.body.appendChild(kScript);
+  }
+
+  // 3. Highlight.js
+  if (!window.hljs) {
+    const hljsScript = document.createElement('script');
+    hljsScript.src = 'https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/core.min.js';
+    hljsScript.onload = () => {
+      ['c', 'cpp', 'python', 'javascript', 'x86asm'].forEach(lang => {
+        const s = document.createElement('script');
+        s.src = `https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/languages/${lang}.min.js`;
+        s.onload = () => {
+          document.querySelectorAll('pre code').forEach(el => hljs.highlightElement(el));
+        };
+        document.body.appendChild(s);
+      });
+    };
+    document.body.appendChild(hljsScript);
+  }
+}
+
+// ── Main Page Initialization ──
+async function init() {
+  // Step 1: Render immediately from built-in syllabus data
+  const renderedSync = renderInitialNoteSync();
+  hideLoading();
+  setTimeout(hideLoading, 50);
+  setTimeout(hideLoading, 200);
+
+  // Step 2: Load deferred visual & math assets in background
+  if ('requestIdleCallback' in window) {
+    requestIdleCallback(loadDeferredAssets, { timeout: 1500 });
+  } else {
+    setTimeout(loadDeferredAssets, 100);
+  }
+
+  // Step 3: Background sync of cloud notes from Firebase RTDB
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3500);
+    const r = await fetch(`${FIREBASE_DB}/notes.json`, { signal: controller.signal });
+    clearTimeout(timeoutId);
+    if (r.ok) {
+      const raw = await r.json();
+      if (raw && typeof raw === 'object') {
+        const cloudNotes = Object.entries(raw).map(([k, v]) => ({ ...v, fbKey: k })).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+        if (cloudNotes.length > 0) {
+          _notes = [...cloudNotes, ..._notes.filter(sn => !cloudNotes.some(cn => cn.id === sn.id))];
+          const p = new URLSearchParams(location.search);
+          const currentKey = p.get('id');
+          if (currentKey) {
+            const updated = _notes.find(n => (n.fbKey === currentKey || n.id === currentKey));
+            if (updated) {
+              renderSingleNote(updated);
+              setupNav(updated.fbKey || updated.id);
+            }
+          }
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('Firebase RTDB background sync note:', err);
+  }
+
+  hideLoading();
 }
 
 // ── Render Single Note View ──
@@ -1373,7 +1403,11 @@ async function handleReaderGoogleSignIn() {
   }
 }
 
-init();
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}
 </script>
 </body>
 </html>
