@@ -1155,9 +1155,6 @@ async function handleMcpRpc(payload, authHeader = '') {
       const topic = args.topic || args.title || "Curriculum Study Note";
       
       let finalContent = args.content || "";
-      if (subInfo && subInfo.visualTag && !finalContent.includes(subInfo.visualTag)) {
-        finalContent = `${subInfo.visualTag}\n\n${finalContent}`;
-      }
       if (args.visual_type && args.visual_type !== "none") {
         const visualTag = `[visual:${args.visual_type}]`;
         if (!finalContent.includes(visualTag)) {

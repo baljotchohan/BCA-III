@@ -144,24 +144,30 @@ body{font-family:var(--font-sans);background:var(--bg-page);color:var(--text-mai
 @keyframes spin{to{transform:rotate(360deg)}}
 
 /* ──────────── MAIN LAYOUT & CONTAINER ──────────── */
+#main {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
 .reader-wrap{
-  max-width: 1140px;
-  width: min(95%, 1140px);
-  margin: 1.5rem auto 5rem;
-  padding: clamp(2rem, 4vw, 3.5rem) clamp(1.75rem, 4vw, 3.75rem) 6rem;
-  background: var(--bg-surface);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-card);
+  max-width: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 2rem clamp(1.25rem, 3.5vw, 3.5rem) 6rem;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
   position: relative;
   box-sizing: border-box;
 }
 
 /* ──────────── DOCUMENT MASTER HEADER ──────────── */
 .doc-header{
-  text-align: center;
-  margin-bottom: 3rem;
-  padding-bottom: 2rem;
+  text-align: left;
+  margin-bottom: 2.5rem;
+  padding-bottom: 1.5rem;
   border-bottom: 1px solid var(--border-color);
   position: relative;
 }
@@ -182,7 +188,7 @@ body{font-family:var(--font-sans);background:var(--bg-page);color:var(--text-mai
 }
 .doc-title{
   font-family: var(--font-serif);
-  font-size: clamp(2.25rem, 5.5vw, 3.5rem);
+  font-size: clamp(2.25rem, 5vw, 3.5rem);
   font-weight: 700;
   line-height: 1.15;
   letter-spacing: -.03em;
@@ -199,7 +205,7 @@ body{font-family:var(--font-sans);background:var(--bg-page);color:var(--text-mai
 .doc-meta-row{
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   gap: .85rem;
   font-size: .75rem;
   font-weight: 700;
@@ -311,25 +317,26 @@ body{font-family:var(--font-sans);background:var(--bg-page);color:var(--text-mai
 /* ──────────── MARKDOWN CONTENT & TYPOGRAPHY ──────────── */
 .prose-content{
   font-family: var(--font-serif);
-  font-size: calc(var(--fs-base) * 1rem);
-  line-height: 1.85;
+  font-size: calc(var(--fs-base, 1) * 1.15rem);
+  line-height: calc(1.75 + (var(--fs-base, 1) - 1) * 0.15);
   color: var(--text-muted);
-  transition: font-size .15s;
+  transition: font-size .1s ease, line-height .1s ease;
+  word-break: break-word;
 }
-.prose-content > p{margin-bottom:1.35rem}
-.prose-content h1{font-family:var(--font-serif);font-size:1.85rem;font-weight:700;color:var(--text-main);margin:2.25rem 0 .75rem;line-height:1.2;border-bottom:1px solid var(--border-color);padding-bottom:.5rem}
-.prose-content h2{font-family:var(--font-serif);font-size:1.45rem;font-weight:700;color:var(--text-main);margin:1.85rem 0 .6rem}
-.prose-content h3{font-family:var(--font-sans);font-size:1.05rem;font-weight:700;color:var(--text-main);margin:1.5rem 0 .4rem}
-.prose-content h4{font-family:var(--font-sans);font-size:.78rem;font-weight:800;color:var(--color-coral);margin:1.25rem 0 .35rem;text-transform:uppercase;letter-spacing:.08em}
+.prose-content > p{font-size: 1em; margin-bottom:1.35rem}
+.prose-content h1{font-family:var(--font-serif);font-size:1.85em;font-weight:700;color:var(--text-main);margin:2.25rem 0 .75rem;line-height:1.2;border-bottom:1px solid var(--border-color);padding-bottom:.5rem}
+.prose-content h2{font-family:var(--font-serif);font-size:1.5em;font-weight:700;color:var(--text-main);margin:1.85rem 0 .6rem}
+.prose-content h3{font-family:var(--font-sans);font-size:1.2em;font-weight:700;color:var(--text-main);margin:1.5rem 0 .4rem}
+.prose-content h4{font-family:var(--font-sans);font-size:.9em;font-weight:800;color:var(--color-coral);margin:1.25rem 0 .35rem;text-transform:uppercase;letter-spacing:.08em}
 .prose-content strong{color:var(--text-main);font-weight:700}
 .prose-content em{color:var(--text-main);font-style:italic}
 .prose-content a{color:var(--color-coral);text-decoration:underline;text-underline-offset:3px}
 .prose-content hr{border:none;border-top:1px solid var(--border-color);margin:2rem 0}
 .prose-content ul{margin:.5rem 0 1.25rem 1.6rem;list-style:disc}
 .prose-content ol{margin:.5rem 0 1.25rem 1.6rem;list-style:decimal}
-.prose-content li{margin-bottom:.4rem;color:var(--text-muted)}
-.prose-content blockquote{border-left:3px solid var(--color-coral);padding:.65rem 1.25rem;margin:1.5rem 0;background:var(--color-coral-dim);border-radius:0 var(--radius-sm) var(--radius-sm) 0}
-.prose-content code{font-family:var(--font-mono);background:var(--color-indigo-dim);border:1px solid var(--color-indigo-border);padding:.12rem .4rem;border-radius:5px;font-size:.85em;color:var(--color-indigo)}
+.prose-content li{font-size: 1em; margin-bottom:.4rem;color:var(--text-muted)}
+.prose-content blockquote{font-size: 1.05em; border-left:3px solid var(--color-coral);padding:.65rem 1.25rem;margin:1.5rem 0;background:var(--color-coral-dim);border-radius:0 var(--radius-sm) var(--radius-sm) 0}
+.prose-content code{font-family:var(--font-mono);background:var(--color-indigo-dim);border:1px solid var(--color-indigo-border);padding:.12rem .4rem;border-radius:5px;font-size:.9em;color:var(--color-indigo)}
 
 /* Language filtering */
 [data-lang-mode="en"] .col-punjabi{display:none!important}
@@ -663,12 +670,11 @@ function changeFs(dir) {
   _fsIdx = Math.max(0, Math.min(FS_STEPS.length - 1, _fsIdx + dir));
   const v = FS_STEPS[_fsIdx];
   document.documentElement.style.setProperty('--fs-base', v);
-  document.querySelectorAll('.prose-content').forEach(el => {
-    el.style.fontSize = (v * 1.15) + 'rem';
-    el.style.lineHeight = (1.85 + (v - 1) * 0.2);
-  });
   const label = document.getElementById('fs-label');
   if (label) label.textContent = Math.round(v * 100) + '%';
+  try {
+    localStorage.setItem('bca_reader_fs', String(v));
+  } catch (e) {}
 }
 
 // ── Reading Progress Bar ──
@@ -1385,10 +1391,8 @@ function renderMD(raw) {
     return stash(`<div class="code-wrap"><div class="code-head"><span class="code-lang" style="color:${col}"><span class="dot" style="background:${col}"></span>${esc(l || 'CODE').toUpperCase()}</span><button class="code-copy-btn" onclick="cpCode(this)">📋 Copy</button></div><pre><code class="language-${esc(l || 'plaintext')}">${esc(code.trim())}</code></pre></div>`);
   });
 
-  // 3. Mount interactive visual simulation placeholders
-  h = h.replace(/(?:@\[visual:|\[visual:)([a-zA-Z0-9_-]+)\]/gi, (m, visualId) => {
-    return stash(`<div class="manim-visual-mount" data-manim-visual="${esc(visualId)}"></div>`);
-  });
+  // 3. Strip visual simulation tags completely from note text
+  h = h.replace(/(?:@\[visual:|\[visual:)([a-zA-Z0-9_-]+)\]/gi, '');
 
   // 4. Tables
   h = h.replace(/\|(.+)\|\n\|[-|\s:]+\|\n((?:\|.+\|\n?)+)/g, (m, header, rows) => {

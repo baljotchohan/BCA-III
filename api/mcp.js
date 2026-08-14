@@ -1299,10 +1299,6 @@ async function handleMcpRpc(payload, authHeader = '', authorHeader = '') {
       const today = new Date().toISOString().split("T")[0];
 
       let finalContent = args.content || "";
-      if (subInfo && subInfo.visualTag && !finalContent.includes(subInfo.visualTag)) {
-        finalContent = `${subInfo.visualTag}\n\n${finalContent}`;
-      }
-      
       if (args.visual_type && args.visual_type !== "none") {
         const visualTag = `[visual:${args.visual_type}]`;
         if (!finalContent.includes(visualTag)) {

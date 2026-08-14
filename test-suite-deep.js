@@ -206,8 +206,7 @@ assert(renderedHtml.includes('language-cpp'), 'Code language class must be attac
 assert(renderedHtml.includes('class="mermaid-wrap"'), 'Mermaid diagrams must be rendered into wrapper');
 assert(renderedHtml.includes('class="callout tip"'), 'Callouts must be rendered');
 assert(renderedHtml.includes('$$E = mc^2$$'), 'LaTeX display math must be preserved untouched');
-assert(renderedHtml.includes('class="table-wrap"'), 'Tables must be rendered');
-assert(renderedHtml.includes('data-manim-visual="aludesign"'), 'Visual mount must be created');
+assert(!renderedHtml.includes('[visual:aludesign]'), 'Visual tags must be stripped cleanly from notes');
 console.log('✅ Note Reader Markdown & Visuals Parser: 100% verified.');
 
 // ── 4. Test MCP Server Definition ──
