@@ -145,22 +145,23 @@ body{font-family:var(--font-sans);background:var(--bg-page);color:var(--text-mai
 
 /* ──────────── MAIN LAYOUT & CONTAINER ──────────── */
 #main {
-  width: 100%;
-  max-width: 100%;
-  box-sizing: border-box;
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
 }
 
 .reader-wrap{
-  max-width: 100%;
-  width: 100%;
-  margin: 0;
-  padding: 2rem clamp(1.25rem, 3.5vw, 3.5rem) 6rem;
-  background: transparent;
-  border: none;
-  border-radius: 0;
-  box-shadow: none;
-  position: relative;
-  box-sizing: border-box;
+  width: var(--page-width, 100%) !important;
+  max-width: var(--page-width, 100%) !important;
+  margin: 0 auto !important;
+  padding: 2.5rem clamp(1.5rem, 4vw, 4rem) 6rem !important;
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  position: relative !important;
+  box-sizing: border-box !important;
+  transition: width 0.15s ease, max-width 0.15s ease;
 }
 
 /* ──────────── DOCUMENT MASTER HEADER ──────────── */
@@ -557,11 +558,6 @@ body{font-family:var(--font-sans);background:var(--bg-page);color:var(--text-mai
       📥 <span>Download PDF</span>
     </button>
 
-    <!-- Audio Narration TTS Button -->
-    <button class="tb-btn" id="tts-btn" onclick="toggleNoteAudioNarration()" title="Listen to Audio Narration">
-      <span id="tts-icon">🔊</span> <span id="tts-text" class="hide-mobile">Listen</span>
-    </button>
-
     <!-- Bookmark / Pin Button -->
     <button class="tb-btn" id="tb-bookmark-btn" onclick="toggleReaderBookmark()" title="Pin / Save Note to Profile">
       <span id="tb-bookmark-icon">📌</span> <span id="tb-bookmark-text" class="hide-mobile">Pin Note</span>
@@ -774,71 +770,6 @@ function copyNoteContent() {
     setTimeout(() => { btn.innerHTML = orig; }, 2000);
   });
 }
-
-// ── Audio Narration (Web Speech API) ──
-let _isNarrating = false;
-let _speechUtterance = null;
-
-function toggleNoteAudioNarration() {
-  if (!('speechSynthesis' in window)) {
-    alert('Web Speech API is not supported in this browser.');
-    return;
-  }
-
-  const btn = document.getElementById('tts-btn');
-  const icon = document.getElementById('tts-icon');
-  const text = document.getElementById('tts-text');
-
-  if (_isNarrating) {
-    window.speechSynthesis.cancel();
-    _isNarrating = false;
-    if (btn) btn.classList.remove('active');
-    if (icon) icon.textContent = '🔊';
-    if (text) text.textContent = 'Listen';
-    return;
-  }
-
-  const contentEl = document.getElementById('content-container');
-  if (!contentEl) return;
-
-  const rawText = contentEl.innerText.replace(/```[\s\S]*?```/g, 'Code block omitted.').replace(/[#*|]/g, '');
-  if (!rawText.trim()) return;
-
-  _speechUtterance = new SpeechSynthesisUtterance(rawText.slice(0, 8000));
-  _speechUtterance.rate = 1.0;
-  _speechUtterance.pitch = 1.0;
-  _speechUtterance.lang = 'en-US';
-
-  _speechUtterance.onstart = () => {
-    _isNarrating = true;
-    if (btn) btn.classList.add('active');
-    if (icon) icon.textContent = '⏸️';
-    if (text) text.textContent = 'Pause';
-  };
-
-  _speechUtterance.onend = () => {
-    _isNarrating = false;
-    if (btn) btn.classList.remove('active');
-    if (icon) icon.textContent = '🔊';
-    if (text) text.textContent = 'Listen';
-  };
-
-  _speechUtterance.onerror = () => {
-    _isNarrating = false;
-    if (btn) btn.classList.remove('active');
-    if (icon) icon.textContent = '🔊';
-    if (text) text.textContent = 'Listen';
-  };
-
-  window.speechSynthesis.cancel();
-  window.speechSynthesis.speak(_speechUtterance);
-}
-
-window.addEventListener('beforeunload', () => {
-  if ('speechSynthesis' in window) {
-    window.speechSynthesis.cancel();
-  }
-});
 
 // ── Loader & Error UI Helpers ──
 function hideLoading() {
