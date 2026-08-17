@@ -279,8 +279,13 @@ ${JSON.stringify(contextData || {})}`;
             }
           }
         }
-        successfulProvider = provider;
-        break; // Successfully completed response
+
+        if (hasStartedStreaming) {
+          successfulProvider = provider;
+          break; // Successfully completed response
+        } else {
+          console.warn(`${provider.name} stream ended with 0 tokens. Failing over to next provider.`);
+        }
       } finally {
         req.off('close', abortHandler);
       }
