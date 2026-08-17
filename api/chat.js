@@ -182,14 +182,16 @@ ${JSON.stringify(contextData || {})}`;
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('Connection', 'keep-alive');
-  res.flushHeaders();
+  if (typeof res.flushHeaders === 'function') res.flushHeaders();
 
   let isClientConnected = true;
   let hasStartedStreaming = false;
   let successfulProvider = null;
 
-  req.on('close', () => {
-    isClientConnected = false;
+  res.on('close', () => {
+    if (!res.writableEnded) {
+      isClientConnected = false;
+    }
   });
 
   for (const provider of providers) {
@@ -224,7 +226,7 @@ ${JSON.stringify(contextData || {})}`;
       const abortHandler = () => {
         try { reader.cancel(); } catch (e) {}
       };
-      req.on('close', abortHandler);
+      res.on('close', abortHandler);
 
       try {
         while (isClientConnected) {
@@ -287,7 +289,8 @@ ${JSON.stringify(contextData || {})}`;
           console.warn(`${provider.name} stream ended with 0 tokens. Failing over to next provider.`);
         }
       } finally {
-        req.off('close', abortHandler);
+        if (typeof res.off === 'function') res.off('close', abortHandler);
+        else if (typeof res.removeListener === 'function') res.removeListener('close', abortHandler);
       }
     } catch (err) {
       console.error(`Error with ${provider.name}:`, err);
