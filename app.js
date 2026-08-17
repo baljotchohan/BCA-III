@@ -3397,15 +3397,15 @@ function updateAISidebarProfileUI() {
     nameEl.textContent = fullName;
     
     // Determine tier
-    let tierText = 'Free Student (10 msgs/day)';
+    let tierText = 'Free Student Tier';
     if (currentUserProfile.isAdmin) {
       tierText = 'Admin • Unlimited';
     } else if (currentUserProfile.subscription && (currentUserProfile.subscription.status === 'active' || !currentUserProfile.subscription.status)) {
       const sub = currentUserProfile.subscription;
-      if (sub.plan === 'max') tierText = 'Exam Max (50 msgs/day)';
+      if (sub.plan === 'max') tierText = 'Exam Max Tier';
       else if (sub.plan === 'pro' || sub.plan === 'plus') {
         if (!sub.validUntil || sub.validUntil > Date.now()) {
-          tierText = 'Pro Member (25 msgs/day)';
+          tierText = 'Pro Scholar Pass';
         }
       }
     }
@@ -3416,7 +3416,7 @@ function updateAISidebarProfileUI() {
       avatarEl.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>`;
     }
     nameEl.textContent = 'Guest Student';
-    planEl.textContent = '2 msgs/day • Sign In';
+    planEl.textContent = 'Guest Preview • Sign In';
   }
 }
 
@@ -4097,10 +4097,10 @@ async function handleStudentNoteSubmit(e) {
     if (!quotaText || !quotaPill) return;
     const quota = getDailyQuota();
     if (quota.isUnlimited) {
-      quotaText.textContent = '⚡ Unlimited';
+      quotaText.textContent = '⚡ Unlimited Access';
       quotaPill.classList.remove('warning');
     } else {
-      quotaText.textContent = `${quota.remaining}/${quota.limit} left`;
+      quotaText.textContent = `${quota.remaining}/${quota.limit} Credits`;
       if (quota.remaining <= 1) {
         quotaPill.classList.add('warning');
       } else {
@@ -4353,7 +4353,7 @@ async function handleStudentNoteSubmit(e) {
         } else if (typeof signInWithGoogle === 'function') {
           signInWithGoogle();
         } else {
-          alert("👋 Welcome Guest Student!\n\nYou currently have 2 Free AI messages/day.\nSign in with Google on the main site for 10 msgs/day or upgrade to Pro for 25 msgs/day!");
+          alert("👋 Welcome Guest Student!\n\nSign in with Google to unlock Standard Student capacity or upgrade to Pro Scholar for high-priority cloud access!");
         }
       } else {
         if (typeof openProfileModal === 'function') {
@@ -4361,9 +4361,8 @@ async function handleStudentNoteSubmit(e) {
         } else {
           const name = currentUserProfile.name || 'Student';
           const plan = getUserPlanTier().toUpperCase();
-          const quota = getDailyQuota();
-          const quotaMsg = quota.isUnlimited ? 'Unlimited msgs/day' : `${quota.remaining}/${quota.limit} msgs left today`;
-          alert(`👤 BCA III Hub Profile\n• Student: ${name}\n• Active Tier: ${plan}\n• Daily Quota: ${quotaMsg}\n• Saved Chats: ${conversations.length}\n• Cloud Matrix: High Availability Qwen/Dots 8K`);
+          const quotaMsg = quota.isUnlimited ? 'Unlimited Access' : `${quota.remaining}/${quota.limit} Daily Credits Available`;
+          alert(`👤 BCA III Hub Profile\n• Student: ${name}\n• Active Tier: ${plan}\n• Daily Capacity: ${quotaMsg}\n• Saved Chats: ${conversations.length}\n• Cloud Matrix: High Availability Qwen/Dots 8K`);
         }
       }
     });
