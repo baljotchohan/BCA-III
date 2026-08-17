@@ -3418,6 +3418,39 @@ function updateAISidebarProfileUI() {
     nameEl.textContent = 'Guest Student';
     planEl.textContent = 'Guest Preview • Sign In';
   }
+
+  // Update Claude-style dynamic greeting
+  const greetingEl = document.getElementById('gpt-hero-greeting');
+  if (greetingEl) {
+    const hour = new Date().getHours();
+    let greet = 'What would you like to master today?';
+    if (hour >= 22 || hour < 5) greet = 'Hello, night owl';
+    else if (hour >= 5 && hour < 12) greet = 'Good morning, scholar';
+    else if (hour >= 12 && hour < 17) greet = 'Good afternoon, scholar';
+    else if (hour >= 17 && hour < 22) greet = 'Good evening, scholar';
+    greetingEl.textContent = greet;
+  }
+
+  // Update Dock Upgrade Banner
+  const dockUpgradeStrip = document.getElementById('gpt-dock-upgrade-strip');
+  const dockUpgradeText = document.getElementById('dock-upgrade-text');
+  const dockUpgradeBtn = document.getElementById('dock-upgrade-btn');
+  if (dockUpgradeStrip && dockUpgradeText && dockUpgradeBtn) {
+    if (isAuth && currentUserProfile.isAdmin) {
+      dockUpgradeStrip.style.display = 'none';
+    } else if (isAuth && currentUserProfile.subscription && (currentUserProfile.subscription.plan === 'max' || currentUserProfile.subscription.plan === 'pro')) {
+      dockUpgradeText.textContent = 'Pro Scholar Active • High-Priority AI';
+      dockUpgradeBtn.textContent = 'Active';
+      dockUpgradeBtn.style.background = 'rgba(204,120,92,0.2)';
+      dockUpgradeBtn.style.color = '#cc785c';
+    } else {
+      dockUpgradeStrip.style.display = 'flex';
+      dockUpgradeText.textContent = 'Get more with BCA III Pro';
+      dockUpgradeBtn.textContent = 'Upgrade';
+      dockUpgradeBtn.style.background = '';
+      dockUpgradeBtn.style.color = '';
+    }
+  }
 }
 
 // ── 30-Second Anthropic Guest Visitor Prompt ──

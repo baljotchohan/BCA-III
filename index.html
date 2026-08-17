@@ -41,6 +41,10 @@
   <meta name="twitter:image" content="icon-512.png"/>
 
   <link rel="stylesheet" href="styles.css?v=5.0"/>
+  <!-- Modern Claude-Style Serif & Inter Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <!-- Marked.js for AI Markdown Parsing -->
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
@@ -1917,10 +1921,17 @@
         <div class="gpt-chat-scroll" id="gpt-chat-scroll">
           <div class="gpt-chat-content" id="gpt-chat-content">
             
-            <!-- EMPTY WELCOME STATE -->
+            <!-- EMPTY WELCOME STATE (CLAUDE-STYLE EDITORIAL HERO) -->
             <div id="gpt-empty-state" class="gpt-empty-state">
-              <div class="gpt-empty-icon">✨</div>
-              <h2 class="gpt-empty-title">What would you like to master today?</h2>
+              <div class="gpt-empty-icon gpt-claude-star">
+                <svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="12" y1="2" x2="12" y2="22"></line>
+                  <line x1="2" y1="12" x2="22" y2="12"></line>
+                  <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line>
+                  <line x1="19.07" y1="4.93" x2="4.93" y2="19.07"></line>
+                </svg>
+              </div>
+              <h2 class="gpt-empty-title" id="gpt-hero-greeting">What would you like to master today?</h2>
               <p class="gpt-empty-sub">Trained on PU syllabus, past exam questions, notes, and lab practicals.</p>
               
               <div class="gpt-starter-grid">
@@ -1960,7 +1971,7 @@
           </div>
         </div>
 
-        <!-- FLOATING BOTTOM INPUT BAR -->
+        <!-- FLOATING BOTTOM INPUT BAR (CLAUDE-STYLE CARD DOCK) -->
         <footer class="gpt-input-container">
           
           <!-- QUICK ATTACH POPUP MENU -->
@@ -1996,11 +2007,20 @@
           </div>
 
           <div class="gpt-input-box">
+            <!-- TOP MINI UPGRADE / PLAN STRIP -->
+            <div id="gpt-dock-upgrade-strip" class="gpt-dock-upgrade-strip" onclick="openUpgradePricingFromQuota()">
+              <div class="dock-upgrade-left">
+                <span class="dock-upgrade-icon">⚡</span>
+                <span class="dock-upgrade-text" id="dock-upgrade-text">Get more with BCA III Pro</span>
+              </div>
+              <button class="dock-upgrade-btn" id="dock-upgrade-btn" type="button">Upgrade</button>
+            </div>
+
             <div class="gpt-input-top-row">
               <button id="gpt-attach-btn" class="gpt-attach-btn" title="Quick Tools & Attachments" aria-label="Attachments">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
               </button>
-              <textarea id="gpt-input" placeholder="Ask anything about BCA III..." rows="1" autocomplete="off" spellcheck="false"></textarea>
+              <textarea id="gpt-input" placeholder="Chat with BCA III AI..." rows="1" autocomplete="off" spellcheck="false"></textarea>
             </div>
             
             <div class="gpt-input-bottom-row">
