@@ -143,17 +143,10 @@ ${JSON.stringify(contextData || {})}`;
 
   let providers = [
     {
-      name: 'OpenRouter-Gemma31B',
-      url: 'https://openrouter.ai/api/v1/chat/completions',
-      key: openRouterKey,
-      model: 'google/gemma-4-31b-it:free',
-      maxTokens: 4096
-    },
-    {
-      name: 'OpenRouter-Gemma26B',
-      url: 'https://openrouter.ai/api/v1/chat/completions',
-      key: openRouterKey,
-      model: 'google/gemma-4-26b-a4b-it:free',
+      name: 'Groq-Qwen27B',
+      url: 'https://api.groq.com/openai/v1/chat/completions',
+      key: groqKey,
+      model: 'qwen/qwen3.6-27b',
       maxTokens: 4096
     },
     {
@@ -169,13 +162,20 @@ ${JSON.stringify(contextData || {})}`;
       key: openRouterKey,
       model: 'dots-studio/dots-3-note-preview:free',
       maxTokens: 4096
+    },
+    {
+      name: 'OpenRouter-Gemma26B',
+      url: 'https://openrouter.ai/api/v1/chat/completions',
+      key: openRouterKey,
+      model: 'google/gemma-4-26b-a4b-it:free',
+      maxTokens: 4096
     }
   ];
 
   if (selectedModel === 'dots') {
-    providers = [providers[3], providers[0], providers[1], providers[2]];
+    providers = [providers[2], providers[0], providers[1], providers[3]];
   } else if (selectedModel === 'exam') {
-    providers = [providers[0], providers[1], providers[3], providers[2]];
+    providers = [providers[1], providers[0], providers[2], providers[3]];
   }
 
   // Setup Server-Sent Events headers
@@ -188,28 +188,35 @@ ${JSON.stringify(contextData || {})}`;
   let hasStartedStreaming = false;
   let successfulProvider = null;
 
-  res.on('close', () => {
-    if (!res.writableEnded) {
-      isClientConnected = false;
-    }
-  });
+  if (typeof res.on === 'function') {
+    res.on('close', () => {
+      if (!res.writableEnded) {
+        isClientConnected = false;
+      }
+    });
+  }
 
   for (const provider of providers) {
     if (!isClientConnected) break;
     try {
+      const requestPayload = {
+        model: provider.model,
+        messages: apiMessages,
+        stream: true,
+        temperature: 0.6,
+        max_tokens: provider.maxTokens || 4096
+      };
+      if (provider.url.includes('groq.com') && selectedModel !== 'exam') {
+        requestPayload.reasoning_effort = 'none';
+      }
+
       const response = await fetch(provider.url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${provider.key}`
         },
-        body: JSON.stringify({
-          model: provider.model,
-          messages: apiMessages,
-          stream: true,
-          temperature: 0.6,
-          max_tokens: provider.maxTokens || 4096
-        })
+        body: JSON.stringify(requestPayload)
       });
 
       if (!response.ok) {
@@ -226,7 +233,9 @@ ${JSON.stringify(contextData || {})}`;
       const abortHandler = () => {
         try { reader.cancel(); } catch (e) {}
       };
-      res.on('close', abortHandler);
+      if (typeof res.on === 'function') {
+        res.on('close', abortHandler);
+      }
 
       try {
         while (isClientConnected) {
