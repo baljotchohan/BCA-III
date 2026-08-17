@@ -2038,32 +2038,32 @@
     <!-- QUOTA LIMIT EXCEEDED MODAL -->
     <div id="gpt-quota-modal" class="gpt-quota-modal-overlay">
       <div class="gpt-quota-modal-card">
-        <div class="quota-modal-icon">⏳</div>
+        <div class="quota-modal-icon">⚡</div>
         <h3 class="quota-modal-title">Daily AI Quota Reached</h3>
-        <p class="quota-modal-desc">You've reached today's limit for your current plan. Your quota will automatically reset at midnight (12:00 AM).</p>
+        <p class="quota-modal-desc">You've reached today's standard generation capacity for your active tier. Daily message quotas automatically refresh every midnight (12:00 AM IST). Unlock higher reasoning power, multi-provider cloud access, and extended daily limits instantly.</p>
         
         <div class="quota-tier-comparison">
           <div class="tier-comp-box">
-            <strong>Guest</strong>
-            <span>2 msgs/day</span>
+            <strong>Guest Visitor</strong>
+            <span>2 msgs / day • Basic Cloud</span>
           </div>
           <div class="tier-comp-box">
             <strong>Free Student</strong>
-            <span>10 msgs/day</span>
+            <span>10 msgs / day • Standard AI</span>
           </div>
           <div class="tier-comp-box highlight">
-            <strong>Pro Pass</strong>
-            <span>25 msgs/day</span>
+            <strong>Pro Scholar Pass</strong>
+            <span>25 msgs / day • 2.5x Speed • Units I-IV</span>
           </div>
           <div class="tier-comp-box highlight max">
-            <strong>Exam Max</strong>
-            <span>50 msgs/day</span>
+            <strong>Exam Max Tier</strong>
+            <span>50 msgs / day • 5x Power • All Subject Packs</span>
           </div>
         </div>
 
         <div class="quota-modal-actions">
-          <button id="gpt-quota-upgrade-btn" class="gpt-quota-btn-primary" onclick="if(typeof openPaymentModal === 'function') openPaymentModal(); document.getElementById('gpt-quota-modal').classList.remove('active');">Upgrade to Pro / Max</button>
-          <button id="gpt-quota-close-btn" class="gpt-quota-btn-sec" onclick="document.getElementById('gpt-quota-modal').classList.remove('active');">Close</button>
+          <button id="gpt-quota-upgrade-btn" class="gpt-quota-btn-primary" onclick="openUpgradePricingFromQuota()">Upgrade to Pro / Max</button>
+          <button id="gpt-quota-close-btn" class="gpt-quota-btn-sec" onclick="document.getElementById('gpt-quota-modal').classList.remove('active');">Maybe Later</button>
         </div>
       </div>
     </div>

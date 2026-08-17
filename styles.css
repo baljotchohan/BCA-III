@@ -6340,10 +6340,10 @@ body.ai-chat-open .mobile-bottom-nav {
   width: 100vw;
   height: 100vh;
   height: 100dvh;
-  background: rgba(0, 0, 0, 0.75);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  z-index: 20000;
+  background: rgba(0, 0, 0, 0.78);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  z-index: 100005;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -6357,9 +6357,11 @@ body.ai-chat-open .mobile-bottom-nav {
   max-width: 900px;
   width: 100%;
   padding: 2rem;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
   max-height: 90dvh;
   overflow-y: auto;
+  position: relative;
+  z-index: 100006;
 }
 
 @media (max-width: 768px) {

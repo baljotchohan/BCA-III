@@ -5103,5 +5103,20 @@ async function handleStudentNoteSubmit(e) {
   renderRecents();
 })();
 
+// Global handler to open pricing modal from Quota Limit UI
+window.openUpgradePricingFromQuota = function() {
+  const quotaModal = document.getElementById('gpt-quota-modal');
+  if (quotaModal) quotaModal.classList.remove('active');
+  
+  if (window.BCA3_PAYMENTS && typeof window.BCA3_PAYMENTS.openPricingModal === 'function') {
+    window.BCA3_PAYMENTS.openPricingModal();
+  } else if (typeof openPricingModal === 'function') {
+    openPricingModal();
+  } else {
+    const modal = document.getElementById('pricingModal');
+    if (modal) modal.style.display = 'flex';
+  }
+};
+
 
 
