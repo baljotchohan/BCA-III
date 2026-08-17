@@ -3852,4 +3852,1192 @@ async function handleStudentNoteSubmit(e) {
   }
 }
 
+/* ==========================================================================
+   AUTHENTIC CHATGPT / CLAUDE APPLICATION ENGINE (FULL INTERACTIVITY)
+   ========================================================================== */
+(function initChatGPTApp() {
+  const STORAGE_KEY = 'bca_gpt_conversations_v4';
+
+  // DOM Elements
+  const fab = document.getElementById('ai-chat-fab');
+  const overlay = document.getElementById('ai-chat-overlay');
+  const sidebar = document.getElementById('gpt-sidebar');
+  const sidebarToggle = document.getElementById('gpt-sidebar-toggle-btn');
+  const sidebarCloseMob = document.getElementById('gpt-sidebar-close-mob');
+  const closeAppBtn = document.getElementById('gpt-close-app-btn');
+  const newChatBtn = document.getElementById('gpt-new-chat-btn');
+  const newChatTopBtn = document.getElementById('gpt-new-chat-top-btn');
+  const clearHistoryBtn = document.getElementById('gpt-clear-all-history');
+  const searchInput = document.getElementById('gpt-search-input');
+  const recentsList = document.getElementById('gpt-recents-list');
+  const userProfilePill = document.getElementById('gpt-user-profile-pill');
+  
+  // Model Dropdown
+  const modelDropdownBtn = document.getElementById('gpt-model-dropdown-btn');
+  const modelMenu = document.getElementById('gpt-model-menu');
+  const currentModelLabel = document.getElementById('gpt-current-model-label');
+  
+  // Attachments & Chips
+  const attachBtn = document.getElementById('gpt-attach-btn');
+  const attachMenu = document.getElementById('gpt-attach-menu');
+  const chipSyllabus = document.getElementById('gpt-chip-syllabus');
+  const chipCode = document.getElementById('gpt-chip-code');
+  const micBtn = document.getElementById('gpt-mic-btn');
+
+  // Main chat elements
+  const emptyState = document.getElementById('gpt-empty-state');
+  const messagesList = document.getElementById('gpt-messages-list');
+  const chatScroll = document.getElementById('gpt-chat-scroll');
+  const input = document.getElementById('gpt-input');
+  const sendBtn = document.getElementById('gpt-send-btn');
+  
+  // Quota & Limit elements
+  const quotaPill = document.getElementById('gpt-quota-pill');
+  const quotaText = document.getElementById('gpt-quota-text');
+  const quotaModal = document.getElementById('gpt-quota-modal');
+  
+  if (!fab || !overlay) return;
+
+  // --- TELEMETRY & PERSISTENT USER IDENTITY ---
+  function getPersistentUserId() {
+    if (typeof currentUserProfile !== 'undefined' && currentUserProfile && currentUserProfile.uid) {
+      return currentUserProfile.uid;
+    }
+    let guestId = localStorage.getItem('bca3_guest_uid');
+    if (!guestId) {
+      guestId = 'guest_' + Math.random().toString(36).substring(2, 11) + '_' + Date.now().toString(36);
+      localStorage.setItem('bca3_guest_uid', guestId);
+    }
+    return guestId;
+  }
+
+  function getUserPlanTier() {
+    if (typeof currentUserProfile !== 'undefined' && currentUserProfile) {
+      const email = String(currentUserProfile.email || '').toLowerCase().trim();
+      if (['baljotchohan23@gmail.com', 'mehakpreetkaur@gmail.com', 'mehakpreetsaini26@gmail.com'].includes(email)) {
+        return 'admin';
+      }
+      const sub = currentUserProfile.subscription;
+      if (sub && (sub.status === 'active' || !sub.status)) {
+        if (sub.plan === 'max') return 'max';
+        if (sub.plan === 'pro' || sub.plan === 'plus') {
+          if (!sub.validUntil || sub.validUntil > Date.now()) return 'pro';
+        }
+      }
+      return 'free'; // Logged-in free student
+    }
+    return 'guest'; // Non-signed in
+  }
+
+  // --- FIREBASE RTDB TELEMETRY & CHAT ARCHIVAL ---
+  function logUserPresence() {
+    try {
+      if (typeof firebaseDb !== 'undefined' && firebaseDb) {
+        const uid = getPersistentUserId();
+        const plan = getUserPlanTier();
+        const userRef = firebaseDb.ref('bca3/telemetry/users/' + uid);
+        userRef.update({
+          uid: uid,
+          name: (typeof currentUserProfile !== 'undefined' && currentUserProfile && currentUserProfile.name) || 'Guest Student',
+          email: (typeof currentUserProfile !== 'undefined' && currentUserProfile && currentUserProfile.email) || 'guest@bca3hub.local',
+          plan: plan,
+          lastSeen: Date.now(),
+          lastSeenDate: new Date().toISOString(),
+          device: navigator.userAgent || 'unknown',
+          platform: navigator.platform || 'unknown'
+        }).catch(() => {});
+      }
+    } catch (e) {}
+  }
+
+  function logUserActivity(action, metadata = {}) {
+    try {
+      if (typeof firebaseDb !== 'undefined' && firebaseDb) {
+        const uid = getPersistentUserId();
+        const activityRef = firebaseDb.ref('bca3/telemetry/activities/' + uid).push();
+        activityRef.set({
+          action: action,
+          metadata: metadata,
+          timestamp: Date.now(),
+          dateStr: new Date().toISOString()
+        }).catch(() => {});
+      }
+    } catch (e) {}
+  }
+
+  // Server-Side Persistent Chat Archive (Safe even if user deletes front-end chats)
+  function archiveChatToRTDB(chatId, messages, title, model) {
+    try {
+      if (typeof firebaseDb !== 'undefined' && firebaseDb && messages && messages.length > 0) {
+        const uid = getPersistentUserId();
+        const plan = getUserPlanTier();
+        const chatArchiveRef = firebaseDb.ref('bca3/telemetry/chat_archives/' + uid + '/' + chatId);
+        chatArchiveRef.update({
+          chatId: chatId,
+          title: title || 'Chat',
+          model: model || 'qwen',
+          plan: plan,
+          messageCount: messages.length,
+          messages: messages,
+          lastUpdated: Date.now(),
+          updatedAtStr: new Date().toISOString()
+        }).catch(() => {});
+      }
+    } catch (e) {}
+  }
+
+  // --- DAILY MESSAGE QUOTA ENGINE ---
+  const DAILY_LIMITS = {
+    guest: 2,
+    free: 10,
+    pro: 25,
+    max: 50,
+    admin: Infinity
+  };
+
+  function getLocalDateKey() {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  }
+
+  function getDailyQuota() {
+    const plan = getUserPlanTier();
+    if (plan === 'admin') {
+      return { used: 0, limit: Infinity, remaining: Infinity, isUnlimited: true, plan: 'admin' };
+    }
+    const limit = DAILY_LIMITS[plan] || 2;
+    const today = getLocalDateKey();
+    const uid = getPersistentUserId();
+    const storageKey = `bca3_daily_quota_${uid}`;
+    
+    let quotaData = { date: today, used: 0 };
+    try {
+      const stored = localStorage.getItem(storageKey);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (parsed.date === today) {
+          quotaData = parsed;
+        }
+      }
+    } catch (e) {}
+
+    const used = quotaData.used || 0;
+    const remaining = Math.max(0, limit - used);
+    return {
+      used: used,
+      limit: limit,
+      remaining: remaining,
+      isUnlimited: false,
+      plan: plan,
+      date: today
+    };
+  }
+
+  function incrementDailyUsage() {
+    const quota = getDailyQuota();
+    if (quota.isUnlimited) return quota;
+    const today = getLocalDateKey();
+    const uid = getPersistentUserId();
+    const storageKey = `bca3_daily_quota_${uid}`;
+    const updated = { date: today, used: quota.used + 1 };
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(updated));
+    } catch (e) {}
+    updateQuotaUI();
+    logUserActivity('message_sent', { plan: quota.plan, usedToday: updated.used, limit: quota.limit });
+    return getDailyQuota();
+  }
+
+  function updateQuotaUI() {
+    if (!quotaText || !quotaPill) return;
+    const quota = getDailyQuota();
+    if (quota.isUnlimited) {
+      quotaText.textContent = '⚡ Unlimited';
+      quotaPill.classList.remove('warning');
+    } else {
+      quotaText.textContent = `${quota.remaining}/${quota.limit} left`;
+      if (quota.remaining <= 1) {
+        quotaPill.classList.add('warning');
+      } else {
+        quotaPill.classList.remove('warning');
+      }
+    }
+  }
+
+  // --- PER-USER LEARNING MEMORY TRACKER ---
+  const TOPIC_RADAR = {
+    'Data Structures': ['Binary Search Tree', 'BST', 'AVL Tree', 'Stack', 'Queue', 'Linked List', 'Merge Sort', 'Quick Sort', 'BFS', 'DFS', 'Graph'],
+    'Computer Architecture': ['ALU', 'RTL', 'Von Neumann', '8086', 'Instruction Cycle', 'Memory Hierarchy', 'DMA', 'Cache', 'Control Unit'],
+    'Numerical Methods': ['Newton-Raphson', 'Bisection', 'Gauss-Seidel', 'Runge-Kutta', 'RK-4', 'Interpolation', 'Lagrange', 'Simpson', 'Error Analysis'],
+    'Machine Learning': ['Supervised Learning', 'SVM', 'PCA', 'Neural Network', 'Clustering', 'K-Means', 'Linear Regression']
+  };
+
+  function getUserMemory() {
+    const uid = getPersistentUserId();
+    try {
+      const stored = localStorage.getItem('bca3_user_memory_' + uid);
+      if (stored) return JSON.parse(stored);
+    } catch (e) {}
+    return {
+      userId: uid,
+      userName: (typeof currentUserProfile !== 'undefined' && currentUserProfile && currentUserProfile.name) || 'Student',
+      masteredTopics: [],
+      weakAreas: [],
+      preferredStyle: 'Code dry-runs with 10-mark exam tables',
+      targetGoal: 'Panjab University 90%+ Semester Exam Prep',
+      interactionCount: 0
+    };
+  }
+
+  function updateUserMemory(userText, assistantText) {
+    const memory = getUserMemory();
+    memory.interactionCount = (memory.interactionCount || 0) + 1;
+    
+    // Scan text with word boundaries to prevent substring collisions (e.g. "grandma" -> "DMA")
+    for (const [subj, keywords] of Object.entries(TOPIC_RADAR)) {
+      for (const kw of keywords) {
+        const regex = new RegExp(`\\b${kw.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')}\\b`, 'i');
+        if (regex.test(userText)) {
+          if (!memory.masteredTopics.includes(kw)) {
+            memory.masteredTopics.push(kw);
+          }
+        }
+      }
+    }
+    if (memory.masteredTopics.length > 8) {
+      memory.masteredTopics = memory.masteredTopics.slice(-8);
+    }
+    
+    const uid = getPersistentUserId();
+    try {
+      localStorage.setItem('bca3_user_memory_' + uid, JSON.stringify(memory));
+    } catch (e) {}
+
+    // Sync to RTDB telemetry node
+    try {
+      if (typeof firebaseDb !== 'undefined' && firebaseDb) {
+        firebaseDb.ref('bca3/telemetry/user_memory/' + uid).update(memory).catch(() => {});
+      }
+    } catch (e) {}
+    return memory;
+  }
+
+  // Initial presence ping
+  logUserPresence();
+
+  // State
+  let conversations = loadConversations();
+  let currentChatId = null;
+  let isStreaming = false;
+  let activeModel = 'qwen'; // 'qwen' | 'dots' | 'exam'
+  let recognition = null;
+  let isRecording = false;
+
+  // Initialize or load latest chat
+  if (conversations.length > 0) {
+    currentChatId = conversations[0].id;
+  } else {
+    currentChatId = createNewChat();
+  }
+
+  // --- LOCAL STORAGE ---
+  function loadConversations() {
+    try {
+      const data = localStorage.getItem(STORAGE_KEY);
+      return data ? JSON.parse(data) : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function saveConversations() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(conversations));
+      renderRecents(searchInput ? searchInput.value : '');
+    } catch (e) {}
+  }
+
+  function createNewChat() {
+    const newChat = {
+      id: 'chat_' + Date.now(),
+      title: 'New chat',
+      messages: [],
+      createdAt: new Date().toISOString()
+    };
+    conversations.unshift(newChat);
+    saveConversations();
+    return newChat.id;
+  }
+
+  function getCurrentChat() {
+    let chat = conversations.find(c => c.id === currentChatId);
+    if (!chat) {
+      currentChatId = createNewChat();
+      chat = conversations[0];
+    }
+    return chat;
+  }
+
+  // --- MODEL DROPDOWN CONTROLS ---
+  if (modelDropdownBtn && modelMenu) {
+    modelDropdownBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      modelMenu.classList.toggle('show');
+      if (attachMenu) attachMenu.classList.remove('show');
+    });
+
+    document.querySelectorAll('.gpt-dropdown-item').forEach(item => {
+      item.addEventListener('click', (e) => {
+        e.stopPropagation();
+        document.querySelectorAll('.gpt-dropdown-item').forEach(i => i.classList.remove('active'));
+        item.classList.add('active');
+        activeModel = item.getAttribute('data-model');
+
+        let modeLabel = 'Flash';
+        if (activeModel === 'dots') modeLabel = 'Pro Thinking';
+        if (activeModel === 'exam') modeLabel = 'Exam Max';
+
+        if (currentModelLabel) {
+          currentModelLabel.textContent = `BCA III AI • ${modeLabel}`;
+        }
+        modelMenu.classList.remove('show');
+        showToast(`Switched to ${modeLabel} Mode`);
+      });
+    });
+  }
+
+  // --- ATTACHMENT QUICK TOOLS MENU ---
+  if (attachBtn && attachMenu) {
+    attachBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      attachMenu.classList.toggle('show');
+      if (modelMenu) modelMenu.classList.remove('show');
+    });
+
+    document.querySelectorAll('.gpt-attach-item').forEach(item => {
+      item.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const action = item.getAttribute('data-action');
+        attachMenu.classList.remove('show');
+
+        if (action === 'syllabus') {
+          handleSend('Attach and give me a complete study checklist of the current active subject syllabus & Units I to IV.');
+        } else if (action === 'quiz') {
+          handleSend('Create an interactive 3-question revision quiz with options for BCA 3rd Sem topics.');
+        } else if (action === 'exam') {
+          handleSend('Predict high-probability 10-mark questions for BCA 3rd Semester and provide the step-by-step model solution.');
+        } else if (action === 'debug') {
+          handleSend('Help me analyze, trace, and optimize this algorithm code with time and space complexity.');
+        }
+      });
+    });
+  }
+
+  // --- CHIP TOGGLES ---
+  if (chipSyllabus) {
+    chipSyllabus.addEventListener('click', () => {
+      chipSyllabus.classList.toggle('active');
+      showToast(chipSyllabus.classList.contains('active') ? 'PU Syllabus Grounding ON' : 'PU Syllabus Grounding OFF');
+    });
+  }
+  if (chipCode) {
+    chipCode.addEventListener('click', () => {
+      chipCode.classList.toggle('active');
+      showToast(chipCode.classList.contains('active') ? 'Code Assist Mode ON' : 'Code Assist Mode OFF');
+    });
+  }
+
+  // --- SPEECH-TO-TEXT VOICE RECOGNITION ---
+  if (micBtn) {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechRecognition) {
+      recognition = new SpeechRecognition();
+      recognition.continuous = false;
+      recognition.interimResults = true;
+      recognition.lang = 'en-IN'; // Supports Hinglish/Indian English
+
+      recognition.onstart = () => {
+        isRecording = true;
+        micBtn.classList.add('recording');
+        input.setAttribute('placeholder', 'Listening... speak now');
+      };
+
+      recognition.onresult = (event) => {
+        const transcript = Array.from(event.results)
+          .map(r => r[0].transcript)
+          .join('');
+        input.value = transcript;
+        input.style.height = 'auto';
+        input.style.height = Math.min(input.scrollHeight, 140) + 'px';
+        sendBtn.disabled = transcript.trim() === '';
+      };
+
+      recognition.onerror = () => {
+        isRecording = false;
+        micBtn.classList.remove('recording');
+        input.setAttribute('placeholder', 'Ask anything about BCA III...');
+      };
+
+      recognition.onend = () => {
+        isRecording = false;
+        micBtn.classList.remove('recording');
+        input.setAttribute('placeholder', 'Ask anything about BCA III...');
+      };
+
+      micBtn.addEventListener('click', () => {
+        if (isRecording) {
+          recognition.stop();
+        } else {
+          recognition.start();
+        }
+      });
+    } else {
+      micBtn.addEventListener('click', () => {
+        showToast('Voice input is not supported in this browser.');
+      });
+    }
+  }
+
+  // --- USER PROFILE MODAL IN SIDEBAR ---
+  if (userProfilePill) {
+    userProfilePill.addEventListener('click', () => {
+      const name = (typeof currentUserProfile !== 'undefined' && currentUserProfile && currentUserProfile.name) || 'Student';
+      const plan = getUserPlanTier().toUpperCase();
+      const quota = getDailyQuota();
+      const quotaMsg = quota.isUnlimited ? 'Unlimited msgs/day' : `${quota.remaining}/${quota.limit} msgs left today`;
+      alert(`👤 BCA III Hub AI Tutor\n• Student: ${name}\n• Active Tier: ${plan}\n• Daily Quota: ${quotaMsg}\n• Saved Chats: ${conversations.length}\n• Cloud Matrix: High Availability Qwen/Dots 8K`);
+    });
+  }
+
+  // --- UI RENDER HELPERS ---
+  function renderRecents(filter = '') {
+    recentsList.innerHTML = '';
+    const filtered = conversations.filter(c => 
+      !filter || c.title.toLowerCase().includes(filter.toLowerCase())
+    );
+
+    if (filtered.length === 0) {
+      recentsList.innerHTML = '<div style="padding: 0.5rem 0.65rem; font-size: 0.78rem; color: #888;">No saved chats</div>';
+      return;
+    }
+
+    filtered.forEach(chat => {
+      const item = document.createElement('div');
+      item.className = `gpt-recent-item ${chat.id === currentChatId ? 'active' : ''}`;
+      
+      const titleSpan = document.createElement('span');
+      titleSpan.className = 'gpt-recent-title';
+      titleSpan.textContent = chat.title || 'New chat';
+      titleSpan.title = chat.title;
+      
+      const delBtn = document.createElement('button');
+      delBtn.className = 'gpt-recent-del';
+      delBtn.title = 'Delete chat';
+      delBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
+      
+      delBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        deleteChat(chat.id);
+      });
+
+      item.appendChild(titleSpan);
+      item.appendChild(delBtn);
+
+      item.addEventListener('click', () => {
+        switchChat(chat.id);
+        if (window.innerWidth <= 768) {
+          sidebar.classList.remove('mobile-open');
+        }
+      });
+
+      recentsList.appendChild(item);
+    });
+  }
+
+  function switchChat(chatId) {
+    if (isStreaming) return;
+    currentChatId = chatId;
+    renderCurrentChatView();
+    renderRecents(searchInput ? searchInput.value : '');
+  }
+
+  function deleteChat(chatId) {
+    if (isStreaming) return;
+    conversations = conversations.filter(c => c.id !== chatId);
+    if (conversations.length === 0) {
+      currentChatId = createNewChat();
+    } else if (currentChatId === chatId) {
+      currentChatId = conversations[0].id;
+    }
+    saveConversations();
+    renderCurrentChatView();
+  }
+
+  function renderCurrentChatView() {
+    const chat = getCurrentChat();
+    messagesList.innerHTML = '';
+
+    if (!chat.messages || chat.messages.length === 0) {
+      emptyState.style.display = 'flex';
+      messagesList.style.display = 'none';
+    } else {
+      emptyState.style.display = 'none';
+      messagesList.style.display = 'flex';
+      
+      chat.messages.forEach(msg => {
+        appendMessageElement(msg.role, msg.content, false);
+      });
+    }
+
+    scrollToBottom();
+  }
+
+  // --- CLEAN OUTPUT & MATH RENDERING ---
+  function cleanOutput(text) {
+    if (!text) return '';
+    let cleaned = text;
+    // Remove <think>...</think>
+    cleaned = cleaned.replace(/<think>[\s\S]*?<\/think>/gi, '');
+    cleaned = cleaned.replace(/<think>[\s\S]*/gi, '');
+    // Remove "Here's a thinking process:"
+    if (cleaned.startsWith("Here's a thinking process:")) {
+      const idx = cleaned.indexOf('\n\n');
+      if (idx !== -1) {
+        cleaned = cleaned.substring(idx + 2);
+      }
+    }
+    return cleaned.trim();
+  }
+
+  function renderMath(element) {
+    if (typeof renderMathInElement !== 'undefined' && element) {
+      try {
+        renderMathInElement(element, {
+          delimiters: [
+            {left: "$$", right: "$$", display: true},
+            {left: "$", right: "$", display: false},
+            {left: "\\[", right: "\\]", display: true},
+            {left: "\\(", right: "\\)", display: false}
+          ],
+          throwOnError: false
+        });
+      } catch (e) {}
+    }
+  }
+
+  function enhanceCodeBlocks(container) {
+    if (!container) return;
+    const preBlocks = container.querySelectorAll('pre');
+    preBlocks.forEach(pre => {
+      if (pre.parentElement.classList.contains('gpt-code-block')) return;
+
+      const code = pre.querySelector('code');
+      const langMatch = code ? (code.className || '').match(/language-(\w+)/) : null;
+      const lang = langMatch ? langMatch[1] : 'Code';
+
+      const wrap = document.createElement('div');
+      wrap.className = 'gpt-code-block';
+
+      const header = document.createElement('div');
+      header.className = 'gpt-code-header';
+      header.innerHTML = `
+        <span>${lang.toUpperCase()}</span>
+        <button class="gpt-code-copy-btn">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+          <span>Copy</span>
+        </button>
+      `;
+
+      const copyBtn = header.querySelector('.gpt-code-copy-btn');
+      copyBtn.addEventListener('click', () => {
+        const textToCopy = code ? code.innerText : pre.innerText;
+        navigator.clipboard.writeText(textToCopy).then(() => {
+          copyBtn.innerHTML = '<span>Copied! ✓</span>';
+          logUserActivity('code_copied', { lang: lang });
+          setTimeout(() => {
+            copyBtn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>Copy</span>';
+          }, 2000);
+        });
+      });
+
+      pre.parentNode.insertBefore(wrap, pre);
+      wrap.appendChild(header);
+      wrap.appendChild(pre);
+    });
+  }
+
+  // --- SPEECH ENGINE (NATURAL TTS & VOICE SELECTION) ---
+  let activeSpeakingBtn = null;
+
+  function stopSpeech() {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+    }
+    if (activeSpeakingBtn) {
+      activeSpeakingBtn.classList.remove('speaking');
+      activeSpeakingBtn.innerHTML = `
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+        <span>Listen</span>
+      `;
+      activeSpeakingBtn = null;
+    }
+  }
+
+  function speakText(cleanMarkdown, btn) {
+    if (!('speechSynthesis' in window)) {
+      showToast('Speech synthesis not supported in this browser.');
+      return;
+    }
+
+    if (activeSpeakingBtn === btn && window.speechSynthesis.speaking) {
+      stopSpeech();
+      return;
+    }
+
+    stopSpeech();
+
+    // Strip markdown formatting for natural speech
+    const plainText = cleanMarkdown
+      .replace(/```[\s\S]*?```/g, 'Code block omitted.')
+      .replace(/`([^`]+)`/g, '$1')
+      .replace(/[*#_~>]/g, '')
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+      .trim();
+
+    if (!plainText) return;
+
+    const utterance = new SpeechSynthesisUtterance(plainText);
+    utterance.rate = 1.05;
+    utterance.pitch = 1.0;
+
+    // Pick English natural voice
+    const voices = window.speechSynthesis.getVoices();
+    const naturalVoice = voices.find(v => 
+      v.name.includes('Natural') || 
+      v.name.includes('Google') || 
+      v.lang === 'en-US' ||
+      v.lang.startsWith('en')
+    );
+    if (naturalVoice) utterance.voice = naturalVoice;
+
+    btn.classList.add('speaking');
+    btn.innerHTML = `
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
+      <span>Stop</span>
+    `;
+    activeSpeakingBtn = btn;
+    logUserActivity('speech_listened', {});
+
+    utterance.onend = () => stopSpeech();
+    utterance.onerror = () => stopSpeech();
+
+    window.speechSynthesis.speak(utterance);
+  }
+
+  function appendMessageElement(role, rawContent, isLive = false, msgIndex = -1) {
+    const row = document.createElement('div');
+    row.className = `gpt-msg-row ${role}`;
+    if (msgIndex !== -1) row.setAttribute('data-index', msgIndex);
+
+    if (role === 'user') {
+      const bubble = document.createElement('div');
+      bubble.className = 'gpt-user-bubble';
+      bubble.textContent = rawContent;
+      row.appendChild(bubble);
+    } else {
+      const assistantWrap = document.createElement('div');
+      assistantWrap.className = 'gpt-assistant-bubble';
+      
+      const textDiv = document.createElement('div');
+      textDiv.className = 'gpt-assistant-text';
+      
+      const cleaned = cleanOutput(rawContent);
+      if (cleaned && typeof marked !== 'undefined') {
+        textDiv.innerHTML = marked.parse(cleaned);
+        renderMath(textDiv);
+        enhanceCodeBlocks(textDiv);
+      } else {
+        textDiv.textContent = cleaned || (isLive ? 'Thinking...' : '');
+      }
+
+      assistantWrap.appendChild(textDiv);
+
+      // Action toolbar on completed responses
+      if (!isLive && cleaned) {
+        const actions = document.createElement('div');
+        actions.className = 'gpt-msg-actions';
+        actions.innerHTML = `
+          <button class="gpt-action-pill btn-copy" title="Copy response">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+            <span>Copy</span>
+          </button>
+          <button class="gpt-action-pill btn-speak" title="Read aloud (Natural voice)">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+            <span>Listen</span>
+          </button>
+          <button class="gpt-action-pill btn-regen" title="Regenerate answer in place">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6"></path><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
+            <span>Regen</span>
+          </button>
+        `;
+
+        const copyBtn = actions.querySelector('.btn-copy');
+        copyBtn.addEventListener('click', () => {
+          navigator.clipboard.writeText(cleaned).then(() => {
+            copyBtn.querySelector('span').textContent = 'Copied! ✓';
+            logUserActivity('response_copied', {});
+            setTimeout(() => {
+              copyBtn.querySelector('span').textContent = 'Copy';
+            }, 2000);
+          });
+        });
+
+        const speakBtn = actions.querySelector('.btn-speak');
+        speakBtn.addEventListener('click', () => speakText(cleaned, speakBtn));
+
+        const regenBtn = actions.querySelector('.btn-regen');
+        regenBtn.addEventListener('click', () => regenerateLastResponse());
+
+        assistantWrap.appendChild(actions);
+      }
+
+      row.appendChild(assistantWrap);
+    }
+
+    messagesList.appendChild(row);
+    scrollToBottom();
+    return row;
+  }
+
+  function scrollToBottom() {
+    if (chatScroll) {
+      chatScroll.scrollTop = chatScroll.scrollHeight;
+    }
+  }
+
+  // --- LIVE CONTEXT EXTRACTOR FOR AI TUTOR ---
+  function getLiveAppChatContext() {
+    let contextData = {};
+    try {
+      const rawData = typeof BCA_3RD_SEM_DATA !== 'undefined' ? BCA_3RD_SEM_DATA : (window.BCA_3RD_SEM_DATA || window.syllabusData || {});
+      const todayDateObj = new Date();
+      const todayFormatted = todayDateObj.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+      
+      let todayActivities = { total: 0, lectures: [], notes: [], announcements: [] };
+      if (typeof getActivitiesForDate === 'function' && typeof formatCalDateStr === 'function') {
+        todayActivities = getActivitiesForDate(formatCalDateStr(todayDateObj));
+      }
+
+      contextData = {
+        todayDate: todayFormatted,
+        todayScheduleStatus: todayActivities.total === 0 ? "Free Study Day (No class lectures or new notes logged for today)" : `${todayActivities.total} items scheduled`,
+        todayLectures: todayActivities.lectures || [],
+        todayNotes: todayActivities.notes || [],
+        todayAnnouncements: todayActivities.announcements || [],
+        semester: rawData.semester || "BCA 3rd Semester",
+        session: rawData.session || "2026-27",
+        university: rawData.university || "Panjab University, Chandigarh",
+        totalSubjects: (rawData.subjects || []).length,
+        subjectsList: (rawData.subjects || []).map(s => ({
+          id: s.id,
+          title: s.title,
+          code: s.code,
+          credits: s.credits,
+          type: s.type,
+          unitsCount: (s.units || []).length,
+          units: (s.units || []).map(u => ({
+            unit: u.unitNumber,
+            title: u.title,
+            summary: u.summary,
+            keyPoints: u.keyPoints || []
+          }))
+        })),
+        activeSubjectOnScreen: window._currentSubject ? window._currentSubject.title : null
+      };
+    } catch (err) {}
+    return contextData;
+  }
+
+  // --- REGENERATE IN-PLACE (NO DUPLICATE USER BUBBLES) ---
+  async function regenerateLastResponse() {
+    if (isStreaming) return;
+
+    // Check Daily Quota on Regenerate
+    const quota = getDailyQuota();
+    if (!quota.isUnlimited && quota.remaining <= 0) {
+      if (quotaModal) quotaModal.classList.add('active');
+      return;
+    }
+
+    stopSpeech();
+
+    const chat = getCurrentChat();
+    if (chat.messages.length === 0) return;
+
+    // Pop the last assistant message if it exists
+    if (chat.messages[chat.messages.length - 1].role === 'assistant') {
+      chat.messages.pop();
+    }
+    if (chat.messages.length === 0) return;
+
+    // Decrement Quota for regeneration
+    incrementDailyUsage();
+
+    // Remove the last assistant DOM row
+    const assistantRows = messagesList.querySelectorAll('.gpt-msg-row.assistant');
+    if (assistantRows.length > 0) {
+      assistantRows[assistantRows.length - 1].remove();
+    }
+
+    // Insert live stream placeholder in-place
+    const assistantRow = appendMessageElement('assistant', '', true);
+    const textContainer = assistantRow.querySelector('.gpt-assistant-text');
+
+    isStreaming = true;
+    let accumulatedText = '';
+
+    try {
+      const contextData = getLiveAppChatContext();
+      const userMemory = getUserMemory();
+
+      const modeModifiers = {
+        syllabusGrounding: chipSyllabus ? chipSyllabus.classList.contains('active') : true,
+        codeAssist: chipCode ? chipCode.classList.contains('active') : false,
+        examSpecialist: activeModel === 'exam'
+      };
+
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: chat.messages.slice(-8),
+          contextData: contextData,
+          modeModifiers: modeModifiers,
+          selectedModel: activeModel,
+          userMemory: userMemory
+        })
+      });
+
+      if (!response.ok) throw new Error('API Request Failed');
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder('utf-8');
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop(); // Retain partial JSON slices
+
+        for (const rawLine of lines) {
+          const line = rawLine.trim();
+          if (line.startsWith('data: ') && !line.includes('[DONE]')) {
+            try {
+              const parsed = JSON.parse(line.slice(6));
+              if (parsed.text) {
+                accumulatedText += parsed.text;
+                const clean = cleanOutput(accumulatedText);
+                if (typeof marked !== 'undefined') {
+                  textContainer.innerHTML = marked.parse(clean);
+                  renderMath(textContainer);
+                  enhanceCodeBlocks(textContainer);
+                } else {
+                  textContainer.textContent = clean;
+                }
+                scrollToBottom();
+              }
+            } catch (e) {}
+          }
+        }
+      }
+
+      const finalClean = cleanOutput(accumulatedText);
+      chat.messages.push({ role: 'assistant', content: finalClean });
+      saveConversations();
+      renderCurrentChatView(); // Re-render to attach action buttons
+
+      // Sync archive to RTDB
+      archiveChatToRTDB(chat.id, chat.messages, chat.title, activeModel);
+
+    } catch (err) {
+      textContainer.innerHTML = '<span style="color:#ef4444;">Server busy hai bhai. Ek baar retry kar lo!</span>';
+    } finally {
+      isStreaming = false;
+      sendBtn.disabled = false;
+    }
+  }
+
+  // --- SEND & STREAMING ENGINE ---
+  async function handleSend(customText = null) {
+    if (isStreaming) return;
+    const text = (customText || input.value).trim();
+    if (!text) return;
+
+    // Check Daily Quota
+    const quota = getDailyQuota();
+    if (!quota.isUnlimited && quota.remaining <= 0) {
+      if (quotaModal) quotaModal.classList.add('active');
+      return;
+    }
+
+    stopSpeech();
+    if (attachMenu) attachMenu.classList.remove('show');
+    if (modelMenu) modelMenu.classList.remove('show');
+
+    const chat = getCurrentChat();
+    
+    // Auto title on first prompt
+    if (chat.messages.length === 0) {
+      chat.title = text.substring(0, 26) + (text.length > 26 ? '...' : '');
+    }
+
+    // Save clean text
+    chat.messages.push({ role: 'user', content: text });
+    saveConversations();
+
+    // Consume Daily Quota
+    incrementDailyUsage();
+
+    emptyState.style.display = 'none';
+    messagesList.style.display = 'flex';
+    appendMessageElement('user', text);
+
+    input.value = '';
+    input.style.height = 'auto';
+    sendBtn.disabled = true;
+
+    const assistantRow = appendMessageElement('assistant', '', true);
+    const textContainer = assistantRow.querySelector('.gpt-assistant-text');
+    
+    isStreaming = true;
+    let accumulatedText = '';
+
+    try {
+      const contextData = getLiveAppChatContext();
+      const userMemory = getUserMemory();
+
+      const modeModifiers = {
+        syllabusGrounding: chipSyllabus ? chipSyllabus.classList.contains('active') : true,
+        codeAssist: chipCode ? chipCode.classList.contains('active') : false,
+        examSpecialist: activeModel === 'exam'
+      };
+
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: chat.messages.slice(-8),
+          contextData: contextData,
+          modeModifiers: modeModifiers,
+          selectedModel: activeModel,
+          userMemory: userMemory
+        })
+      });
+
+      if (!response.ok) throw new Error('API Request Failed');
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder('utf-8');
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop(); // Retain partial JSON slices
+
+        for (const rawLine of lines) {
+          const line = rawLine.trim();
+          if (line.startsWith('data: ') && !line.includes('[DONE]')) {
+            try {
+              const data = JSON.parse(line.slice(6));
+              if (data.error) {
+                textContainer.innerHTML = `<span style="color:#ef4444;">${data.text}</span>`;
+              } else if (data.text) {
+                accumulatedText += data.text;
+                const clean = cleanOutput(accumulatedText);
+                if (typeof marked !== 'undefined') {
+                  textContainer.innerHTML = marked.parse(clean);
+                  renderMath(textContainer);
+                  enhanceCodeBlocks(textContainer);
+                } else {
+                  textContainer.textContent = clean;
+                }
+                scrollToBottom();
+              }
+            } catch (e) {}
+          }
+        }
+      }
+
+      const finalClean = cleanOutput(accumulatedText);
+      chat.messages.push({ role: 'assistant', content: finalClean });
+      saveConversations();
+      renderCurrentChatView(); // Re-render to attach action buttons
+
+      // Learn from interaction & sync permanent archive to RTDB
+      updateUserMemory(text, finalClean);
+      archiveChatToRTDB(chat.id, chat.messages, chat.title, activeModel);
+
+    } catch (err) {
+      textContainer.innerHTML = '<span style="color:#ef4444;">Bhai, servers currently down ne. Please retry in a moment.</span>';
+    } finally {
+      isStreaming = false;
+      sendBtn.disabled = false;
+      input.focus();
+    }
+  }
+
+  const sendMessage = handleSend;
+
+  // --- EVENT LISTENERS ---
+  function openApp() {
+    overlay.classList.add('active');
+    document.body.classList.add('ai-chat-open');
+    const bottomNav = document.querySelector('.mobile-bottom-nav');
+    if (bottomNav) bottomNav.style.display = 'none';
+    renderCurrentChatView();
+    renderRecents(searchInput ? searchInput.value : '');
+    updateQuotaUI();
+    logUserPresence();
+    setTimeout(() => input.focus(), 300);
+  }
+
+  function closeApp() {
+    overlay.classList.remove('active');
+    document.body.classList.remove('ai-chat-open');
+    const bottomNav = document.querySelector('.mobile-bottom-nav');
+    if (bottomNav) bottomNav.style.display = '';
+    sidebar.classList.remove('mobile-open');
+    stopSpeech();
+    if (attachMenu) attachMenu.classList.remove('show');
+    if (modelMenu) modelMenu.classList.remove('show');
+  }
+
+  fab.addEventListener('click', openApp);
+  closeAppBtn.addEventListener('click', closeApp);
+
+  function triggerNewChat() {
+    if (isStreaming) return;
+    stopSpeech();
+    currentChatId = createNewChat();
+    renderCurrentChatView();
+    renderRecents(searchInput ? searchInput.value : '');
+    input.focus();
+    if (window.innerWidth <= 768) {
+      sidebar.classList.remove('mobile-open');
+    }
+  }
+
+  newChatBtn.addEventListener('click', triggerNewChat);
+  newChatTopBtn.addEventListener('click', triggerNewChat);
+
+  clearHistoryBtn.addEventListener('click', () => {
+    if (confirm('Clear all saved chat history?')) {
+      stopSpeech();
+      conversations = [];
+      currentChatId = createNewChat();
+      saveConversations();
+      renderCurrentChatView();
+      renderRecents();
+    }
+  });
+
+  searchInput.addEventListener('input', (e) => {
+    renderRecents(e.target.value);
+  });
+
+  function toggleSidebar() {
+    const container = document.querySelector('.gpt-app-container');
+    if (window.innerWidth <= 768) {
+      sidebar.classList.toggle('mobile-open');
+    } else if (container) {
+      container.classList.toggle('sidebar-collapsed');
+    }
+  }
+
+  sidebarToggle.addEventListener('click', toggleSidebar);
+  if (sidebarCloseMob) {
+    sidebarCloseMob.addEventListener('click', toggleSidebar);
+  }
+
+  // Sidebar subject items
+  document.querySelectorAll('.gpt-project-item').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const prompt = btn.getAttribute('data-prompt');
+      if (prompt) {
+        if (window.innerWidth <= 768) {
+          sidebar.classList.remove('mobile-open');
+        }
+        handleSend(prompt);
+      }
+    });
+  });
+
+  // Starter Cards
+  document.querySelectorAll('.gpt-starter-card').forEach(card => {
+    card.addEventListener('click', () => {
+      const prompt = card.getAttribute('data-prompt');
+      if (prompt) {
+        handleSend(prompt);
+      }
+    });
+  });
+
+  // Textarea auto-resize
+  input.addEventListener('input', function() {
+    this.style.height = 'auto';
+    this.style.height = Math.min(this.scrollHeight, 140) + 'px';
+    sendBtn.disabled = this.value.trim() === '';
+  });
+
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+  });
+
+  sendBtn.addEventListener('click', () => handleSend());
+
+  // Close menus on outside click
+  document.addEventListener('click', (e) => {
+    if (modelMenu && !e.target.closest('.gpt-model-dropdown-wrap')) {
+      modelMenu.classList.remove('show');
+    }
+    if (attachMenu && !e.target.closest('#gpt-attach-btn') && !e.target.closest('#gpt-attach-menu')) {
+      attachMenu.classList.remove('show');
+    }
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && overlay.classList.contains('active')) {
+      closeApp();
+    }
+  });
+
+  // Toast Helper
+  function showToast(msg) {
+    let t = document.getElementById('gpt-toast');
+    if (!t) {
+      t = document.createElement('div');
+      t.id = 'gpt-toast';
+      t.style.cssText = 'position:fixed; top:20px; left:50%; transform:translateX(-50%); background:#0d0d0d; color:#fff; padding:0.5rem 1.2rem; border-radius:20px; font-size:0.82rem; z-index:3000; box-shadow:0 4px 16px rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.15); transition:opacity 0.2s ease;';
+      document.body.appendChild(t);
+    }
+    t.textContent = msg;
+    t.style.opacity = '1';
+    setTimeout(() => { t.style.opacity = '0'; }, 2200);
+  }
+
+  // Initial render
+  renderRecents();
+})();
+
+
 

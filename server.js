@@ -111,6 +111,7 @@ const apiRoutes = {
   '/api/mcp': wrapHandler('./api/mcp.js'),
   '/openapi.json': wrapHandler('./api/openapi.js'),
   '/api/openapi': wrapHandler('./api/openapi.js'),
+  '/api/chat': wrapHandler('./api/chat.js'),
   '/api/authorize': wrapHandler('./api/authorize.js'),
   '/api/register': wrapHandler('./api/register.js'),
   '/api/oauth-metadata': wrapHandler('./api/oauth-metadata.js'),

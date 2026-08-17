@@ -41,6 +41,8 @@
   <meta name="twitter:image" content="icon-512.png"/>
 
   <link rel="stylesheet" href="styles.css?v=5.0"/>
+  <!-- Marked.js for AI Markdown Parsing -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 <body>
 
@@ -1572,11 +1574,12 @@
       <span>Calendar</span>
     </button>
     
-    <button class="mobile-bottom-nav-item" id="mob-nav-manim" onclick="openMcpModal(); return false;" title="Visual AI & MCP">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+    <button class="mobile-bottom-nav-item" id="mob-nav-ai" onclick="document.getElementById('ai-chat-fab').click(); return false;" title="AI Tutor">
+      <svg viewBox="0 0 24 24" fill="currentColor">
+        <path d="M11.5 1C11.5 6.799 6.799 11.5 1 11.5C6.799 11.5 11.5 16.201 11.5 22C11.5 16.201 16.201 11.5 22 11.5C16.201 11.5 11.5 6.799 11.5 1Z"></path>
+        <path d="M19 1C19 2.657 17.657 4 16 4C17.657 4 19 5.343 19 7C19 5.343 20.343 4 22 4C20.343 4 19 2.657 19 1Z"></path>
       </svg>
-      <span>Visual AI</span>
+      <span>AI Tutor</span>
     </button>
     
     <button class="mobile-bottom-nav-item" id="mob-nav-profile" onclick="openProfileModal(); return false;" title="Profile & Account">
@@ -1745,6 +1748,325 @@
   <script src="visuals-engine.js?v=5.0"></script>
   <script src="firebase-config.js?v=5.0"></script>
   <script src="payment.js?v=5.0"></script>
+
+  <!-- AI TUTOR UI (FULL CHATGPT / CLAUDE APP INTERFACE) -->
+  <button id="ai-chat-fab" class="ai-chat-fab" aria-label="Open AI Tutor" title="Open BCA III AI Tutor">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M11.5 1C11.5 6.799 6.799 11.5 1 11.5C6.799 11.5 11.5 16.201 11.5 22C11.5 16.201 16.201 11.5 22 11.5C16.201 11.5 11.5 6.799 11.5 1Z"></path>
+      <path d="M19 1C19 2.657 17.657 4 16 4C17.657 4 19 5.343 19 7C19 5.343 20.343 4 22 4C20.343 4 19 2.657 19 1Z"></path>
+    </svg>
+  </button>
+
+  <div id="ai-chat-overlay" class="gpt-overlay" aria-hidden="true">
+    <div class="gpt-app-container">
+      
+      <!-- LEFT SIDEBAR -->
+      <aside class="gpt-sidebar" id="gpt-sidebar">
+        <div class="gpt-sidebar-header">
+          <div class="gpt-brand">
+            <div class="brand-name-wrap">
+              <span class="brand-main-title" style="font-size: 1.15rem;">BCA<span class="brand-roman-accent">III</span></span>
+              <span class="brand-hub-badge" style="background: rgba(204, 120, 92, 0.15); color: var(--color-coral, #cc785c); border: 1px solid rgba(204, 120, 92, 0.3); font-weight: 700;">AI</span>
+            </div>
+          </div>
+          <button id="gpt-sidebar-close-mob" class="gpt-icon-btn" aria-label="Toggle or Close sidebar" title="Close sidebar">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
+        </div>
+
+        <button id="gpt-new-chat-btn" class="gpt-new-chat-btn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+          <span>New chat</span>
+        </button>
+
+        <div class="gpt-search-wrapper">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          <input type="text" id="gpt-search-input" placeholder="Search chats..."/>
+        </div>
+
+        <div class="gpt-sidebar-section">
+          <div class="gpt-section-header">
+            <span class="gpt-section-label">Subjects (PU Sem 3)</span>
+            <span class="gpt-section-badge">7 Courses</span>
+          </div>
+          <div class="gpt-project-list">
+            <button class="gpt-project-item" data-subject="comp-arch" data-prompt="Give me a comprehensive 4-unit syllabus breakdown of Computer Architecture (BCA-DSC-301) with key RTL, Instruction Cycle, 8086, and high-probability 10-mark questions.">
+              <span class="gpt-subj-code">DSC-301</span>
+              <div class="gpt-subj-meta">
+                <span class="gpt-subj-title">Computer Architecture</span>
+                <span class="gpt-subj-sub">4 Units • Core</span>
+              </div>
+            </button>
+
+            <button class="gpt-project-item" data-subject="data-structures" data-prompt="Give me a comprehensive 4-unit breakdown of Data Structures (BCA-DSC-302) with key Algorithms, BST, Graphs, Sorting, and 10-mark question predictions.">
+              <span class="gpt-subj-code">DSC-302</span>
+              <div class="gpt-subj-meta">
+                <span class="gpt-subj-title">Data Structures</span>
+                <span class="gpt-subj-sub">4 Units • Core</span>
+              </div>
+            </button>
+
+            <button class="gpt-project-item" data-subject="numerical-methods" data-prompt="Give me a complete breakdown of Computer Oriented Numerical Methods (BCA-DSC-303): Newton-Raphson, Gauss-Seidel, Interpolation, and RK-4 formulas with step-by-step tables.">
+              <span class="gpt-subj-code">DSC-303</span>
+              <div class="gpt-subj-meta">
+                <span class="gpt-subj-title">Numerical Methods</span>
+                <span class="gpt-subj-sub">4 Units • Core</span>
+              </div>
+            </button>
+
+            <button class="gpt-project-item" data-subject="machine-learning" data-prompt="Explain Introduction to Machine Learning (BCA-DSC-304): Supervised algorithms, SVM, PCA, Neural Networks, and Clustering across all 4 units.">
+              <span class="gpt-subj-code">DSC-304</span>
+              <div class="gpt-subj-meta">
+                <span class="gpt-subj-title">Machine Learning</span>
+                <span class="gpt-subj-sub">4 Units • Core</span>
+              </div>
+            </button>
+
+            <button class="gpt-project-item" data-subject="python-lab" data-prompt="Give me complete verified Python programming and Full-Stack Lab (BCA-SEC-301) code solutions, practical file guidelines, and viva questions.">
+              <span class="gpt-subj-code">SEC-301</span>
+              <div class="gpt-subj-meta">
+                <span class="gpt-subj-title">Python & Web Lab</span>
+                <span class="gpt-subj-sub">Practical • SEC</span>
+              </div>
+            </button>
+
+            <button class="gpt-project-item" data-subject="discrete-math" data-prompt="Explain Discrete Mathematics (BCA-MDC-301): Propositional Logic, Sets, Relations, Combinatorics, and Graph Theory with solved examples.">
+              <span class="gpt-subj-code">MDC-301</span>
+              <div class="gpt-subj-meta">
+                <span class="gpt-subj-title">Discrete Mathematics</span>
+                <span class="gpt-subj-sub">All Units • MDC</span>
+              </div>
+            </button>
+
+            <button class="gpt-project-item" data-subject="tech-english" data-prompt="Explain Technical English & Professional Ethics (BCA-AEC-301): Business correspondence, technical writing, resume structure, and presentation guidelines.">
+              <span class="gpt-subj-code">AEC-301</span>
+              <div class="gpt-subj-meta">
+                <span class="gpt-subj-title">Technical English</span>
+                <span class="gpt-subj-sub">Communication • AEC</span>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        <div class="gpt-sidebar-section recents-section">
+          <div class="gpt-section-header">
+            <span class="gpt-section-label">Recents</span>
+            <button id="gpt-clear-all-history" class="gpt-clear-history-btn" title="Clear all saved chats">Clear</button>
+          </div>
+          <div id="gpt-recents-list" class="gpt-recents-list">
+            <!-- Saved Chats will render here -->
+          </div>
+        </div>
+
+        <div class="gpt-sidebar-footer">
+          <div class="gpt-user-pill" id="gpt-user-profile-pill" title="View Profile & Stats">
+            <div class="gpt-user-avatar">B</div>
+            <div class="gpt-user-info">
+              <span class="gpt-username">Baljot Chohan</span>
+              <span class="gpt-user-plan">Pro Member</span>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- MAIN CHAT PANEL -->
+      <main class="gpt-main-view">
+        <!-- TOP HEADER -->
+        <header class="gpt-top-bar">
+          <div class="gpt-top-left">
+            <button id="gpt-sidebar-toggle-btn" class="gpt-icon-btn" aria-label="Toggle Sidebar" title="Toggle Sidebar">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+            </button>
+            
+            <!-- INTERACTIVE MODEL SELECTOR DROPDOWN (FLASH / PRO THINKING / EXAM MAX) -->
+            <div class="gpt-model-dropdown-wrap">
+              <button id="gpt-model-dropdown-btn" class="gpt-model-badge-btn" aria-haspopup="true">
+                <span id="gpt-current-model-label">BCA III AI • Flash</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+              </button>
+              <div id="gpt-model-menu" class="gpt-dropdown-menu">
+                <div class="gpt-dropdown-item active" data-model="qwen">
+                  <div class="model-opt-title">⚡ Flash Mode</div>
+                  <div class="model-opt-sub">Ultra Fast • Daily Doubts & Instant Code</div>
+                </div>
+                <div class="gpt-dropdown-item" data-model="dots">
+                  <div class="model-opt-title">🧠 Pro Thinking Mode</div>
+                  <div class="model-opt-sub">Deep Reasoning • Proofs & Complex Logic</div>
+                </div>
+                <div class="gpt-dropdown-item" data-model="exam">
+                  <div class="model-opt-title">🎯 Exam Max Mode</div>
+                  <div class="model-opt-sub">High-Yield 10-Mark Questions & Full PU Units</div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+          <div class="gpt-top-right">
+            <button id="gpt-new-chat-top-btn" class="gpt-icon-btn" title="New Chat" aria-label="New Chat">
+              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+            </button>
+            <button id="gpt-close-app-btn" class="gpt-icon-btn" title="Exit to Hub" aria-label="Close Chat">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+          </div>
+        </header>
+
+        <!-- CHAT SCROLL AREA -->
+        <div class="gpt-chat-scroll" id="gpt-chat-scroll">
+          <div class="gpt-chat-content" id="gpt-chat-content">
+            
+            <!-- EMPTY WELCOME STATE -->
+            <div id="gpt-empty-state" class="gpt-empty-state">
+              <div class="gpt-empty-icon">✨</div>
+              <h2 class="gpt-empty-title">What would you like to master today?</h2>
+              <p class="gpt-empty-sub">Trained on PU syllabus, past exam questions, notes, and lab practicals.</p>
+              
+              <div class="gpt-starter-grid">
+                <button class="gpt-starter-card" data-prompt="Give me a rapid revision breakdown of Binary Search Trees in Data Structures with C++ examples.">
+                  <span class="card-icon">🌲</span>
+                  <div class="card-text">
+                    <strong>BST & Tree Traversal</strong>
+                    <span>Inorder, Preorder, Postorder & AVL Trees</span>
+                  </div>
+                </button>
+                <button class="gpt-starter-card" data-prompt="Explain Computer Architecture: Memory Hierarchy, Cache Mapping, and Pipelining.">
+                  <span class="card-icon">⚡</span>
+                  <div class="card-text">
+                    <strong>Computer Architecture</strong>
+                    <span>Cache memory, ALU & Pipelining</span>
+                  </div>
+                </button>
+                <button class="gpt-starter-card" data-prompt="Show me practical modern JavaScript concepts: Event Loop, Promises, and DOM manipulation.">
+                  <span class="card-icon">🌐</span>
+                  <div class="card-text">
+                    <strong>Web Development</strong>
+                    <span>JS Event Loop, DOM & Async/Await</span>
+                  </div>
+                </button>
+                <button class="gpt-starter-card" data-prompt="What are the high-probability 10-mark questions for BCA 3rd semester PU exams?">
+                  <span class="card-icon">🎯</span>
+                  <div class="card-text">
+                    <strong>Exam Predictor</strong>
+                    <span>High-probability 10-mark questions</span>
+                  </div>
+                </button>
+              </div>
+            </div>
+
+            <!-- ACTIVE CONVERSATION MESSAGES -->
+            <div id="gpt-messages-list" class="gpt-messages-list" style="display: none;"></div>
+          </div>
+        </div>
+
+        <!-- FLOATING BOTTOM INPUT BAR -->
+        <footer class="gpt-input-container">
+          
+          <!-- QUICK ATTACH POPUP MENU -->
+          <div id="gpt-attach-menu" class="gpt-attach-popup">
+            <div class="gpt-attach-item" data-action="syllabus">
+              <span class="attach-icon">📚</span>
+              <div>
+                <strong>Attach Active Subject Details</strong>
+                <span>Injects complete unit topics & formulas</span>
+              </div>
+            </div>
+            <div class="gpt-attach-item" data-action="quiz">
+              <span class="attach-icon">🧠</span>
+              <div>
+                <strong>Start Quick Revision Quiz</strong>
+                <span>Generates 3 interactive self-check questions</span>
+              </div>
+            </div>
+            <div class="gpt-attach-item" data-action="exam">
+              <span class="attach-icon">🎯</span>
+              <div>
+                <strong>Predict 10-Mark Question</strong>
+                <span>Get a high-yield exam question with model solution</span>
+              </div>
+            </div>
+            <div class="gpt-attach-item" data-action="debug">
+              <span class="attach-icon">💻</span>
+              <div>
+                <strong>Debug / Explain Code</strong>
+                <span>Step-by-step logic, dry-run & complexity analysis</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="gpt-input-box">
+            <div class="gpt-input-top-row">
+              <button id="gpt-attach-btn" class="gpt-attach-btn" title="Quick Tools & Attachments" aria-label="Attachments">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+              </button>
+              <textarea id="gpt-input" placeholder="Ask anything about BCA III..." rows="1" autocomplete="off" spellcheck="false"></textarea>
+            </div>
+            
+            <div class="gpt-input-bottom-row">
+              <div class="gpt-input-tools">
+                <button id="gpt-chip-syllabus" class="gpt-tool-chip active" title="Toggle PU Syllabus Grounding">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+                  <span>PU Syllabus</span>
+                </button>
+                <button id="gpt-chip-code" class="gpt-tool-chip" title="Toggle Code Assist Mode">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+                  <span>Code Assist</span>
+                </button>
+                <div id="gpt-quota-pill" class="gpt-quota-pill" title="Daily message quota based on your plan">
+                  <span class="quota-icon">⚡</span>
+                  <span id="gpt-quota-text">10/10 msgs</span>
+                </div>
+              </div>
+              
+              <div class="gpt-input-actions">
+                <button id="gpt-mic-btn" class="gpt-mic-btn" title="Voice Input (Speech-to-Text)" aria-label="Voice Input">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
+                </button>
+                <button id="gpt-send-btn" class="gpt-send-btn" aria-label="Send message" disabled>
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="gpt-disclaimer">BCA III AI can make mistakes. Verify critical concepts with lecture notes.</div>
+        </footer>
+      </main>
+
+    </div>
+
+    <!-- QUOTA LIMIT EXCEEDED MODAL -->
+    <div id="gpt-quota-modal" class="gpt-quota-modal-overlay">
+      <div class="gpt-quota-modal-card">
+        <div class="quota-modal-icon">⏳</div>
+        <h3 class="quota-modal-title">Daily AI Quota Reached</h3>
+        <p class="quota-modal-desc">You've reached today's limit for your current plan. Your quota will automatically reset at midnight (12:00 AM).</p>
+        
+        <div class="quota-tier-comparison">
+          <div class="tier-comp-box">
+            <strong>Guest</strong>
+            <span>2 msgs/day</span>
+          </div>
+          <div class="tier-comp-box">
+            <strong>Free Student</strong>
+            <span>10 msgs/day</span>
+          </div>
+          <div class="tier-comp-box highlight">
+            <strong>Pro Pass</strong>
+            <span>25 msgs/day</span>
+          </div>
+          <div class="tier-comp-box highlight max">
+            <strong>Exam Max</strong>
+            <span>50 msgs/day</span>
+          </div>
+        </div>
+
+        <div class="quota-modal-actions">
+          <button id="gpt-quota-upgrade-btn" class="gpt-quota-btn-primary" onclick="if(typeof openPaymentModal === 'function') openPaymentModal(); document.getElementById('gpt-quota-modal').classList.remove('active');">Upgrade to Pro / Max</button>
+          <button id="gpt-quota-close-btn" class="gpt-quota-btn-sec" onclick="document.getElementById('gpt-quota-modal').classList.remove('active');">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script src="app.js?v=5.0"></script>
 </body>
 </html>
