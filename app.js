@@ -3367,12 +3367,57 @@ function updateProfileUI() {
     }
     if (planHeading) planHeading.textContent = 'Guest Preview Mode';
     if (planDesc) planDesc.textContent = 'Sign in with Google to get instant free access to all Unit 1 notes across all subjects!';
-    if (googleBtnText) googleBtnText.textContent = 'Sign In with Google';
-    if (authTriggerBtn) authTriggerBtn.className = 'google-auth-btn';
-    if (adminTabBtn) adminTabBtn.style.display = 'none';
   }
 
   updateProfileStats();
+  updateAISidebarProfileUI();
+}
+
+function updateAISidebarProfileUI() {
+  const avatarEl = document.getElementById('gpt-user-avatar');
+  const nameEl = document.getElementById('gpt-username');
+  const planEl = document.getElementById('gpt-user-plan');
+  if (!nameEl || !planEl) return;
+
+  const isAuth = typeof currentUserProfile !== 'undefined' && currentUserProfile && currentUserProfile.email && currentUserProfile.uid && !currentUserProfile.uid.startsWith('guest_');
+
+  if (isAuth) {
+    const fullName = currentUserProfile.name || 'BCA Scholar';
+    const initial = fullName.charAt(0).toUpperCase() || 'S';
+    const photo = currentUserProfile.photo;
+    
+    if (avatarEl) {
+      avatarEl.classList.remove('guest');
+      if (photo) {
+        avatarEl.innerHTML = `<img src="${photo}" alt="${fullName}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;" />`;
+      } else {
+        avatarEl.textContent = initial;
+      }
+    }
+    nameEl.textContent = fullName;
+    
+    // Determine tier
+    let tierText = 'Free Student (10 msgs/day)';
+    if (currentUserProfile.isAdmin) {
+      tierText = 'Admin • Unlimited';
+    } else if (currentUserProfile.subscription && (currentUserProfile.subscription.status === 'active' || !currentUserProfile.subscription.status)) {
+      const sub = currentUserProfile.subscription;
+      if (sub.plan === 'max') tierText = 'Exam Max (50 msgs/day)';
+      else if (sub.plan === 'pro' || sub.plan === 'plus') {
+        if (!sub.validUntil || sub.validUntil > Date.now()) {
+          tierText = 'Pro Member (25 msgs/day)';
+        }
+      }
+    }
+    planEl.textContent = tierText;
+  } else {
+    if (avatarEl) {
+      avatarEl.classList.add('guest');
+      avatarEl.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>`;
+    }
+    nameEl.textContent = 'Guest Student';
+    planEl.textContent = '2 msgs/day • Sign In';
+  }
 }
 
 // ── 30-Second Anthropic Guest Visitor Prompt ──
@@ -4301,13 +4346,31 @@ async function handleStudentNoteSubmit(e) {
   // --- USER PROFILE MODAL IN SIDEBAR ---
   if (userProfilePill) {
     userProfilePill.addEventListener('click', () => {
-      const name = (typeof currentUserProfile !== 'undefined' && currentUserProfile && currentUserProfile.name) || 'Student';
-      const plan = getUserPlanTier().toUpperCase();
-      const quota = getDailyQuota();
-      const quotaMsg = quota.isUnlimited ? 'Unlimited msgs/day' : `${quota.remaining}/${quota.limit} msgs left today`;
-      alert(`👤 BCA III Hub AI Tutor\n• Student: ${name}\n• Active Tier: ${plan}\n• Daily Quota: ${quotaMsg}\n• Saved Chats: ${conversations.length}\n• Cloud Matrix: High Availability Qwen/Dots 8K`);
+      const isGuest = !currentUserProfile || !currentUserProfile.email || !currentUserProfile.uid || currentUserProfile.uid.startsWith('guest_');
+      if (isGuest) {
+        if (typeof openProfileModal === 'function') {
+          openProfileModal();
+        } else if (typeof signInWithGoogle === 'function') {
+          signInWithGoogle();
+        } else {
+          alert("👋 Welcome Guest Student!\n\nYou currently have 2 Free AI messages/day.\nSign in with Google on the main site for 10 msgs/day or upgrade to Pro for 25 msgs/day!");
+        }
+      } else {
+        if (typeof openProfileModal === 'function') {
+          openProfileModal();
+        } else {
+          const name = currentUserProfile.name || 'Student';
+          const plan = getUserPlanTier().toUpperCase();
+          const quota = getDailyQuota();
+          const quotaMsg = quota.isUnlimited ? 'Unlimited msgs/day' : `${quota.remaining}/${quota.limit} msgs left today`;
+          alert(`👤 BCA III Hub Profile\n• Student: ${name}\n• Active Tier: ${plan}\n• Daily Quota: ${quotaMsg}\n• Saved Chats: ${conversations.length}\n• Cloud Matrix: High Availability Qwen/Dots 8K`);
+        }
+      }
     });
   }
+
+  // Initial AI sidebar profile render
+  updateAISidebarProfileUI();
 
   // --- UI RENDER HELPERS ---
   function renderRecents(filter = '') {
@@ -4904,6 +4967,7 @@ async function handleStudentNoteSubmit(e) {
     renderCurrentChatView();
     renderRecents(searchInput ? searchInput.value : '');
     updateQuotaUI();
+    updateAISidebarProfileUI();
     logUserPresence();
     setTimeout(() => input.focus(), 300);
   }

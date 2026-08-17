@@ -7698,25 +7698,45 @@ body:has(.gpt-overlay.active) .mobile-bottom-nav,
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: #10a37f;
-  color: #fff;
+  background: var(--color-coral, #cc785c);
+  color: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 600;
-  font-size: 0.9rem;
+  font-size: 0.88rem;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.gpt-user-avatar.guest {
+  background: rgba(255, 255, 255, 0.1);
+  color: #9ca3af;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+[data-theme="light"] .gpt-user-avatar.guest {
+  background: #e5e7eb;
+  color: #6b7280;
+  border-color: #d1d5db;
 }
 .gpt-user-info {
   display: flex;
   flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
 }
 .gpt-username {
   font-size: 0.85rem;
   font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .gpt-user-plan {
   font-size: 0.72rem;
   color: #888;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* MAIN VIEW - PURE FLEX LAYOUT (ZERO OVERLAP GUARANTEED) */
