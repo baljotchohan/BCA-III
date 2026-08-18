@@ -4788,6 +4788,12 @@ async function handleStudentNoteSubmit(e) {
     const assistantRow = appendMessageElement('assistant', '', true);
     const textContainer = assistantRow.querySelector('.gpt-assistant-text');
 
+    // Add blinking caret
+    const streamCaret = document.createElement('span');
+    streamCaret.className = 'gpt-streaming-caret';
+    textContainer.innerHTML = '';
+    textContainer.appendChild(streamCaret);
+
     isStreaming = true;
     let accumulatedText = '';
 
@@ -4842,6 +4848,9 @@ async function handleStudentNoteSubmit(e) {
                 } else {
                   textContainer.textContent = clean;
                 }
+                if (streamCaret && !textContainer.contains(streamCaret)) {
+                  textContainer.appendChild(streamCaret);
+                }
                 scrollToBottom();
               }
             } catch (e) {}
@@ -4849,6 +4858,9 @@ async function handleStudentNoteSubmit(e) {
         }
       }
 
+      if (streamCaret && streamCaret.parentNode) {
+        streamCaret.remove();
+      }
       const finalClean = cleanOutput(accumulatedText);
       chat.messages.push({ role: 'assistant', content: finalClean });
       saveConversations();
@@ -4858,6 +4870,7 @@ async function handleStudentNoteSubmit(e) {
       archiveChatToRTDB(chat.id, chat.messages, chat.title, activeModel);
 
     } catch (err) {
+      if (streamCaret && streamCaret.parentNode) streamCaret.remove();
       textContainer.innerHTML = '<span style="color:#ef4444;">Server busy hai bhai. Ek baar retry kar lo!</span>';
     } finally {
       isStreaming = false;
@@ -4906,6 +4919,12 @@ async function handleStudentNoteSubmit(e) {
 
     const assistantRow = appendMessageElement('assistant', '', true);
     const textContainer = assistantRow.querySelector('.gpt-assistant-text');
+    
+    // Add StudiQ-style blinking caret
+    const streamCaret = document.createElement('span');
+    streamCaret.className = 'gpt-streaming-caret';
+    textContainer.innerHTML = '';
+    textContainer.appendChild(streamCaret);
     
     isStreaming = true;
     let accumulatedText = '';
@@ -4963,6 +4982,10 @@ async function handleStudentNoteSubmit(e) {
                 } else {
                   textContainer.textContent = clean;
                 }
+                // Re-append blinking caret at end of streamed content
+                if (streamCaret && !textContainer.contains(streamCaret)) {
+                  textContainer.appendChild(streamCaret);
+                }
                 scrollToBottom();
               }
             } catch (e) {}
@@ -4970,6 +4993,10 @@ async function handleStudentNoteSubmit(e) {
         }
       }
 
+      // Remove streaming caret
+      if (streamCaret && streamCaret.parentNode) {
+        streamCaret.remove();
+      }
       const finalClean = cleanOutput(accumulatedText);
       chat.messages.push({ role: 'assistant', content: finalClean });
       saveConversations();
